@@ -40,45 +40,52 @@ const upload = multer({
 });
 
 // Function to process the uploaded logo image
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const safeUnlink = async (filePath) => {
+  try {
+    await delay(100); // small delay to ensure file is released
+    await fs.promises.unlink(filePath);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      console.error("Error deleting file:", err);
+    }
+  }
+};
+
 const processLogoImage = async (tempPath, finalPath) => {
   try {
-    // Initial processing with high quality
-    await sharp(tempPath)
-      .webp({ quality: 100 })
+    // Read the file into memory
+    let buffer = await sharp(tempPath)
       .resize({ width: 1024, withoutEnlargement: true })
-      .toFile(finalPath);
+      .webp({ quality: 100 })
+      .toBuffer();
 
-    // Check if the processed file size exceeds 100KB
-    let fileSize = fs.statSync(finalPath).size;
     let quality = 100;
 
-    // If file is too large, gradually reduce quality until size is acceptable
-    while (fileSize > 100 * 1024 && quality > 10) {
-      await sharp(tempPath)
-        .webp({ quality })
-        .resize({ width: 1024, withoutEnlargement: true })
-        .toFile(finalPath);
-
-      fileSize = fs.statSync(finalPath).size;
+    // Reduce quality until file size <= 100KB or quality <= 10
+    while (buffer.length > 100 * 1024 && quality > 10) {
       quality -= 10;
+      buffer = await sharp(buffer).webp({ quality }).toBuffer();
     }
 
-    // Clean up temporary file
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
+    // Write final optimized image
+    await fs.promises.writeFile(finalPath, buffer);
+
+    // Delete the temp file safely
+    await safeUnlink(tempPath);
 
     return finalPath;
   } catch (err) {
-    // Clean up any files if processing fails
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
-    if (fs.existsSync(finalPath)) {
-      fs.unlinkSync(finalPath);
-    }
-    console.error('Error processing logo image:', err);
-    throw new Error('Error processing logo image');
+    console.error("Error processing logo image:", err);
+
+    // Clean up files if something fails
+    await safeUnlink(tempPath);
+    try {
+      await fs.promises.unlink(finalPath);
+    } catch {}
+
+    throw new Error("Error processing logo image");
   }
 };
 

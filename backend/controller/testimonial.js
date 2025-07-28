@@ -502,6 +502,15 @@ const updateTestimonial = async (req, res) => {
       updateFields.videotitle = existingTestimonial.videotitle;
     }
 
+    // Convert string "active" or "inactive" to boolean
+    if (updateFields.status !== undefined) {
+      if (typeof updateFields.status === "string") {
+        updateFields.status =
+          updateFields.status.toLowerCase() === "active" ||
+          updateFields.status === "true";
+      }
+    }
+
     const updatedTestimonial = await Testimonial.findByIdAndUpdate(
       id,
       updateFields,

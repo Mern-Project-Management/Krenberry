@@ -334,6 +334,7 @@ useEffect(() => {
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
                     className="w-full p-2 border rounded focus:outline-none"
+                    required
                 />
             </div>
             <div className="mb-4">

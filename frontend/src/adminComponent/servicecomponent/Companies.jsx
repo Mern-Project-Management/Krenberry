@@ -18,7 +18,9 @@ const Companies = ({ categoryId }) => {
   const [companies, setCompanies] = useState([]);
   const [loadings, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [photoType, setPhotoType] = useState("company"); // Changed to "company"
+  const [photoType, setPhotoType] = useState("company");
+  const [showModal, setShowModal] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState(null);
   const navigate = useNavigate();
 
   const filteredCompanies = useMemo(() => {
@@ -70,10 +72,12 @@ const Companies = ({ categoryId }) => {
             >
               <FaEdit />
             </Link>
-
             <button
               className="text-red-500 hover:text-red-700 transition"
-              onClick={() => deleteCompany(row.original._id)}
+              onClick={() => {
+                setCompanyToDelete(row.original._id);
+                setShowModal(true);
+              }}
             >
               <FaTrashAlt />
             </button>
@@ -119,10 +123,13 @@ const Companies = ({ categoryId }) => {
         `/api/serviceImages/deleteGallery?id=${id}`,
         { withCredentials: true }
       );
-      fetchData(categoryId); // Refresh data after deletion
-      notify(); // Notify the user about the update
+      fetchData(categoryId);
+      notify();
     } catch (error) {
       console.error(error);
+    } finally {
+      setShowModal(false);
+      setCompanyToDelete(null);
     }
   };
 
@@ -130,7 +137,7 @@ const Companies = ({ categoryId }) => {
     if (categoryId) {
       fetchData(categoryId);
     }
-  }, [categoryId, photoType]); // Include photoType in dependencies
+  }, [categoryId, photoType]);
 
   return (
     <div className="p-4 overflow-x-auto">
@@ -140,13 +147,13 @@ const Companies = ({ categoryId }) => {
         <h1 className="text-xl font-bold text-gray-700 font-serif uppercase">
           Companies
         </h1>
-        <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
-          <Link
-            to={`/services/createImage/${categoryId}?photoType=${photoType}`}
-          >
+        <Link
+          to={`/services/createImage/${categoryId}?photoType=${photoType}`}
+        >
+          <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
             <FaPlus size={15} />
-          </Link>
-        </button>
+          </button>
+        </Link>
       </div>
       <div className="mb-4">
         <input
@@ -224,6 +231,36 @@ const Companies = ({ categoryId }) => {
             </table>
           )}
         </>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-4">
+              Are you sure you want to delete this company?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300"
+                onClick={() => {
+                  setShowModal(false);
+                  setCompanyToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700 transition duration-300"
+                onClick={() => deleteCompany(companyToDelete)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -20,7 +20,7 @@ const EditCategory = () => {
   const [otherMeta,setOthermeta]=useState("")
   const [url, setUrl] = useState()
   const [changeFreq, setChangeFreq] = useState()
-  const [priority, setPriority] = useState()
+  const [priority, setPriority] = useState(0)
   const [status, setStatus] = useState("active");
 
   useEffect(() => {
@@ -325,17 +325,21 @@ useEffect(() => {
                 <label htmlFor="priority" className="block font-semibold mb-2">
                     Priority
                 </label>
-                <input
+                  <input
                     type="number"
                     id="priority"
                     min={0}
                     max={1}
                     step={0.01}
                     value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPriority(val === "" ? 0 : parseFloat(val)); // If empty, keep 0
+                    }}
                     className="w-full p-2 border rounded focus:outline-none"
                     required
-                />
+                  />
+
             </div>
             <div className="mb-4">
                 <label htmlFor="changeFreq" className="block font-semibold mb-2">

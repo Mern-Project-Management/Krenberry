@@ -8,14 +8,13 @@ const NewCategoryForm = () => {
   const [category, setCategory] = useState("");
   const [tag, setTag] = useState("");
   const [description, setDescription] = useState("");
-  const [photo, setPhoto] = useState("");
+  const [photo, setPhoto] = useState(null); // Changed from "" to null for file handling
   const [altText, setAltText] = useState("");
   const [imgtitle, setImgtitle] = useState("");
-
   const [parentCategoryId, setParentCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
-  const [priority, setPriority] = useState("");
+  const [priority, setPriority] = useState(0);
   const [changeFreq, setChangeFreq] = useState("");
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
@@ -27,16 +26,60 @@ const NewCategoryForm = () => {
   const [metaschema, setMetaschema] = useState("");
   const [otherMeta, setOthermeta] = useState("");
   const [status, setStatus] = useState("active");
-
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  const validateFile = (file) => {
+    if (!file) return true; // No file selected is valid since photo is optional
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (!validTypes.includes(file.type)) {
+      return "Only JPG, PNG, and WebP files are allowed";
+    }
+    if (file.size > maxSize) {
+      return "File size must be under 2MB";
+    }
+    return true;
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!category.trim()) newErrors.category = "Category is required";
+    if (!slug.trim()) {
+      newErrors.slug = "Slug is required";
+    } else if (!/^[a-z0-9-]+$/.test(slug)) {
+      newErrors.slug = "Slug must be URL-friendly (lowercase letters, numbers, and hyphens only)";
+    }
+    if (!metatitle.trim()) newErrors.metatitle = "Meta Title is required";
+    if (!metadescription.trim()) newErrors.metadescription = "Meta Description is required";
+    if (!status) newErrors.status = "Status is required";
+    if (photo && !altText.trim()) newErrors.altText = "Alternative Text is required when a photo is uploaded";
+    if (photo && !imgtitle.trim()) newErrors.imgtitle = "Image Title Text is required when a photo is uploaded";
+    if (priority && (isNaN(priority) || priority < 0 || priority > 1)) {
+      newErrors.priority = "Priority must be a number between 0 and 1";
+    }
+    const fileValidation = validateFile(photo);
+    if (fileValidation !== true) newErrors.photo = fileValidation;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    setPhoto(file);
+    const fileValidation = validateFile(file);
+    if (fileValidation === true) {
+      setPhoto(file);
+      setErrors(prev => ({ ...prev, photo: "" }));
+    } else {
+      setErrors(prev => ({ ...prev, photo: fileValidation }));
+      setPhoto(null);
+    }
   };
 
   const handleDeleteImage = () => {
     setPhoto(null);
+    setErrors(prev => ({ ...prev, photo: "", altText: "", imgtitle: "" }));
   };
 
   const modules = {
@@ -110,6 +153,8 @@ const NewCategoryForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       let urls = "/api/services/insertCategory";
       const formData = new FormData();
@@ -145,17 +190,15 @@ const NewCategoryForm = () => {
       });
 
       setCategory("");
-      setTag("")
+      setTag("");
       setDescription("");
-      setPhoto("");
+      setPhoto(null);
       setAltText("");
       setImgtitle("");
       setParentCategoryId("");
       setSubCategoryId("");
       setSlug("");
-
       setStatus("active");
-
       setMetatitle("");
       setMetadescription("");
       setMetakeywords("");
@@ -164,7 +207,7 @@ const NewCategoryForm = () => {
       setMetaschema("");
       setOthermeta("");
       setUrl("");
-      setPriority("");
+      setPriority(0);
       setChangeFreq("");
       navigate("/ServiceCategory");
     } catch (error) {
@@ -208,13 +251,13 @@ const NewCategoryForm = () => {
   const subCategories = findSubCategories(categories, parentCategoryId);
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
+    <div className="p-4">
       <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">
         Add Category
       </h1>
       <div className="mb-4">
         <label htmlFor="parentCategory" className="block font-semibold mb-2">
-          Parent Category
+          Parent Category<span className="text-red-500">*</span>
         </label>
         <select
           id="parentCategory"
@@ -248,16 +291,17 @@ const NewCategoryForm = () => {
       )}
       <div className="mb-4">
         <label htmlFor="title" className="block font-semibold mb-2">
-          Category
+          Category <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="title"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${errors.category ? 'border-red-500' : ''}`}
           required
         />
+        {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
       </div>
       <div className="mb-6">
         <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">
@@ -265,7 +309,7 @@ const NewCategoryForm = () => {
         </label>
         <ReactQuill
           value={description}
-          onChange={setDescription} // Directly update heading
+          onChange={setDescription}
           modules={modules}
           className="quill"
         />
@@ -279,7 +323,7 @@ const NewCategoryForm = () => {
           value={tag}
           onChange={(e) => setTag(e.target.value)}
           className="w-full p-2 border rounded focus:outline-none"
-        ></input>
+        />
       </div>
       <div className="mb-8">
         <label htmlFor="photo" className="block font-semibold mb-2">
@@ -290,10 +334,10 @@ const NewCategoryForm = () => {
           name="photo"
           id="photo"
           onChange={handlePhotoChange}
-          className="border rounded focus:outline-none"
-          accept="image/*"
+          className={`border rounded focus:outline-none ${errors.photo ? 'border-red-500' : ''}`}
+          accept="image/jpeg,image/png,image/webp"
         />
-
+        {errors.photo && <p className="text-red-500 text-sm mt-1">{errors.photo}</p>}
         {photo && (
           <div className="mt-2 relative group w-56">
             <img
@@ -310,44 +354,48 @@ const NewCategoryForm = () => {
             </button>
             <div className="mb-4">
               <label htmlFor="alt" className="block font-semibold mb-2">
-                Alternative Text
+                Alternative Text <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 id="alt"
                 value={altText}
                 onChange={(e) => setAltText(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-none"
+                className={`w-full p-2 border rounded focus:outline-none ${errors.altText ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.altText && <p className="text-red-500 text-sm mt-1">{errors.altText}</p>}
             </div>
             <div className="mb-4">
               <label htmlFor="imgtitle" className="block font-semibold mb-2">
-                Image Title Text
+                Image Title Text <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 id="imgtitle"
                 value={imgtitle}
                 onChange={(e) => setImgtitle(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-none"
+                className={`w-full p-2 border rounded focus:outline-none ${errors.imgtitle ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.imgtitle && <p className="text-red-500 text-sm mt-1">{errors.imgtitle}</p>}
             </div>
           </div>
         )}
       </div>
       <div className="mb-4 mt-4">
         <label htmlFor="slug" className="block font-semibold mb-2">
-          Slug
+          Slug <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="slug"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${errors.slug ? 'border-red-500' : ''}`}
+          required
         />
+        {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
       </div>
       <div className="mb-4 mt-4">
         <label htmlFor="url" className="block font-semibold mb-2">
@@ -358,32 +406,36 @@ const NewCategoryForm = () => {
           id="url"
           value={url}
           disabled
-          className="w-full p-2 border rounded focus:outline-none"
+          className="w-full p-2 border rounded focus:outline-none bg-gray-100"
         />
       </div>
       <div className="mb-4">
         <label htmlFor="meta" className="block font-semibold mb-2">
-          Meta Title
+          Meta Title <span className="text-red-500">*</span>
         </label>
         <textarea
           id="meta"
           value={metatitle}
           onChange={(e) => setMetatitle(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${errors.metatitle ? 'border-red-500' : ''}`}
           rows="3"
+          required
         ></textarea>
+        {errors.metatitle && <p className="text-red-500 text-sm mt-1">{errors.metatitle}</p>}
       </div>
       <div className="mb-4">
         <label htmlFor="meta" className="block font-semibold mb-2">
-          Meta Description
+          Meta Description <span className="text-red-500">*</span>
         </label>
         <textarea
           id="meta"
           value={metadescription}
           onChange={(e) => setMetadescription(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${errors.metadescription ? 'border-red-500' : ''}`}
           rows="3"
+          required
         ></textarea>
+        {errors.metadescription && <p className="text-red-500 text-sm mt-1">{errors.metadescription}</p>}
       </div>
       <div className="mb-4">
         <label htmlFor="meta" className="block font-semibold mb-2">
@@ -456,9 +508,13 @@ const NewCategoryForm = () => {
           max={1}
           step={0.01}
           value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          onChange={(e) => {
+            const val = e.target.value;
+            setPriority(val === "" ? 0 : parseFloat(val));
+          }}
+          className={`w-full p-2 border rounded focus:outline-none ${errors.priority ? 'border-red-500' : ''}`}
         />
+        {errors.priority && <p className="text-red-500 text-sm mt-1">{errors.priority}</p>}
       </div>
       <div className="mb-4">
         <label htmlFor="changeFreq" className="block font-semibold mb-2">
@@ -481,25 +537,28 @@ const NewCategoryForm = () => {
       </div>
       <div className="mb-4">
         <label htmlFor="status" className="block font-semibold mb-2">
-          Status
+          Status <span className="text-red-500">*</span>
         </label>
         <select
           id="status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${errors.status ? 'border-red-500' : ''}`}
+          required
         >
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
       </div>
       <button
-        type="submit"
-        className="bg-blue-500 text-white py-2 px-4 rounded"
+        type="button"
+        onClick={handleSubmit}
+        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
       >
         Add Category
       </button>
-    </form>
+    </div>
   );
 };
 

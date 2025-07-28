@@ -5,10 +5,12 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import UseAnimations from "react-useanimations";
+import loading from "react-useanimations/lib/loading";
 
 const NewServiceForm = () => {
-  const { categoryId } = useParams(); // Extract categoryId and subcategoryId from URL
-  const [heading, setHeading] = useState(""); // State for heading
+  const { categoryId } = useParams();
+  const [heading, setHeading] = useState("");
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState([]);
   const [photoAlts, setPhotoAlts] = useState([]);
@@ -18,6 +20,9 @@ const NewServiceForm = () => {
   const [videotitle, setVideotitle] = useState("");
   const [status, setStatus] = useState(true);
   const [questions, setQuestions] = useState([{ question: "", answer: "" }]);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [hasAttemptedPhotoUpload, setHasAttemptedPhotoUpload] = useState(false); // Track photo upload attempts
   const navigate = useNavigate();
 
   const modules = {
@@ -39,17 +44,80 @@ const NewServiceForm = () => {
     },
   };
 
+  // Utility to strip HTML tags and get plain text
+  const stripHTML = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  };
+
+  // Validate heading
+  const validateHeading = (value) => {
+    const plainText = stripHTML(value);
+    if (!plainText.trim()) {
+      return "Please enter a valid heading using alphabets and spaces only (max 100 characters). Avoid special symbols like #, $, %, etc.";
+    }
+    if (plainText.length > 100) {
+      return "Heading cannot exceed 100 characters.";
+    }
+    if (!/^[a-zA-Z\s.,:–-]*$/.test(plainText)) {
+      return "Heading can only contain alphabets, spaces, and basic punctuation (.,:–-).";
+    }
+    return "";
+  };
+
+  // Validate description
+  const validateDescription = (value) => {
+    const plainText = stripHTML(value);
+    if (!plainText.trim()) {
+      return "Description cannot be empty. Please provide a brief explanation of the service.";
+    }
+    return "";
+  };
+
+  // Validate photos
+  const validatePhotos = () => {
+    if (hasAttemptedPhotoUpload && photos.length === 0) {
+      return "Please upload at least one image in JPG/PNG format (max size: 10MB). This image will appear on the website.";
+    }
+    return "";
+  };
+
   const handlePhotoChange = (e) => {
+    setHasAttemptedPhotoUpload(true);
     const files = Array.from(e.target.files);
-    if (photos.length + files.length > 5) {
-      toast.error("You can only upload up to 5 photos");
+    const validFiles = files.filter((file) => {
+      const isValidType = ["image/jpeg", "image/png"].includes(file.type);
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      if (!isValidType) {
+        toast.error(`Invalid file type for ${file.name}. Only JPG/PNG allowed.`);
+        return false;
+      }
+      if (!isValidSize) {
+        toast.error(`File ${file.name} exceeds 10MB limit.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (photos.length + validFiles.length > 5) {
+      toast.error("You can only upload up to 5 photos.");
+      setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
       return;
     }
-    setPhotos([...photos, ...files]);
-    const newPhotoAlts = Array.from({ length: files.length }, () => "");
+
+    setPhotos([...photos, ...validFiles]);
+    const newPhotoAlts = Array.from({ length: validFiles.length }, () => "");
     setPhotoAlts([...photoAlts, ...newPhotoAlts]);
-    const newImgtitles = Array.from({ length: files.length }, () => "");
+    const newImgtitles = Array.from({ length: validFiles.length }, () => "");
     setImgtitle([...imgtitle, ...newImgtitles]);
+    setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
+  };
+
+  const handleClearAllPhotos = () => {
+    setPhotos([]);
+    setPhotoAlts([]);
+    setImgtitle([]);
+    setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
   };
 
   const handleVideoChange = (e) => {
@@ -58,15 +126,14 @@ const NewServiceForm = () => {
 
   const handleDeleteImage = (index) => {
     setPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
-    setPhotoAlts((prevPhotoAlts) =>
-      prevPhotoAlts.filter((_, i) => i !== index)
-    );
+    setPhotoAlts((prevPhotoAlts) => prevPhotoAlts.filter((_, i) => i !== index));
     setImgtitle((prevImgtitle) => prevImgtitle.filter((_, i) => i !== index));
+    setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
   };
 
-  const handleQuestionChange = (index, event) => {
+  const handleQuestionChange = (index, field, value) => {
     const newQuestions = [...questions];
-    newQuestions[index][event.target.name] = event.target.value;
+    newQuestions[index][field] = value;
     setQuestions(newQuestions);
   };
 
@@ -80,13 +147,48 @@ const NewServiceForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all fields
+    const headingError = validateHeading(heading);
+    const descriptionError = validateDescription(description);
+    const photosError = photos.length === 0
+      ? "Please upload at least one image in JPG/PNG format (max size: 10MB). This image will appear on the website."
+      : "";
+
+    const newErrors = {
+      heading: headingError,
+      description: descriptionError,
+      photos: photosError,
+    };
+
+    setErrors(newErrors);
+
+    if (headingError || descriptionError || photosError) {
+      toast.error("Please fix the errors before submitting.");
+      return;
+    }
+
+    setLoading(true);
     try {
+      console.log("Submitting form with data:", {
+        heading,
+        description,
+        status,
+        categoryId,
+        photos,
+        photoAlts,
+        imgtitle,
+        video,
+        altVideo,
+        videotitle,
+        questions,
+      });
       const formData = new FormData();
-      formData.append("heading", heading); // Use heading as the name field
+      formData.append("heading", heading);
       formData.append("description", description);
       formData.append("status", status);
       formData.append("altVideo", altVideo);
-      formData.append("categoryId", categoryId); // Send categoryId from URL
+      formData.append("categoryId", categoryId);
       formData.append("videotitle", videotitle);
       photos.forEach((photo, index) => {
         formData.append("photo", photo);
@@ -102,16 +204,22 @@ const NewServiceForm = () => {
         formData.append("questions", JSON.stringify(qa));
       });
 
-      await axios.post("/api/serviceDetails/insertServiceDetail", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        "/api/serviceDetails/insertServiceDetail",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
 
-      // Reset form fields
+      console.log("Service created successfully:", response.data);
+      toast.success("Service created successfully!", { autoClose: 3000 });
+
       setDescription("");
-      setHeading(""); // Reset heading
+      setHeading("");
       setPhotos([]);
       setVideo(null);
       setVideoAlt("");
@@ -120,10 +228,14 @@ const NewServiceForm = () => {
       setImgtitle([]);
       setVideotitle("");
       setQuestions([{ question: "", answer: "" }]);
+      setErrors({});
+      setHasAttemptedPhotoUpload(false);
       navigate(`/services`);
     } catch (error) {
-      console.error(error);
+      console.error("Error creating service:", error.response?.data || error.message);
       toast.error("Failed to create service.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,10 +253,16 @@ const NewServiceForm = () => {
         </label>
         <ReactQuill
           value={heading}
-          onChange={setHeading}
+          onChange={(value) => {
+            setHeading(value);
+            setErrors((prev) => ({ ...prev, heading: validateHeading(value) }));
+          }}
           modules={modules}
           className="quill"
         />
+        {errors.heading && (
+          <p className="text-red-500 text-sm mt-1">{errors.heading}</p>
+        )}
       </div>
 
       {/* Description Field */}
@@ -154,10 +272,19 @@ const NewServiceForm = () => {
         </label>
         <ReactQuill
           value={description}
-          onChange={setDescription}
+          onChange={(value) => {
+            setDescription(value);
+            setErrors((prev) => ({
+              ...prev,
+              description: validateDescription(value),
+            }));
+          }}
           modules={modules}
           className="quill"
         />
+        {errors.description && (
+          <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+        )}
       </div>
 
       {/* Photo Upload Field */}
@@ -165,15 +292,29 @@ const NewServiceForm = () => {
         <label htmlFor="photo" className="block font-semibold mb-2">
           Photos
         </label>
-        <input
-          type="file"
-          name="photo"
-          id="photo"
-          multiple
-          onChange={handlePhotoChange}
-          className="border rounded focus:outline-none"
-          accept="image/*"
-        />
+        <div className="flex items-center gap-4">
+          <input
+            type="file"
+            name="photo"
+            id="photo"
+            multiple
+            onChange={handlePhotoChange}
+            className="border rounded focus:outline-none"
+            accept="image/jpeg,image/png"
+          />
+          {photos.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllPhotos}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Clear All Photos
+            </button>
+          )}
+        </div>
+        {errors.photos && (
+          <p className="text-red-500 text-sm mt-1">{errors.photos}</p>
+        )}
         {photos.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-4">
             {photos.map((photo, index) => (
@@ -271,29 +412,27 @@ const NewServiceForm = () => {
       {/* Questions Section */}
       <div className="mt-8">
         <h3 className="text-lg font-semibold mb-4">Questions and Answers</h3>
-
         {questions.map((qa, index) => (
-          <div key={index} className="mb-4">
+          <div key={index} className="mb-4 p-4 border rounded bg-gray-50">
             <label className="block mb-1 font-medium">Question</label>
             <input
               type="text"
               name="question"
               value={qa.question}
-              onChange={(event) => handleQuestionChange(index, event)}
+              onChange={(e) => handleQuestionChange(index, "question", e.target.value)}
               className="w-full p-2 border rounded focus:outline-none mb-2"
             />
             <label className="block mb-1 font-medium">Answer</label>
-
             <ReactQuill
               value={qa.answer}
-              onChange={(event) => handleQuestionChange(index, event)}
+              onChange={(value) => handleQuestionChange(index, "answer", value)}
               modules={modules}
               className="quill"
             />
             {questions.length > 1 && (
               <button
                 type="button"
-                className="mt-2 text-red-600"
+                className="mt-2 text-red-600 hover:text-red-800"
                 onClick={() => handleRemoveQuestion(index)}
               >
                 Remove
@@ -303,7 +442,7 @@ const NewServiceForm = () => {
         ))}
         <button
           type="button"
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           onClick={handleAddQuestion}
         >
           Add Another Question
@@ -328,9 +467,17 @@ const NewServiceForm = () => {
       <div className="mt-8">
         <button
           type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
+          disabled={loading}
         >
-          Create Service
+          {loading ? (
+            <>
+              <UseAnimations animation={loading} size={24} strokeColor="#fff" />
+              Submitting...
+            </>
+          ) : (
+            "Create Service"
+          )}
         </button>
       </div>
     </form>

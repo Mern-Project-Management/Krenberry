@@ -42,21 +42,114 @@ const upload = multer({
 // Function to process the uploaded logo image
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const safeUnlink = async (filePath) => {
-  try {
-    await delay(100); // small delay to ensure file is released
-    await fs.promises.unlink(filePath);
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      console.error("Error deleting file:", err);
+const safeUnlink = async (filePath, maxRetries = 5) => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      // Increase delay with each attempt
+      await delay(200 * (attempt + 1));
+      
+      // Check if file exists before trying to delete
+      try {
+        await fs.promises.access(filePath);
+      } catch (accessErr) {
+        // File doesn't exist, consider it successfully "deleted"
+        return;
+      }
+
+      await fs.promises.unlink(filePath);
+      return; // Success
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        // File doesn't exist, consider it successfully deleted
+        return;
+      }
+      
+      if (err.code === "EBUSY" && attempt < maxRetries - 1) {
+        console.warn(`File busy, retrying... (attempt ${attempt + 1}/${maxRetries})`);
+        continue; // Retry
+      }
+      
+      // If it's the last attempt or a different error, log and continue
+      if (attempt === maxRetries - 1) {
+        console.error(`Failed to delete file after ${maxRetries} attempts:`, err);
+        // Don't throw - just log and continue to prevent breaking the flow
+      }
     }
   }
 };
 
 const processLogoImage = async (tempPath, finalPath) => {
+  let sharpInstance = null;
+  let buffer = null;
+  
   try {
-    // Read the file into memory
-    let buffer = await sharp(tempPath)
+    // Create Sharp instance and immediately read to buffer to release file handle
+    sharpInstance = sharp(tempPath);
+    buffer = await sharpInstance
+      .resize({ width: 1024, withoutEnlargement: true })
+      .webp({ quality: 100 })
+      .toBuffer();
+
+    // Explicitly destroy the Sharp instance to release resources
+    if (sharpInstance) {
+      sharpInstance.destroy();
+      sharpInstance = null;
+    }
+
+    let quality = 100;
+
+    // Reduce quality until file size <= 100KB or quality <= 10
+    while (buffer.length > 100 * 1024 && quality > 10) {
+      quality -= 10;
+      // Create new Sharp instance from buffer (not from file)
+      buffer = await sharp(buffer).webp({ quality }).toBuffer();
+    }
+
+    // Write final optimized image
+    await fs.promises.writeFile(finalPath, buffer);
+
+    // Add a longer delay before attempting to delete
+    await delay(500);
+
+    // Delete the temp file safely with retries
+    await safeUnlink(tempPath);
+
+    return finalPath;
+  } catch (err) {
+    console.error("Error processing logo image:", err);
+
+    // Ensure Sharp instance is destroyed
+    if (sharpInstance) {
+      try {
+        sharpInstance.destroy();
+      } catch (destroyErr) {
+        console.warn("Error destroying Sharp instance:", destroyErr);
+      }
+    }
+
+    // Clean up files if something fails
+    await safeUnlink(tempPath);
+    
+    // Clean up final file if it was created
+    try {
+      await fs.promises.access(finalPath);
+      await safeUnlink(finalPath);
+    } catch (accessErr) {
+      // Final file doesn't exist, no need to delete
+    }
+
+    throw new Error("Error processing logo image");
+  }
+};
+
+// Alternative approach: Process without temp file (direct to final location)
+const processLogoImageDirect = async (tempPath, finalPath) => {
+  try {
+    // Read file to buffer immediately to release file handle
+    const inputBuffer = await fs.promises.readFile(tempPath);
+    
+    // Process the buffer
+    let buffer = await sharp(inputBuffer)
       .resize({ width: 1024, withoutEnlargement: true })
       .webp({ quality: 100 })
       .toBuffer();
@@ -72,7 +165,7 @@ const processLogoImage = async (tempPath, finalPath) => {
     // Write final optimized image
     await fs.promises.writeFile(finalPath, buffer);
 
-    // Delete the temp file safely
+    // Now safe to delete temp file since we're not using Sharp on it anymore
     await safeUnlink(tempPath);
 
     return finalPath;
@@ -81,9 +174,13 @@ const processLogoImage = async (tempPath, finalPath) => {
 
     // Clean up files if something fails
     await safeUnlink(tempPath);
+    
     try {
-      await fs.promises.unlink(finalPath);
-    } catch {}
+      await fs.promises.access(finalPath);
+      await safeUnlink(finalPath);
+    } catch (accessErr) {
+      // Final file doesn't exist, no need to delete
+    }
 
     throw new Error("Error processing logo image");
   }
@@ -108,8 +205,8 @@ const uploadLogo = async (req, res, next) => {
         const tempPath = req.file.path;
         const finalPath = path.join(uploadDir, req.file.filename);
 
-        // Process the image if file is present
-        await processLogoImage(tempPath, finalPath);
+        // Use the direct processing approach (recommended)
+        await processLogoImageDirect(tempPath, finalPath);
 
         // Update req.file with the new path
         req.file.path = finalPath;

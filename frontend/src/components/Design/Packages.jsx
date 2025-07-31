@@ -94,50 +94,62 @@ const PricingSection = ({ setServiceSlug }) => {
   };
 
     return (
-      <div className="bg-[#F7F4EE] border border-gray-300 shadow-lg rounded-lg p-6 mb-10 flex flex-col min-h-[400px]">
-        <div className="flex justify-between items-center">
-          <h3 className="md:text-2xl font-bold mb-2">
-            {splitHeading(item.title).firstPart}
-            <span className="text-[#ec2127]">{splitHeading(heading).secondPart}
-            </span></h3>
-        </div>
-        <p className="mb-4" dangerouslySetInnerHTML={{ __html: item.description }} />
-        <p className="text-4xl text-black font-bold pb-2">₹{item.price}</p>
-        
-        <div className="mt-6 mb-4 text-md text-gray-600 flex-grow">
-          <ul className="list-disc list-inside">
+      <div className="bg-[#F7F4EE] border border-gray-300 shadow-lg rounded-lg p-6 flex flex-col h-full">
+      <div className="flex flex-col flex-grow">
+        <h3 className="md:text-2xl font-bold mb-3 text-center">
+          {splitHeading(item.title).firstPart}
+          <span className="text-[#ec2127]">{splitHeading(item.title).secondPart}</span>
+        </h3>
+
+        <p
+          className="mb-3 text-gray-700 text-center min-h-[60px]"
+          dangerouslySetInnerHTML={{ __html: item.description }}
+        />
+
+        <p className="text-4xl text-black font-bold text-center mb-4">${item.price}</p>
+
+        <div className="text-md text-gray-600 flex-grow">
+          <ul className="list-disc list-inside mb-4">
             {whatIsTheir.map((detail, index) => (
-              <li key={index} className="flex gap-2 mb-4">
-                <FaCheck className="text-[#ec2127] text-md flex-shrink-0 mt-2" />
+              <li key={index} className="flex gap-2 mb-2">
+                <FaCheck className="text-[#ec2127] mt-1 flex-shrink-0" />
                 {detail}
               </li>
             ))}
           </ul>
+
           {!showHourlyPackages && (
-            <p>
-              <b>Additional Revisions</b>: After the free virtual meeting,
-              any further changes will be charged on an hourly basis.
-              <span className="text-[#ec2127] cursor-pointer" onClick={togglePackageView}>
+            <p className="text-sm mb-3">
+              <b>Additional Revisions</b>: After the free virtual meeting, further
+              changes will be charged hourly.
+              <span
+                className="text-[#ec2127] cursor-pointer"
+                onClick={togglePackageView}
+              >
                 (Hourly Rates)
               </span>
             </p>
           )}
-          <ul className="mt-2 mb-4 text-md text-gray-600">
+
+          <ul className="list-disc list-inside mb-4">
             {whatIsNotTheir.map((exclusion, index) => (
-              <li key={index} className="flex gap-2 mb-4">
-                <RxCross2 className="text-red-600 text-md flex-shrink-0 mt-2" />
+              <li key={index} className="flex gap-2 mb-2">
+                <RxCross2 className="text-red-600 mt-1 flex-shrink-0" />
                 {exclusion}
               </li>
             ))}
           </ul>
         </div>
-        <button
-          className="mt-auto w-full px-4 py-2 bg-[#ec2127] text-white rounded-lg text-sm sm:text-base"
-          onClick={() => navigate(`/contact`)}
-        >
-          Get Started
-        </button>
       </div>
+
+      <button
+        className="mt-auto w-full px-4 py-2 bg-[#ec2127] text-white rounded-lg text-base"
+        onClick={() => navigate(`/contact`)}
+      >
+        Get Started
+      </button>
+    </div>
+
     );
   };
   const splitHeading = (text) => {
@@ -180,11 +192,15 @@ const PricingSection = ({ setServiceSlug }) => {
       </div>
 
       <div className="mt-10 mb-10 xl:w-[75%] px-6 mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {showHourlyPackages
-            ? hourlypackage.map((item) => <PackageCard key={item._id} item={item} />)
-            : normalpackage.map((item) => <PackageCard key={item._id} item={item} />)}
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+        {showHourlyPackages
+          ? hourlypackage
+              .filter((item) => item.status === "active")
+              .map((item) => <PackageCard key={item._id} item={item} />)
+          : normalpackage
+              .filter((item) => item.status === "active")
+              .map((item) => <PackageCard key={item._id} item={item} />)}
+      </div>
       </div>
     </div>
   );

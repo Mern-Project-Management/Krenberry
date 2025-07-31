@@ -159,8 +159,10 @@ const Navbar = () => {
               ) : null}
             </NavLink>
           </div>
-          <div className="hidden lg:flex items-center space-x-2 relative ">
-            {navData.map((link) => (
+          <div className="hidden lg:flex items-center space-x-2 relative">
+          {navData
+            .filter((link) => link.name !== "Packages") // filter out packages
+            .map((link) => (
               <NavItem key={link.id} item={link} closeMenu={closeMenu} />
             ))}
           </div>

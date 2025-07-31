@@ -30,7 +30,7 @@ export default function Website() {
       <Review />
       <Companies />
       <WhyPartnerWithUs />
-      <PricingSection />
+      {/* <PricingSection /> */}
       <De />
       {/* <DesignProcess/> */}
       <FAQ />

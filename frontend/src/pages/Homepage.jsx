@@ -15,7 +15,7 @@ import StandardPackage from "../components/StandardPackage"
 
 import PremiumTemplatesSection from '../components/PrimiumTemplateSection'
 import MainContent from '../components/AboveAnimation'
-
+  
 export default function Homepage() {
   const serviceGridRef = useRef(null);
   return (

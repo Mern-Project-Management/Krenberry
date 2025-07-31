@@ -26,20 +26,22 @@ const modules = {
 };
 
 const EditPackageForm = () => {
-  const { packageId } = useParams(); // Extract packageId from the URL
+  const { packageId } = useParams();
   const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
   const [status, setStatus] = useState("active");
   const [packageType, setPackageType] = useState("");
-  const [price, setPrice] = useState(0);
-
+  const [price, setPrice] = useState("");
+  const [priceError, setPriceError] = useState("");
   const [whatIsTheir, setWhatIsTheir] = useState([]);
+  const [whatIsTheirError, setWhatIsTheirError] = useState("");
   const [whatIsNotTheir, setWhatIsNotTheir] = useState([]);
   const [categories, setCategories] = useState([]);
   const [parentCategoryId, setParentCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
   const [subSubCategoryId, setSubSubCategoryId] = useState("");
-  // State for categories, parent, sub, and sub-sub categories with updated naming convention
   const [servicecategories, setServiceCategories] = useState([]);
   const [serviceparentCategoryId, setServiceParentCategoryId] = useState("");
   const [servicesubCategoryId, setServiceSubCategoryId] = useState("");
@@ -47,10 +49,10 @@ const EditPackageForm = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPackageDetails(); // Fetch package details using packageId
-    fetchCategories(); // Fetch categories for the dropdown
+    fetchPackageDetails();
+    fetchCategories();
     fetchServiceCategories();
-  }, [packageId]); // Add packageId as a dependency
+  }, [packageId]);
 
   const fetchPackageDetails = async () => {
     try {
@@ -59,15 +61,18 @@ const EditPackageForm = () => {
       });
       const packageData = response.data;
       setTitle(packageData.title);
+      setTitleError(validateTitle(packageData.title));
       setDescription(packageData.description);
+      setDescriptionError(validateDescription(packageData.description));
       setStatus(packageData.status);
       setPackageType(packageData.packagetype);
       setPrice(packageData.price);
-
-      setWhatIsTheir(JSON.parse(packageData.whatIsTheir[0] || "[]"));
+      setPriceError(validatePrice(packageData.price));
+      const whatIsTheirData = JSON.parse(packageData.whatIsTheir[0] || "[]");
+      setWhatIsTheir(whatIsTheirData);
+      setWhatIsTheirError(validateWhatIsTheir(whatIsTheirData));
       setWhatIsNotTheir(JSON.parse(packageData.whatIsNotTheir[0] || "[]"));
 
-      // Fetch categories
       try {
         const categoryResponse = await axios.get(
           `/api/packages/getSpecificCategory?categoryId=${packageData.categories}`,
@@ -101,7 +106,6 @@ const EditPackageForm = () => {
         console.error("Error fetching sub-subcategory:", error);
       }
 
-      // Fetch services
       try {
         const serviceCategoryResponse = await axios.get(
           `/api/services/getSpecificCategory?categoryId=${packageData.servicecategories}`,
@@ -162,8 +166,87 @@ const EditPackageForm = () => {
     }
   };
 
+  const validateTitle = (value) => {
+    if (!value.trim()) return "Title is required";
+    if (value.trim().length < 3) return "Title must be at least 3 characters long";
+    if (value.trim().length > 100) return "Title cannot exceed 100 characters";
+    if (/^\s+$/.test(value)) return "Title cannot contain only spaces";
+    if (!/^[a-zA-Z0-9\s-/]+$/.test(value)) {
+      return "Title can only contain letters, numbers, spaces, hyphens, and slashes";
+    }
+    return "";
+  };
+
+  const validateDescription = (value) => {
+    const text = value.replace(/<[^>]+>/g, '').trim();
+    if (!text) return "Description is required";
+    if (text.length < 10) return "Description must be at least 10 characters long";
+    return "";
+  };
+
+  const validatePrice = (value) => {
+    if (value === "" || value === null) return "Price is required";
+    if (isNaN(value) || Number(value) < 0) return "Price must be a non-negative number";
+    return "";
+  };
+
+  const validateWhatIsTheir = (items) => {
+    if (items.length === 0) return "At least one item is required in What Is Included";
+    for (const item of items) {
+      if (!item.trim()) return "Items in What Is Included cannot be empty";
+      if (item.trim().length < 3) return "Each item in What Is Included must be at least 3 characters long";
+      if (item.trim().length > 100) return "Each item in What Is Included cannot exceed 100 characters";
+      if (/^\s+$/.test(item)) return "Items in What Is Included cannot contain only spaces";
+    }
+    return "";
+  };
+
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
+    if (value.length <= 100) {
+      setTitle(value);
+      setTitleError(validateTitle(value));
+    }
+  };
+
+  const handleDescriptionChange = (value) => {
+    setDescription(value);
+    setDescriptionError(validateDescription(value));
+  };
+
+  const handlePriceChange = (e) => {
+    const value = e.target.value;
+    setPrice(value);
+    setPriceError(validatePrice(value));
+  };
+
+  const handleWhatIsTheirChange = (index, value) => {
+    if (value.length <= 100) {
+      const newItems = [...whatIsTheir];
+      newItems[index] = value;
+      setWhatIsTheir(newItems);
+      setWhatIsTheirError(validateWhatIsTheir(newItems));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const titleErr = validateTitle(title);
+    const descErr = validateDescription(description);
+    const priceErr = validatePrice(price);
+    const whatIsTheirErr = validateWhatIsTheir(whatIsTheir);
+
+    setTitleError(titleErr);
+    setDescriptionError(descErr);
+    setPriceError(priceErr);
+    setWhatIsTheirError(whatIsTheirErr);
+
+    if (titleErr || descErr || priceErr || whatIsTheirErr) {
+      toast.error("Please fix the validation errors before submitting.");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("title", title);
@@ -177,7 +260,6 @@ const EditPackageForm = () => {
       formData.append("servicecategories", serviceparentCategoryId);
       formData.append("servicesubcategories", servicesubCategoryId);
       formData.append("servicesubSubcategories", servicesubSubCategoryId);
-
       formData.append("whatIsTheir", JSON.stringify(whatIsTheir));
       formData.append("whatIsNotTheir", JSON.stringify(whatIsNotTheir));
 
@@ -197,11 +279,23 @@ const EditPackageForm = () => {
   };
 
   const removeItem = (setter, index) => {
-    setter((prev) => prev.filter((_, i) => i !== index));
+    setter((prev) => {
+      const newItems = prev.filter((_, i) => i !== index);
+      if (setter === setWhatIsTheir) {
+        setWhatIsTheirError(validateWhatIsTheir(newItems));
+      }
+      return newItems;
+    });
   };
 
   const addItem = (setter, item) => {
-    setter((prev) => [...prev, item]);
+    setter((prev) => {
+      const newItems = [...prev, item];
+      if (setter === setWhatIsTheir) {
+        setWhatIsTheirError(validateWhatIsTheir(newItems));
+      }
+      return newItems;
+    });
   };
 
   const renderInputList = (items, setter) => {
@@ -211,11 +305,16 @@ const EditPackageForm = () => {
           type="text"
           value={item}
           onChange={(e) => {
-            const newItems = [...items];
-            newItems[index] = e.target.value;
-            setter(newItems);
+            if (setter === setWhatIsTheir) {
+              handleWhatIsTheirChange(index, e.target.value);
+            } else {
+              const newItems = [...items];
+              newItems[index] = e.target.value;
+              setter(newItems);
+            }
           }}
-          className="w-full p-2 border rounded focus:outline-none"
+          className={`w-full p-2 border rounded focus:outline-none ${setter === setWhatIsTheir && whatIsTheirError ? 'border-red-500' : ''}`}
+          maxLength={setter === setWhatIsTheir ? 100 : undefined}
         />
         <button
           type="button"
@@ -228,54 +327,41 @@ const EditPackageForm = () => {
     ));
   };
 
-  const renderCategoryOptions = (category) => {
-    return (
-      <option key={category._id} value={category.slug}>
-        {category.category}
-      </option>
-    );
-  };
+  const renderCategoryOptions = (category) => (
+    <option key={category._id} value={category.slug}>
+      {category.category}
+    </option>
+  );
 
-  const renderSubCategoryOptions = (subCategory) => {
-    return (
-      <option key={subCategory._id} value={subCategory.slug}>
-        {subCategory.category}
-      </option>
-    );
-  };
+  const renderSubCategoryOptions = (subCategory) => (
+    <option key={subCategory._id} value={subCategory.slug}>
+      {subCategory.category}
+    </option>
+  );
 
-  // For Services
-  const renderServiceCategoryOptions = (category) => {
-    return (
-      <option key={category._id} value={category.slug}>
-        {category.category}
-      </option>
-    );
-  };
+  const renderSubSubCategoryOptions = (subSubCategory) => (
+    <option key={subSubCategory._id} value={subSubCategory.slug}>
+      {subSubCategory.category}
+    </option>
+  );
 
-  const renderServiceSubCategoryOptions = (subCategory) => {
-    return (
-      <option key={subCategory._id} value={subCategory.slug}>
-        {subCategory.category}
-      </option>
-    );
-  };
+  const renderServiceCategoryOptions = (category) => (
+    <option key={category._id} value={category.slug}>
+      {category.category}
+    </option>
+  );
 
-  const renderSubSubCategoryOptions = (subSubCategory) => {
-    return (
-      <option key={subSubCategory._id} value={subSubCategory.slug}>
-        {subSubCategory.category}
-      </option>
-    );
-  };
+  const renderServiceSubCategoryOptions = (subCategory) => (
+    <option key={subCategory._id} value={subCategory.slug}>
+      {subCategory.category}
+    </option>
+  );
 
-  const renderServiceSubSubCategoryOptions = (subSubCategory) => {
-    return (
-      <option key={subSubCategory._id} value={subSubCategory.slug}>
-        {subSubCategory.category}
-      </option>
-    );
-  };
+  const renderServiceSubSubCategoryOptions = (subSubCategory) => (
+    <option key={subSubCategory._id} value={subSubCategory.slug}>
+      {subSubCategory.category}
+    </option>
+  );
 
   const handleParentCategoryChange = (e) => {
     const selectedCategoryId = e.target.value;
@@ -290,7 +376,6 @@ const EditPackageForm = () => {
     setSubSubCategoryId("");
   };
 
-  // Handler for regular sub-subcategory
   const handleSubSubCategoryChange = (e) => {
     const selectedSubSubCategoryId = e.target.value;
     setSubSubCategoryId(selectedSubSubCategoryId);
@@ -299,342 +384,266 @@ const EditPackageForm = () => {
   const handleServiceParentCategoryChange = (e) => {
     const selectedCategoryId = e.target.value;
     setServiceParentCategoryId(selectedCategoryId);
-    setServiceSubCategoryId(""); // Reset subcategory selection
-    setServiceSubSubCategoryId(""); // Reset sub-subcategory selection
+    setServiceSubCategoryId("");
+    setServiceSubSubCategoryId("");
   };
 
   const handleServiceSubCategoryChange = (e) => {
     const selectedSubCategoryId = e.target.value;
     setServiceSubCategoryId(selectedSubCategoryId);
-    setServiceSubSubCategoryId(""); // Reset sub-subcategory selection
+    setServiceSubSubCategoryId("");
   };
 
-  // Handler for service sub-subcategory (you already had this)
   const handleServiceSubSubCategoryChange = (e) => {
     const selectedSubSubCategoryId = e.target.value;
     setServiceSubSubCategoryId(selectedSubSubCategoryId);
   };
-  // Render categories safely
+
   const getSubCategories = (categoryId) => {
-    const category = categories.find(
-      (category) => category.slug === categoryId
-    );
+    const category = categories.find((category) => category.slug === categoryId);
     return category?.subCategories || [];
   };
+
   const getSubSubCategories = (categoryId, subCategoryId) => {
-    const category = categories.find(
-      (category) => category.slug === categoryId
-    );
-    if (!category) {
-      return [];
-    }
-
-    const subCategory = category.subCategories.find(
-      (sub) => sub.slug === subCategoryId
-    );
-    if (!subCategory) {
-      return [];
-    }
-
-    return subCategory.subSubCategory || [];
+    const category = categories.find((category) => category.slug === categoryId);
+    if (!category) return [];
+    const subCategory = category.subCategories.find((sub) => sub.slug === subCategoryId);
+    return subCategory ? subCategory.subSubCategory || [] : [];
   };
 
-  // Render services safely
   const getServiceSubCategories = (categoryId) => {
-    const category = servicecategories.find(
-      (category) => category.slug === categoryId
-    );
+    const category = servicecategories.find((category) => category.slug === categoryId);
     return category?.subCategories || [];
   };
 
   const getServiceSubSubCategories = (categoryId, subCategoryId) => {
-    const category = servicecategories.find(
-      (category) => category.slug === categoryId
-    );
-    if (!category) {
-      return [];
-    }
-
-    const subCategory = category.subCategories.find(
-      (sub) => sub.slug === subCategoryId
-    );
-    if (!subCategory) {
-      return [];
-    }
-
-    return subCategory.subSubCategory || [];
+    const category = servicecategories.find((category) => category.slug === categoryId);
+    if (!category) return [];
+    const subCategory = category.subCategories.find((sub) => sub.slug === subCategoryId);
+    return subCategory ? subSubCategory.subSubCategory || [] : [];
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
+    <div className="p-4">
       <ToastContainer />
       <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">
         Edit Package
       </h1>
-
-      <div className="mb-4">
-        <label htmlFor="parentCategory" className="block font-semibold mb-2">
-          Parent Category
-        </label>
-        <select
-          id="parentCategory"
-          value={parentCategoryId}
-          onChange={handleParentCategoryChange}
-          className="w-full p-2 border rounded focus:outline-none"
-        >
-          <option value="">Select Parent Category</option>
-          {categories.map(renderCategoryOptions)}
-        </select>
-      </div>
-
-      {getSubCategories(parentCategoryId).length > 0 && (
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="subCategory" className="block font-semibold mb-2">
-            Subcategory
+          <label htmlFor="parentCategory" className="block font-semibold mb-2">
+            Parent Category
           </label>
           <select
-            id="subCategory"
-            value={subCategoryId}
-            onChange={handleSubCategoryChange}
+            id="parentCategory"
+            value={parentCategoryId}
+            onChange={handleParentCategoryChange}
             className="w-full p-2 border rounded focus:outline-none"
           >
-            <option value="">Select Subcategory</option>
-            {getSubCategories(parentCategoryId).map(renderSubCategoryOptions)}
+            <option value="">Select Parent Category</option>
+            {categories.map(renderCategoryOptions)}
           </select>
         </div>
-      )}
-
-      {getSubSubCategories(parentCategoryId, subCategoryId).length > 0 && (
+        {getSubCategories(parentCategoryId).length > 0 && (
+          <div className="mb-4">
+            <label htmlFor="subCategory" className="block font-semibold mb-2">
+              Subcategory
+            </label>
+            <select
+              id="subCategory"
+              value={subCategoryId}
+              onChange={handleSubCategoryChange}
+              className="w-full p-2 border rounded focus:outline-none"
+            >
+              <option value="">Select Subcategory</option>
+              {getSubCategories(parentCategoryId).map(renderSubCategoryOptions)}
+            </select>
+          </div>
+        )}
+        {getSubSubCategories(parentCategoryId, subCategoryId).length > 0 && (
+          <div className="mb-4">
+            <label htmlFor="subSubCategory" className="block font-semibold mb-2">
+              Sub-Subcategory
+            </label>
+            <select
+              id="subSubCategory"
+              value={subSubCategoryId}
+              onChange={handleSubSubCategoryChange}
+              className="w-full p-2 border rounded focus:outline-none"
+            >
+              <option value="">Select Sub-Subcategory</option>
+              {getSubSubCategories(parentCategoryId, subCategoryId).map(renderSubSubCategoryOptions)}
+            </select>
+          </div>
+        )}
         <div className="mb-4">
-          <label htmlFor="subSubCategory" className="block font-semibold mb-2">
-            Sub-Subcategory
+          <label htmlFor="serviceParentCategory" className="block font-semibold mb-2">
+            Service Parent Category
           </label>
           <select
-            id="subSubCategory"
-            value={subSubCategoryId}
-            onChange={handleSubSubCategoryChange}
+            id="serviceParentCategory"
+            value={serviceparentCategoryId}
+            onChange={handleServiceParentCategoryChange}
             className="w-full p-2 border rounded focus:outline-none"
           >
-            <option value="">Select Sub-Subcategory</option>
-            {getSubSubCategories(parentCategoryId, subCategoryId).map(
-              renderSubSubCategoryOptions
-            )}
+            <option value="">Select Service Parent Category</option>
+            {servicecategories.map(renderServiceCategoryOptions)}
           </select>
         </div>
-      )}
-      <div className="mb-4">
-        <label
-          htmlFor="serviceParentCategory"
-          className="block font-semibold mb-2"
-        >
-          Service Parent Category
-        </label>
-        <select
-          id="serviceParentCategory"
-          value={serviceparentCategoryId}
-          onChange={handleServiceParentCategoryChange}
-          className="w-full p-2 border rounded focus:outline-none"
-        >
-          <option value="">Select Service Parent Category</option>
-          {servicecategories.map(renderServiceCategoryOptions)}
-        </select>
-      </div>
-
-      {getServiceSubCategories(serviceparentCategoryId).length > 0 && (
+        {getServiceSubCategories(serviceparentCategoryId).length > 0 && (
+          <div className="mb-4">
+            <label htmlFor="serviceSubCategory" className="block font-semibold mb-2">
+              Service Subcategory
+            </label>
+            <select
+              id="serviceSubCategory"
+              value={servicesubCategoryId}
+              onChange={handleServiceSubCategoryChange}
+              className="w-full p-2 border rounded focus:outline-none"
+            >
+              <option value="">Select Service Subcategory</option>
+              {getServiceSubCategories(serviceparentCategoryId).map(renderServiceSubCategoryOptions)}
+            </select>
+          </div>
+        )}
+        {getServiceSubSubCategories(serviceparentCategoryId, servicesubCategoryId).length > 0 && (
+          <div className="mb-4">
+            <label htmlFor="serviceSubSubCategory" className="block font-semibold mb-2">
+              Service Sub-Subcategory
+            </label>
+            <select
+              id="serviceSubSubCategory"
+              value={servicesubSubCategoryId}
+              onChange={handleServiceSubSubCategoryChange}
+              className="w-full p-2 border rounded focus:outline-none"
+            >
+              <option value="">Select Service Sub-Subcategory</option>
+              {getServiceSubSubCategories(serviceparentCategoryId, servicesubCategoryId).map(renderServiceSubSubCategoryOptions)}
+            </select>
+          </div>
+        )}
         <div className="mb-4">
-          <label
-            htmlFor="serviceSubCategory"
-            className="block font-semibold mb-2"
-          >
-            Service Subcategory
+          <label htmlFor="title" className="block font-semibold mb-2">
+            Title <span className="text-red-500">*</span>
           </label>
-          <select
-            id="serviceSubCategory"
-            value={servicesubCategoryId}
-            onChange={handleServiceSubCategoryChange}
-            className="w-full p-2 border rounded focus:outline-none"
-          >
-            <option value="">Select Service Subcategory</option>
-            {getServiceSubCategories(serviceparentCategoryId).map(
-              renderServiceSubCategoryOptions
-            )}
-          </select>
-        </div>
-      )}
-
-      {getServiceSubSubCategories(serviceparentCategoryId, servicesubCategoryId)
-        .length > 0 && (
-        <div className="mb-4">
-          <label
-            htmlFor="serviceSubSubCategory"
-            className="block font-semibold mb-2"
-          >
-            Service Sub-Subcategory
-          </label>
-          <select
-            id="serviceSubSubCategory"
-            value={servicesubSubCategoryId}
-            onChange={handleServiceSubSubCategoryChange}
-            className="w-full p-2 border rounded focus:outline-none"
-          >
-            <option value="">Select Service Sub-Subcategory</option>
-            {getServiceSubSubCategories(
-              serviceparentCategoryId,
-              servicesubCategoryId
-            ).map(renderServiceSubSubCategoryOptions)}
-          </select>
-        </div>
-      )}
-
-      <div className="mb-4">
-        <label htmlFor="title" className="block font-semibold mb-2">
-          Title
-        </label>
-        <input
-          type="text"
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="description" className="block font-semibold mb-2">
-          Description
-        </label>
-        <ReactQuill
-          value={description}
-          onChange={setDescription}
-          modules={modules}
-          className="quill"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="price" className="block font-semibold mb-2">
-          Price
-        </label>
-        <input
-          type="number"
-          id="price"
-          min={0}
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
-        />
-      </div>
-
-      {/* <div className="mb-4">
-        <label htmlFor="slots" className="block font-semibold mb-2">
-          Slots Available
-        </label>
-        <input
-          type="number"
-          id="slots"
-          min={1}
-          value={slots}
-          onChange={(e) => setSlots(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
-          required
-        />
-      </div> */}
-
-      {/* <div className="mb-4">
-        <label className="block font-semibold mb-2">What You Get</label>
-        {renderInputList(whatYouGet, setWhatYouGet)}
-        <button
-          type="button"
-          onClick={() => addItem(setWhatYouGet, "")}
-          className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-700 transition duration-300"
-        >
-          Add What You Get Item
-        </button>
-      </div> */}
-
-      <div className="mb-4">
-        <label className="block font-semibold mb-2">What Is Included</label>
-        {renderInputList(whatIsTheir, setWhatIsTheir)}
-        <button
-          type="button"
-          onClick={() => addItem(setWhatIsTheir, "")}
-          className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-700 transition duration-300"
-        >
-          Add What Is Included
-        </button>
-      </div>
-
-      <div className="mb-4">
-        <label className="block font-semibold mb-2">What Is Not Included</label>
-        {renderInputList(whatIsNotTheir, setWhatIsNotTheir)}
-        <button
-          type="button"
-          onClick={() => addItem(setWhatIsNotTheir, "")}
-          className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-700 transition duration-300"
-        >
-          Add What Is Not Included
-        </button>
-      </div>
-      <div className="mb-4">
-        <label className="block font-semibold mb-2">Package Type</label>
-        <div className="flex space-x-4">
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              value="normal"
-              checked={packageType === "normal"}
-              onChange={(e) => setPackageType(e.target.value)}
-              className="mr-2"
-            />
-            <span>Normal</span>
-          </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              value="hourly"
-              checked={packageType === "hourly"}
-              onChange={(e) => setPackageType(e.target.value)}
-              className="mr-2"
-            />
-            <span>Hourly</span>
-          </label>
-        </div>
-      </div>
-      <div className="mb-4">
-        <label htmlFor="status" className="block font-semibold mb-2">
-          Status
-        </label>
-        <select
-          id="status"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      </div>
-
-      {/* <div className="mb-4">
-        <label htmlFor="popular" className="flex items-center">
           <input
-            type="checkbox"
-            id="popular"
-            checked={popular}
-            onChange={(e) => setPopular(e.target.checked)}
-            className="mr-2"
+            type="text"
+            id="title"
+            value={title}
+            onChange={handleTitleChange}
+            className={`w-full p-2 border rounded focus:outline-none ${titleError ? 'border-red-500' : ''}`}
+            required
+            maxLength={100}
           />
-          Popular
-        </label>
-      </div> */}
-
-      <button
-        type="submit"
-        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
-      >
-        Update Package
-      </button>
-    </form>
+          {titleError && (
+            <p className="text-red-500 text-sm mt-1">{titleError}</p>
+          )}
+        </div>
+        <div className="mb-4">
+          <label htmlFor="description" className="block font-semibold mb-2">
+            Description <span className="text-red-500">*</span>
+          </label>
+          <ReactQuill
+            value={description}
+            onChange={handleDescriptionChange}
+            modules={modules}
+            className={`quill ${descriptionError ? 'border-red-500' : ''}`}
+          />
+          {descriptionError && (
+            <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+          )}
+        </div>
+        <div className="mb-4">
+          <label htmlFor="price" className="block font-semibold mb-2">
+            Price <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="price"
+            min={0}
+            value={price}
+            onChange={handlePriceChange}
+            className={`w-full p-2 border rounded focus:outline-none ${priceError ? 'border-red-500' : ''}`}
+            required
+          />
+          {priceError && (
+            <p className="text-red-500 text-sm mt-1">{priceError}</p>
+          )}
+        </div>
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">
+            What Is Included <span className="text-red-500">*</span>
+          </label>
+          {renderInputList(whatIsTheir, setWhatIsTheir)}
+          {whatIsTheirError && (
+            <p className="text-red-500 text-sm mt-1">{whatIsTheirError}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => addItem(setWhatIsTheir, "")}
+            className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-700 transition duration-300"
+          >
+            Add What Is Included
+          </button>
+        </div>
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">What Is Not Included</label>
+          {renderInputList(whatIsNotTheir, setWhatIsNotTheir)}
+          <button
+            type="button"
+            onClick={() => addItem(setWhatIsNotTheir, "")}
+            className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-700 transition duration-300"
+          >
+            Add What Is Not Included
+          </button>
+        </div>
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">Package Type</label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="normal"
+                checked={packageType === "normal"}
+                onChange={(e) => setPackageType(e.target.value)}
+                className="mr-2"
+              />
+              <span>Normal</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="hourly"
+                checked={packageType === "hourly"}
+                onChange={(e) => setPackageType(e.target.value)}
+                className="mr-2"
+              />
+              <span>Hourly</span>
+            </label>
+          </div>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="status" className="block font-semibold mb-2">
+            Status
+          </label>
+          <select
+            id="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full p-2 border rounded focus:outline-none"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
+        >
+          Update Package
+        </button>
+      </form>
+    </div>
   );
 };
 

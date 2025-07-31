@@ -39,53 +39,59 @@ const upload = multer({
 });
 
 // Function to process and convert images to webp format
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const processImage = async (filePath) => {
-    try {
-        const fileExtension = path.extname(filePath).toLowerCase();
-        const directory = path.dirname(filePath);
-        const filename = path.basename(filePath, fileExtension);
-        const tempPath = path.join(directory,` ${filename}_temp.webp`);
-        const finalPath = path.join(directory,` ${filename}.webp`);
+  try {
+    const fileExtension = path.extname(filePath).toLowerCase();
+    const directory = path.dirname(filePath);
+    const filename = path.basename(filePath, fileExtension);
+    const tempPath = path.join(directory, `${filename}_temp.webp`);
+    const finalPath = path.join(directory, `${filename}.webp`);
 
-        // Check if the uploaded file is an image
-        if (fileExtension !== '.webp' && ['.jpg', '.jpeg', '.png'].includes(fileExtension)) {
-            // Initial conversion with resize
-            await sharp(filePath)
-                .resize({ width: 1024, withoutEnlargement: true })
-                .webp({ quality: 100 })
-                .toFile(tempPath);
+    if (fileExtension !== ".webp" && [".jpg", ".jpeg", ".png"].includes(fileExtension)) {
+      // Convert to WebP
+      await sharp(filePath)
+        .resize({ width: 1024, withoutEnlargement: true })
+        .webp({ quality: 100 })
+        .toFile(tempPath);
 
-            // Remove original file
-            fs.unlinkSync(filePath);
+      await delay(50); // small delay to release file locks
 
-            // Rename temp file to final name
-            fs.renameSync(tempPath, finalPath);
+      // Remove original file safely
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath).catch(() => {});
+      }
 
-            // Check and reduce file size if needed
-            let fileSize = fs.statSync(finalPath).size;
-            let quality = 90;
+      // Rename temp file
+      await fs.promises.rename(tempPath, finalPath);
 
-            while (fileSize > 100 * 1024 && quality > 20) {
-                await sharp(finalPath)
-                    .webp({ quality })
-                    .toFile(tempPath);
+      let fileSize = fs.statSync(finalPath).size;
+      let quality = 90;
 
-                // Replace the file with reduced size version
-                fs.unlinkSync(finalPath);
-                fs.renameSync(tempPath, finalPath);
+      while (fileSize > 100 * 1024 && quality > 20) {
+        await sharp(finalPath)
+          .webp({ quality })
+          .toFile(tempPath);
 
-                fileSize = fs.statSync(finalPath).size;
-                quality -= 10; // Reduce quality by 10% each iteration
-            }
+        await delay(50);
 
-            // Update req.file path to point to the new webp file
-            return finalPath;
+        if (fs.existsSync(finalPath)) {
+          await fs.promises.unlink(finalPath).catch(() => {});
         }
-        return filePath;
-    } catch (err) {
-        console.error('Error processing image:', err);
-        throw new Error(`Error processing image: ${err.message}`);
+        await fs.promises.rename(tempPath, finalPath);
+
+        fileSize = fs.statSync(finalPath).size;
+        quality -= 10;
+      }
+
+      return finalPath;
     }
+    return filePath;
+  } catch (err) {
+    console.error("Error processing image:", err);
+    throw new Error(`Error processing image: ${err.message}`);
+  }
 };
 
 // Create middleware function

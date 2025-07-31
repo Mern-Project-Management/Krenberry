@@ -14,7 +14,7 @@ const ProductcategorySchema = new mongoose.Schema({
   metaschema: { type: String },
   otherMeta: { type: String },
   url: { type: String },
-  priority: { type: Number },
+  priority: { type: Number, default: 0},
   lastmod: { type: Date, default: Date.now },
   changeFreq: { type: String },
   subCategories: [{
@@ -38,6 +38,7 @@ const ProductcategorySchema = new mongoose.Schema({
         category: { type: String },
         photo: { type: String },
         alt: { type: String },
+        imgtitle: { type: String },
         slug: { type: String },
         metatitle: { type: String },
         metadescription: { type: String },
@@ -47,7 +48,7 @@ const ProductcategorySchema = new mongoose.Schema({
         metaschema: { type: String },
         otherMeta: { type: String },
         url: { type: String },
-        priority: { type: Number },
+        priority: { type: Number, default: 0},
         lastmod: { type: Date, default: Date.now },
         changeFreq: { type: String },
       }

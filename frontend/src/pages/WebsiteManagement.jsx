@@ -21,7 +21,7 @@ export default function WebsiteManagement() {
         <LatestProduct/>
         <Companies/>
         <WebSolution/>
-        <Packages/>
+        {/* <Packages/> */}
         <DesignProcess/>
         <FAQ/>
         <BookAcall/>

@@ -11,7 +11,7 @@ const {
   getSubSubcategoryPackages,getAllnormalPackagesSlug,getAllhourlyPackagesSlug,getAllPackagesFront,getPackagesBySlug
   ,getCategoryHeadingBySlug
 } = require('../controller/plan'); // Adjust the path as necessary
-const {insertCategory,insertSubCategory,insertSubSubCategory,updateCategory,updateSubCategory,updatesubsubcategory,deletecategory,deletesubcategory,deletesubsubcategory,getAll,getSpecificCategory,getSpecificSubcategory,getSpecificSubSubcategory,fetchCategoryUrlPriorityFreq, editCategoryUrlPriorityFreq,  fetchCategoryUrlPriorityFreqById,fetchCategoryUrlmeta, editCategoryUrlmeta, fetchCategoryUrlmetaById }= require('../controller/packagecategory')
+const {insertCategory,insertSubCategory,insertSubSubCategory,updateCategory,updateSubCategory,updatesubsubcategory,deletecategory,deletesubcategory,deletesubsubcategory,getAll,getSpecificCategory,getSpecificSubcategory,getSpecificSubSubcategory,fetchCategoryUrlPriorityFreq, editCategoryUrlPriorityFreq,  fetchCategoryUrlPriorityFreqById,fetchCategoryUrlmeta, editCategoryUrlmeta, fetchCategoryUrlmetaById, updateCategoryName }= require('../controller/packagecategory')
 const {uploadPhoto} = require('../middleware/fileUpload')
 const { requireAuth } = require('../middleware/authmiddleware');
 const {uploadfiles} = require('../middleware/files');
@@ -36,6 +36,7 @@ router.get('/single/:id', getSinglePackage);
 
 // Route to get plans by category
 router.get('/category', getCategoryPackages);
+router.put('/category/:id', updateCategoryName);
 
 // Route to get plans by subcategory
 router.get('/subcategory', getSubcategoryPackages);

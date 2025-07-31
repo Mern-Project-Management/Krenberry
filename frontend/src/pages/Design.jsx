@@ -25,7 +25,7 @@ console.log(serviceSlug)
   return (
     <div>
         <HeroSection/>
-        <Packages setServiceSlug={setServiceSlug}/>
+        {/* <Packages setServiceSlug={setServiceSlug}/> */}
         <LatestProduct serviceSlug={serviceSlug}/> 
         <Review serviceSlug={serviceSlug}/>
         <Companies serviceSlug={serviceSlug}/>

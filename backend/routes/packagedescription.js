@@ -34,6 +34,7 @@ router.get("/single/:id", getSinglePackage);
 // Route to get plans by category
 router.get("/category", getCategoryPackages);
 
+
 // Route to get plans by subcategory
 router.get("/subcategory", getSubcategoryPackages);
 router.get("/subsubcategory", getSubSubcategoryPackages);

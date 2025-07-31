@@ -14,18 +14,11 @@ export default function CraftRight() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const slug = location.pathname.split("/").filter(Boolean).pop();
-        const response = await axios.get(`/api/serviceDetails/front/${slug}`, {
-          withCredentials: true,
-        });
-        
-        // Ensure data exists and has the expected structure
-        const data = response.data.data && response.data.data.length > 0 ? response.data.data[0] : null;
-        
-        if (data) {
-          setService(data);
-          setVideoUrl(data.video ? `/api/video/download/${data.video}` : null);
-        } 
+        const slug = location.pathname.split('/').filter(Boolean).pop();
+        const response = await axios.get(`/api/industiesDetails/front/${slug}`, { withCredentials: true });
+        const data = response.data.data[0]; // Access the first item in the data array
+        setService(data);
+        setVideoUrl(data.video ? `/api/video/download/${data.video}` : null);
       } catch (error) {
         console.error("Error fetching service data:", error);
       }
@@ -58,13 +51,8 @@ export default function CraftRight() {
     }
   };
 
-  // If service data is not available, return null
-  if (!service) {
-    return null; // You can also return a loading indicator or message here
-  }
-
-  // Use service data
-  const faqData = service.questions || [];
+  // Use service data if available, otherwise fallback to static data
+  const faqData = service ? service.questions : [];
 
   return (
     <div className="flex xl:flex-col items-center mt-20">
@@ -72,25 +60,15 @@ export default function CraftRight() {
         {/* Text Content for Large Screens */}
         <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">
           {/* Render the heading only if service and heading are available */}
-          <div className="max-w-full overflow-hidden">
-            {service.heading ? (
-              <div
-                dangerouslySetInnerHTML={{ __html: service.heading }}
-                className="text-4xl font-bold pb-6 break-words"
-              />
-            ) : (
-              <h2 className="text-4xl font-bold pb-6">Default Heading</h2>
-            )}
-          </div>
+          {service?.heading && (
+            <div dangerouslySetInnerHTML={{ __html: service.heading }}  className="text-4xl font-bold pb-6" />
+          ) }
 
           <p className="mt-4 text-lg pb-4 text-justify">
-            {service.description ? (
+            {service?.description && (
               <div dangerouslySetInnerHTML={{ __html: service.description }} />
-            ) : (
-              "Easily manage your design projects with our convenient portal. Provide important details like design briefs and backlogs, and add an unlimited number of design requests. Our talented designers will promptly get to work on fulfilling your requests, all while enjoying the ease and efficiency of managing your projects in one place."
-            )}
+            ) }
           </p>
-
           {faqData.map((faq, index) => (
             <div key={index} className="mb-2 sm:mb-4">
               <div
@@ -118,9 +96,10 @@ export default function CraftRight() {
               </div>
             </div>
           ))}
+         
         </div>
 
-        {/* Video or Photo Content */}
+        {/* Video Content */}
         <div className="w-full lg:w-[40%] flex items-center  justify-center order-2">
           <div className="relative rounded-2xl border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
             {videoUrl ? (
@@ -133,14 +112,12 @@ export default function CraftRight() {
                 className="w-[450px] h-[450px] rounded-2xl transition-all duration-300"
               />
             ) : (
-              service.photo && service.photo.length > 0 && (
-                <div className="w-full flex justify-center">
-                  <img
-                    src={`/api/image/download/${service.photo[0]}`} 
-                    alt="Service Image"
-                     className="w-full max-w-[750px] h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain rounded-2xl"
-                  />
-                </div>
+              service ?.photo && service.photo.length > 0 && (
+                <img
+                  src={`/api/image/download/${service.photo[0]}`} // Display the first photo if video isn't available
+                  alt="Service Image"
+                  className="w-full max-w-[750px] h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain rounded-2xl"
+                />
               )
             )}
             <div className="absolute inset-0 rounded-2xl border-4 border-transparent m-10 transition-all duration-300"></div>

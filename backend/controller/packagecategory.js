@@ -160,9 +160,28 @@ const updateCategory = async (req, res) => {
   }
 };
 
+const updateCategoryName = async (req, res) => {
+  const { id } = req.params;
+  const { category } = req.body;
 
+  try {
+    const updatedCategory = await PackageCategory.findByIdAndUpdate(
+      id,
+      { category },
+      { new: true }
+    );
 
+    if (!updatedCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
 
+    res.status(200).json(updatedCategory);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+module.exports = { updateCategoryName }; 
 
 const updateSubCategory = async (req, res) => {
   // Extract categoryId and subCategoryId from query
@@ -815,4 +834,4 @@ const fetchCategoryUrlmetaById = async (req, res) => {
   }
 };
 
-module.exports = { insertCategory, insertSubCategory, insertSubSubCategory, updateCategory, updateSubCategory, updatesubsubcategory, deletecategory, deletesubcategory, deletesubsubcategory, getAll, getSpecificCategory, getSpecificSubcategory, getSpecificSubSubcategory,fetchCategoryUrlPriorityFreq, editCategoryUrlPriorityFreq, fetchCategoryUrlPriorityFreqById ,fetchCategoryUrlmeta, editCategoryUrlmeta, fetchCategoryUrlmetaById};
+module.exports = { updateCategoryName, insertCategory, insertSubCategory, insertSubSubCategory, updateCategory, updateSubCategory, updatesubsubcategory, deletecategory, deletesubcategory, deletesubsubcategory, getAll, getSpecificCategory, getSpecificSubcategory, getSpecificSubSubcategory,fetchCategoryUrlPriorityFreq, editCategoryUrlPriorityFreq, fetchCategoryUrlPriorityFreqById ,fetchCategoryUrlmeta, editCategoryUrlmeta, fetchCategoryUrlmetaById};

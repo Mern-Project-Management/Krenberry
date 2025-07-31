@@ -87,11 +87,11 @@ const PricingSection = () => {
     const whatIsNotTheir = parseJsonArray(item.whatIsNotTheir[0]);
 
     return (
-      <div className="bg-[#F7F4EE] border border-gray-300 shadow-lg rounded-lg p-6 mb-4 flex flex-col min-h-[400px]">
+      <div className="bg-[#F7F4EE] border border-gray-300 shadow-lg rounded-lg p-6 b-4 flex flex-col min-h-[400px]">
         <div className="flex justify-between items-center">
           <h3 className="md:text-2xl font-bold mb-2">{item.title}</h3>
         </div>
-         <p className="text-4xl text-black font-bold pb-2">₹{item.price}</p>
+         <p className="text-4xl text-black font-bold pb-2">${item.price}</p>
         <p className="mb-4" dangerouslySetInnerHTML={{ __html: item.description }} />
         <div className="mt-6 mb-4 text-md text-gray-600 flex-grow">
           <ul className="list-disc list-inside">
@@ -124,7 +124,7 @@ const PricingSection = () => {
         <button
           className="mt-auto w-full px-4 py-2 bg-[#ec2127] text-white rounded-lg text-sm sm:text-base"
           onClick={() => navigate(`/contact`)}
-        >
+        > 
           Get Started
         </button>
       </div>
@@ -171,13 +171,14 @@ const PricingSection = () => {
 
         <div className="mt-10  mb-10 xl:w-[75%] px-6 mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {showHourlyPackages
-              ? hourlypackage.map((item) => (
-                  <PackageCard key={item._id} item={item} />
-                ))
-              : normalpackage.map((item) => (
-                  <PackageCard key={item._id} item={item} />
-                ))}
+           {showHourlyPackages
+            ? hourlypackage
+                .filter((item) => item.status === "active")
+                .map((item) => <PackageCard key={item._id} item={item} />)
+            : normalpackage
+                .filter((item) => item.status === "active")
+                .map((item) => <PackageCard key={item._id} item={item} />)}
+
           </div>
         </div>
       </div>

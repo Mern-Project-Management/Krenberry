@@ -73,7 +73,9 @@ const PricingSection = () => {
       }
     }
 
-    return items.map((item) => {
+    return items
+    .filter((item) => item.status === "active") // ✅ Only active packages
+    .map((item) => {
       const whatYouGet = parseJsonArray(item.whatYouGet[0]);
       const whatIsTheir = parseJsonArray(item.whatIsTheir[0]);
       const whatIsNotTheir = parseJsonArray(item.whatIsNotTheir[0]);

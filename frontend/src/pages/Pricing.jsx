@@ -11,7 +11,7 @@ export default function Pricing() {
     <div>
     <HeroSection/>
     <Review/>
-    <PricingSection/>
+    {/* <PricingSection/> */}
     <WhyPartnerWithUs/>
     <Faq/>
     <BookAcall/>

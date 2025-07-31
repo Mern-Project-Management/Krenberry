@@ -57,7 +57,7 @@ const PricingPackage = () => {
           <h2 className="text-[29px] font-bold mb-2 max-w-[90%]">
             {title || "Ultimate Growth Package: A One-Time Investment for Lifelong Growth"}
           </h2>
-          <p className="text-4xl font-bold mb-2">₹{price} Lakh</p>
+          <p className="text-4xl font-bold mb-2">${price} Lakh</p>
           {/* <p className="text-sm opacity-90">One-time investment for forever growth</p> */}
         </div>
 

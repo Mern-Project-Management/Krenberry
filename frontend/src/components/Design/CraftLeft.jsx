@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MdKeyboardArrowRight, MdKeyboardArrowDown } from "react-icons/md";
-import axios from "axios";
-import { useLocation } from "react-router-dom";
+import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import gsap from "gsap";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+
+
 
 export default function CraftLeft() {
   const [openIndex, setOpenIndex] = useState(null);
@@ -13,15 +13,12 @@ export default function CraftLeft() {
   const [videoUrl, setVideoUrl] = useState(null);
   const location = useLocation();
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const slug = location.pathname.split("/").filter(Boolean).pop();
-        const response = await axios.get(`/api/serviceDetails/front/${slug}`, {
-          withCredentials: true,
-        });
-
-        // Ensure data exists and has the expected structure
+        const slug = location.pathname.split('/').filter(Boolean).pop();
+        const response = await axios.get(`/api/industiesDetails/front/${slug}`, { withCredentials: true });
         const data =
           response.data.data && response.data.data.length > 0
             ? response.data.data[1]
@@ -63,35 +60,22 @@ export default function CraftLeft() {
     }
   };
 
-  // If service data is not available, return null
-  if (!service) {
-    return null; // Or return a loading indicator if preferred
-  }
-
-  // Use service data
-  const faqData = service.questions || [];
-
+  // Use service data if available, otherwise fallback to static data
+  const faqData = service ? service.questions : [];
   return (
     <div className="flex xl:flex-col items-center">
+  
       <div className="flex flex-col lg:flex-row-reverse gap-10 lg:px-28 w-full">
-        {/* Text Content for Large Screens */}
-        <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">
-          <div className="max-w-full overflow-hidden">
-            {service.heading ? (
-              <div
-                dangerouslySetInnerHTML={{ __html: service.heading }}
-                className="text-4xl font-bold pb-6 break-words"
-              />
-            ) : (
-              <h2 className="text-4xl font-bold pb-6">Default Heading</h2>
-            )}
-          </div>
-
+     {/* Text Content for Large Screens */}
+     <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">
+         {/* Render the heading only if service and heading are available */}
+         {service?.heading && (
+            <div dangerouslySetInnerHTML={{ __html: service.heading }}  className="text-4xl font-bold pb-6" />
+          ) 
+        }
           <p className="mt-4 text-lg pb-4 text-justify">
-            {service.description ? (
+            {service?.description && (
               <div dangerouslySetInnerHTML={{ __html: service.description }} />
-            ) : (
-              "Easily manage your design projects with our convenient portal. Provide important details like design briefs and backlogs, and add an unlimited number of design requests. Our talented designers will promptly get to work on fulfilling your requests, all while enjoying the ease and efficiency of managing your projects in one place."
             )}
           </p>
 
@@ -114,19 +98,10 @@ export default function CraftLeft() {
               </div>
               <div
                 ref={(el) => (answerRefs.current[index] = el)}
-                className={`overflow-hidden ${
-                  openIndex === index ? "block" : "hidden"
-                }`}
+                className={`overflow-hidden ${openIndex === index ? "block" : "hidden"}`}
               >
-                <div className="  list-decimal p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify">
-                  {/* <p dangerouslySetInnerHTML={{ __html: faq.answer }} /> */}
-                  <ReactQuill
-                    readOnly={true}
-                    value={faq.answer}
-                    modules={{ toolbar: false }}
-                    theme="bubble"
-                    className="quill text-sm"
-                  />
+                <div className="p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify">
+                  <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                 </div>
               </div>
             </div>
@@ -137,7 +112,7 @@ export default function CraftLeft() {
         <div className="w-full lg:w-[40%] flex items-center justify-center order-2">
           <div className="relative rounded-2xl border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
             {videoUrl ? (
-              <video
+              <video 
                 src={videoUrl}
                 title={service.videotitle} // Provide the title attribute
                 autoPlay
@@ -146,8 +121,7 @@ export default function CraftLeft() {
                 className="w-[450px] h-[450px] rounded-2xl transition-all duration-300"
               />
             ) : (
-              service.photo &&
-              service.photo.length > 0 && (
+              service ?.photo && service.photo.length > 0 && (
                 <img
                   src={`/api/image/download/${service.photo[0]}`} // Display the first photo if video isn't available
                   alt="Service Image"

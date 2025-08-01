@@ -4,7 +4,7 @@ import { useLocation, useParams } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { IoMdClose } from "react-icons/io";
+import { IoMdClose, IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 export default function LatestProject({serviceSlug}) {
   const [latestProject, setProjects] = useState([]);
@@ -13,6 +13,35 @@ export default function LatestProject({serviceSlug}) {
   const [error, setError] = useState(null);
   const imageRefs = useRef({});
   const location = useLocation();
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+const NextArrow = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute top-1/2 right-2 sm:right-4 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-1 sm:p-2 md:p-3 rounded-full hover:bg-opacity-75 transition-all"
+  > 
+    <IoIosArrowForward
+      className="text-white"
+      size={18} // base size
+      style={{ width: "1.5rem", height: "1.5rem" }} // default
+    />
+  </button>
+);
+
+const PrevArrow = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute top-1/2 left-2 sm:left-4 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-1 sm:p-2 md:p-3 rounded-full hover:bg-opacity-75 transition-all"
+  >
+    <IoIosArrowBack
+      className="text-white"
+      size={18}
+      style={{ width: "1.5rem", height: "1.5rem" }}
+    />
+  </button>
+);
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,56 +72,42 @@ export default function LatestProject({serviceSlug}) {
   }, [serviceSlug]);
   
 
-  const handleImageClick = (image) => {
-    setFullscreenImage(image);
-  };
+  
+  
 
-  const closeFullscreen = () => {
-    setFullscreenImage(null);
-  };
 
   const settings = {
-    dots: true,
-    infinite: true,
-    speed: 700,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-          slidesToScroll: 1,
-          infinite: true,
-          dots: true,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-          initialSlide: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
-  };
+  dots: true,
+  infinite: true,
+  speed: 700,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+  autoplay: true,
+  autoplaySpeed: 2000,
+  nextArrow: <NextArrow />,
+  prevArrow: <PrevArrow />, 
+  responsive: [
+    {
+      breakpoint: 1024,
+      settings: { slidesToShow: 3, slidesToScroll: 1, dots: true },
+    },
+    {
+      breakpoint: 600,
+      settings: { slidesToShow: 2, slidesToScroll: 1 },
+    },
+    {
+      breakpoint: 480,
+      settings: { slidesToShow: 1, slidesToScroll: 1 },
+    },
+  ],
+};
+
 
   if (isLoading) {
     return (
-      // <div className="flex items-center justify-center min-h-[400px]">
-      //   <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      // </div>
-      null
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
     );
   }
 
@@ -118,7 +133,7 @@ export default function LatestProject({serviceSlug}) {
           <h3 className="text-white text-2xl font-semibold p-2">
             {project.imgtitle[0]}
           </h3>
-          {project.link && (
+          {project.link ? (
             <a
               href={project.link}
               target="_blank"
@@ -130,6 +145,16 @@ export default function LatestProject({serviceSlug}) {
                 Visit Website
               </button>
             </a>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent accidental fullscreen click
+                onClick(project.photo[1] || project.photo[0]);
+              }}
+              className="px-4 py-2 bg-[#ec2127] text-white rounded-lg hover:bg-red-600 transition-colors mt-2"
+            >
+              View  
+            </button>
           )}
         </div>
       </div>
@@ -137,15 +162,15 @@ export default function LatestProject({serviceSlug}) {
   );
 
   return (
-    <div className="py-16">
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold p-4 text-center">
+    <div className="pb-18 pt-5">
+      <h2 className="heading font-semibold p-4 text-center">
         Latest <span className="text-[#ec2127]">Projects</span>
       </h2>
-      <p className="text-lg md:text-2xl px-4 md:px-20 text-gray-600 text-center">
+      <p className="subheading px-4 md:px-20   text-center">
         Discover Our Latest Project Milestones
       </p>
 
-      <div className="mx-auto w-[85%] px-2 pt-20">
+      <div className="mx-auto w-[85%] px-2 pt-8">
         {latestProject.length > 8 ? (
           <Slider {...settings}>
             {latestProject.map((project) => (
@@ -174,6 +199,8 @@ export default function LatestProject({serviceSlug}) {
             src={`/api/image/download/${fullscreenImage}`}
             alt="Fullscreen view"
             className="w-full h-auto object-cover"
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
           />
           <button
             className="absolute top-4 right-4 text-white text-3xl md:text-4xl p-2 bg-black bg-opacity-50 rounded-full hover:bg-opacity-75"

@@ -48,19 +48,21 @@ export default function Sidebar() {
     { title: "Dashboard", icon: <BiSolidDashboard size={20} />, path: "/dashboard" },
     {
       title: "Home", icon: <FaHome size={20} />, submenu: [
-        { title: "Banner", icon: <GiVerticalBanner size={20} />, path: "/banner" },
         { title: "Hero Section", icon: <GiVerticalBanner size={20} />, path: "/homehero" },
-        { title: "Animation", icon: <RiQuestionAnswerFill size={20} />, path: "/homeanimation" },
-
         { title: "Testimonials", icon: <FaPager size={20} />, path: "/testimonials" },
-        { title: "Counter", icon: <GoNumber size={20} />, path: "/counter" },
-        { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
+        { title: "Extra Pages", icon: <RiPagesFill size={20} />, path: "/extrapages" },
+        
       ]
+    },
+    { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
+    {
+      title:"Policy",icon:<GiVerticalBanner size={20}/>,path:"/policy"
     },
     {
       title: "About us", icon: <BsFillPersonLinesFill size={20} />, submenu: [
         { title: "About Company", icon: <FaBuildingUser size={20} />, path: "/aboutcompany" },
-        { title: "Mission & Vision", icon: <GoGoal size={20} />, path: "/missionandvision" },
+        { title: "Counter", icon: <GoNumber size={20} />, path: "/counter" },
+        // { title: "Mission & Vision", icon: <GoGoal size={20} />, path: "/missionandvision" },
         { title: "Core Value", icon: <IoMdPricetags size={20} />, path: "/corevalue" },
         { title: "Certificates", icon: <GiAchievement size={20} />, path: "/certificates" },
         { title: "Our Team", icon: <FaPeopleGroup size={20} />, path: "/ourTeam" },
@@ -101,10 +103,6 @@ export default function Sidebar() {
         { title: "Portfolio", icon: <GrServices size={20} />, path: "/portfolio" },
       ]
     },
-
-
-
-
     {
       title: "Contact Us", icon: <BiSolidDashboard size={20} />, submenu: [
         { title: "Contact Us", icon: <BiSolidDashboard size={20} />, path: "/contactinfo" },

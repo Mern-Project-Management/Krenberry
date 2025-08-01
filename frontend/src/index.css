@@ -18,3 +18,11 @@
     width: 124px;
     height: 124px;
 }   
+
+.heading {
+  @apply text-4xl md:text-5xl font-semibold capitalize;
+}
+
+.subheading {
+  @apply text-xl lg:text-xl text-[#39B54A];
+}

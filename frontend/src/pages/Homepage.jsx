@@ -37,8 +37,6 @@ export default function Homepage() {
       <BookAcall />
       <PremiumTemplatesSection />
       <GlobalSolution />
-
-
     </div>
   )
 }

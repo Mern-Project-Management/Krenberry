@@ -1,5 +1,6 @@
 const PortfolioCategory = require("../model/portfoliocategory");
 const Portfolio= require("../model/portfolio")
+const Package = require("../model/packages")
 const fs = require("fs");
 const path = require("path");
 
@@ -474,59 +475,72 @@ const deletecategory = async (req, res) => {
 };
 
 const deletesubcategory = async (req, res) => {
-  const { categoryId, subCategoryId } = req.query; // Get the categoryId and subCategoryId from the query
+  const { categoryId, subCategoryId } = req.query;
+
+  console.log("Incoming Request -> categoryId:", categoryId, "subCategoryId:", subCategoryId);
 
   try {
-    // Find the category document by slug
+    // 1️⃣ Find category by slug
     const categoryDoc = await PortfolioCategory.findOne({ slug: categoryId });
-
-    // If category not found, return 404
     if (!categoryDoc) {
-      return res.status(404).json({ message: 'Category not found' });
+      console.warn("Category not found for slug:", categoryId);
+      return res.status(404).json({ message: "Category not found" });
     }
 
-    // Find the index of the subcategory to delete
-    const subCategoryIndex = categoryDoc.subCategories.findIndex(subCat => subCat._id.toString() === subCategoryId);
+    console.log("Fetched categoryDoc:", categoryDoc._id);
+    console.log("Available subCategories:", categoryDoc.subCategories.map(s => ({ id: s._id.toString(), slug: s.slug })));
 
-    // If subcategory not found, return 404
-    if (subCategoryIndex === -1) {
-      return res.status(404).json({ message: 'Subcategory not found' });
-    }
-
-    // Get the subcategory to delete
-    const subCategory = categoryDoc.subCategories[subCategoryIndex];
-
-    // Check if there are sub-subcategories associated with this subcategory
-    if (subCategory.subSubCategory && subCategory.subSubCategory.length > 0) {
-      return res.status(400).json({ message: 'Subcategory has associated sub-subcategories and cannot be deleted' });
-    }
-
-    // Check if there is a photo and delete it if exists
-    if (subCategory.photo) {
-      const photoPath = path.join(__dirname, '../logos', subCategory.photo);
-      deleteFile(photoPath);
-    } else {
-      console.warn('No photo found for this subcategory');
-    }
-
-    // Remove the subcategory from the category's subCategories array
-    categoryDoc.subCategories.splice(subCategoryIndex, 1);
-
-    // Save the updated category document
-    await categoryDoc.save();
-
-    // Update all services that reference this subcategory, removing the subcategory reference
-    await Package.updateMany(
-      { subcategories: subCategoryId },
-      { $pull: { subcategories: subCategoryId } }
+    // 2️⃣ Try finding subcategory either by _id or slug
+    const subCategoryIndex = categoryDoc.subCategories.findIndex(
+      (subCat) =>
+        subCat._id.toString() === subCategoryId || subCat.slug === subCategoryId
     );
 
-    res.status(200).json({ message: 'Subcategory deleted successfully and references removed from services' });
+    console.log("Matched subCategoryIndex:", subCategoryIndex);
+
+    if (subCategoryIndex === -1) {
+      console.warn("No matching subcategory found");
+      return res.status(404).json({ message: "Subcategory not found" });
+    }
+
+    const subCategory = categoryDoc.subCategories[subCategoryIndex];
+    console.log("Found subCategory:", subCategory);
+
+    // 3️⃣ Prevent delete if has sub-subcategories
+    if (subCategory.subSubCategory?.length > 0) {
+      return res.status(400).json({
+        message: "Subcategory has associated sub-subcategories and cannot be deleted",
+      });
+    }
+
+    // 4️⃣ Delete photo if exists
+    if (subCategory.photo) {
+      const photoPath = path.join(__dirname, "../logos", subCategory.photo);
+      console.log("Deleting photo:", photoPath);
+      deleteFile(photoPath);
+    }
+
+    // 5️⃣ Remove subcategory and save
+    categoryDoc.subCategories.splice(subCategoryIndex, 1);
+    await categoryDoc.save();
+
+    // 6️⃣ Remove references in Package model
+    const updateResult = await Package.updateMany(
+      { subcategories: subCategory._id.toString() },
+      { $pull: { subcategories: subCategory._id.toString() } }
+    );
+
+    console.log("Package update result:", updateResult);
+
+    res.status(200).json({
+      message: "Subcategory deleted successfully and references removed",
+    });
   } catch (error) {
-    console.log(`Error: ${error.message}`);
-    res.status(500).json({ message: 'Server error', error });
+    console.error("Error in deletesubcategory:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 
 const deletesubsubcategory = async (req, res) => {

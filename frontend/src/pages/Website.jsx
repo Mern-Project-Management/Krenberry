@@ -20,9 +20,10 @@ export default function Website() {
   return (
     <div>
       <HeroSection />
-      <LatestProduct />
+      
       <CraftRight />
       <CraftLeft />
+      <LatestProduct />
       <ServiceSlider/>
       <Tagline/>
       <WeAreExpert />

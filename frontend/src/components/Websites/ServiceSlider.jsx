@@ -128,12 +128,12 @@ function ServiceSlider() {
     <div className="container mx-auto px-4 py-8 md:py-16">
       <style>{sliderStyles}</style>
       <div className="mb-8 text-center md:mb-12">
-        <h2 className="font-semibold text-4xl md:text-5xl">
+        <h2 className="font-semibold heading">
           Our <span className="text-[#ec2127]">Services</span>
         </h2>
-        <h3 className="mt-4 text-xl lg:text-xl text-[#39b54a]">
+        <p className="mt-4 subheading text-[#39b54a]">
           Visualizing Success Through Our Work
-        </h3>
+        </p>
       </div>
 
       {services.length > 5 ? (

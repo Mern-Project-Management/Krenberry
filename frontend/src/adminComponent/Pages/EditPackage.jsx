@@ -195,7 +195,7 @@ const EditPackageForm = () => {
     for (const item of items) {
       if (!item.trim()) return "Items in What Is Included cannot be empty";
       if (item.trim().length < 3) return "Each item in What Is Included must be at least 3 characters long";
-      if (item.trim().length > 100) return "Each item in What Is Included cannot exceed 100 characters";
+      if (item.trim().length > 150) return "Each item in What Is Included cannot exceed 150 characters";
       if (/^\s+$/.test(item)) return "Items in What Is Included cannot contain only spaces";
     }
     return "";
@@ -535,6 +535,10 @@ const EditPackageForm = () => {
             required
             maxLength={100}
           />
+          {/* ✅ Show remaining characters */}
+          <p className={`text-sm mt-1 ${title.length === 50 ? "text-red-500" : "text-gray-500"}`}>
+              {title.length}/50 characters {title.length === 50 && "(Max limit reached)"}
+          </p>
           {titleError && (
             <p className="text-red-500 text-sm mt-1">{titleError}</p>
           )}

@@ -11,7 +11,6 @@ import 'react-quill/dist/quill.snow.css';
 import UseAnimations from "react-useanimations";
 import loading from "react-useanimations/lib/loading";
 
-
 Modal.setAppElement('#root');
 
 const PortfolioTable = () => {
@@ -23,26 +22,28 @@ const PortfolioTable = () => {
   const [pageCount, setPageCount] = useState(0);
   const [metaFilter, setMetaFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPortfolio, setSelectedPortfolio] = useState(null); // State for the selected banner
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
-  const navigate = useNavigate()
+  const [selectedPortfolio, setSelectedPortfolio] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const navigate = useNavigate();
   const pageSize = 5;
 
-
   const filteredPortfolio = useMemo(() => {
-    return Portfolio.filter((Portfolio) => {
+    return Portfolio.filter((portfolio) => {
       if (metaFilter === "Meta Available") {
-        return Portfolio.metatitle && Portfolio.metatitle.length > 0 || Portfolio.metadescription && Portfolio.metadescription.length > 0;
+        return portfolio.metatitle && portfolio.metatitle.length > 0 || portfolio.metadescription && portfolio.metadescription.length > 0;
       }
       if (metaFilter === "Meta Unavailable") {
-        return !Portfolio.metatitle || Portfolio.metatitle.length === 0 || !Portfolio.metadescription || Portfolio.metadescription.length === 0;
+        return !portfolio.metatitle || portfolio.metatitle.length === 0 || !portfolio.metadescription || portfolio.metadescription.length === 0;
       }
       return true;
-    }).filter((Portfolio) =>
-      Portfolio.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    }).filter((portfolio) => {
+      if (!searchTerm) return true;
+      const searchWords = searchTerm.toLowerCase().split(/\s+/);
+      return searchWords.every(word => portfolio.title.toLowerCase().includes(word));
+    });
   }, [Portfolio, searchTerm, metaFilter]);
-
 
   const notify = () => {
     toast.success("Updated Successfully!");
@@ -103,7 +104,13 @@ const PortfolioTable = () => {
             <button className="text-blue-500 hover:text-blue-700 transition">
               <Link to={`/portfolio/editPortfolio/${row.original.slug}`}><FaEdit /></Link>
             </button>
-            <button className="text-red-500 hover:text-red-700 transition" onClick={() => deletePortfolio(row.original.slug)}>
+            <button
+              className="text-red-500 hover:text-red-700 transition"
+              onClick={() => {
+                setItemToDelete(row.original.slug);
+                setDeleteModalOpen(true);
+              }}
+            >
               <FaTrashAlt />
             </button>
           </div>
@@ -140,6 +147,7 @@ const PortfolioTable = () => {
       setPageCount(Math.ceil(response.data.total / pageSize));
     } catch (error) {
       console.error(error);
+      toast.error("Failed to fetch portfolio.");
     } finally {
       setLoading(false);
     }
@@ -157,12 +165,27 @@ const PortfolioTable = () => {
 
   const deletePortfolio = async (slugs) => {
     try {
-      const response = await axios.delete(`/api/portfolio/deletePortfolio?slugs=${slugs}`, { withCredentials: true });
-
-      fetchData();
+      await axios.delete(`/api/portfolio/deletePortfolio?slugs=${slugs}`, { withCredentials: true });
+      fetchData(pageIndex);
+      toast.success("Portfolio deleted successfully!");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to delete portfolio.");
+    } finally {
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deletePortfolio(itemToDelete);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setItemToDelete(null);
   };
 
   useEffect(() => {
@@ -197,18 +220,16 @@ const PortfolioTable = () => {
     fetchHeadings();
   }, []);
 
-
   const handleHeadingChange = (e) => setHeading(e.target.value);
   const handleSubheadingChange = (e) => setSubheading(e.target.value);
 
   return (
     <div className="p-4 overflow-x-auto">
       <ToastContainer />
-      <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded ">
+      <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded">
         <div className="grid md:grid-cols-2 md:gap-2 grid-cols-1">
-
           <div className="mb-6">
-            <label className="block text-gray-700 font-bold mb-2 uppercase ">Heading</label>
+            <label className="block text-gray-700 font-bold mb-2 uppercase">Heading</label>
             <input
               type="text"
               value={heading}
@@ -217,7 +238,7 @@ const PortfolioTable = () => {
             />
           </div>
           <div className="mb-6">
-            <label className="block text-gray-700 font-bold mb-2 uppercase ">Sub heading</label>
+            <label className="block text-gray-700 font-bold mb-2 uppercase">Sub heading</label>
             <input
               type="text"
               value={subheading}
@@ -233,21 +254,13 @@ const PortfolioTable = () => {
           Save
         </button>
       </div>
-
-
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold  text-gray-700  uppercase">News</h1>
+        <h1 className="text-xl font-bold text-gray-700 uppercase">Portfolio</h1>
         <div className="flex gap-2">
- 
           <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-semibold">
             <Link to="/portfolio/createPortfolio"><FaPlus size={15} /></Link>
           </button>
         </div>
-      </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold  text-gray-700 uppercase">Portfolio</h1>
-   
       </div>
       <div className="mb-4">
         <input
@@ -261,102 +274,104 @@ const PortfolioTable = () => {
       <h2 className="text-md font-semibold mb-4">Manage Portfolio</h2>
       {loadings ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
-
       ) : (
-        <>{Portfolio.length == 0 ? <div className="flex justify-center items-center"><iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe></div>
-          : <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
-                      className="py-2 px-4 border-b border-gray-300 cursor-pointer uppercase font-semibold "
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="">{column.render("Header")}</span>
-                        {column.canSort && (
-                          <span className="ml-1">
-                            {column.isSorted ? (
-                              column.isSortedDesc ? (
-                                <FaArrowDown />
+        <>
+          {filteredPortfolio.length === 0 ? (
+            <div className="flex justify-center items-center">
+              <iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
+            </div>
+          ) : (
+            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+              <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps(column.getSortByToggleProps())}
+                        className="py-2 px-4 border-b border-gray-300 cursor-pointer uppercase font-semibold"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{column.render("Header")}</span>
+                          {column.canSort && (
+                            <span className="ml-1">
+                              {column.isSorted ? (
+                                column.isSortedDesc ? (
+                                  <FaArrowDown />
+                                ) : (
+                                  <FaArrowUp />
+                                )
                               ) : (
-                                <FaArrowUp />
-                              )
-                            ) : (
-                              <FaArrowDown className="text-gray-400" />
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {rows.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
-                    {row.cells.map((cell) => (
-                      <td {...cell.getCellProps()} className="py-2 px-4 ">
-                        {cell.render("Cell")}
-                      </td>
+                                <FaArrowDown className="text-gray-400" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                     ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        }
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()} className="py-2 px-4">
+                          {cell.render("Cell")}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </>
-
       )}
       <div className="mt-4 flex justify-center">
         <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0} className="mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition">
           {"<<"}
-        </button>{" "}
+        </button>
         <button onClick={() => setPageIndex(pageIndex - 1)} disabled={pageIndex === 0} className="mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition">
           {"<"}
-        </button>{" "}
+        </button>
         <button onClick={() => setPageIndex(pageIndex + 1)} disabled={pageIndex + 1 >= pageCount} className="mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition">
           {">"}
-        </button>{" "}
+        </button>
         <button onClick={() => setPageIndex(pageCount - 1)} disabled={pageIndex + 1 >= pageCount} className="mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition">
           {">>"}
-        </button>{" "}
+        </button>
         <span>
           Page{" "}
           <strong>
             {pageIndex + 1} of {pageCount}
-          </strong>{" "}
+          </strong>
         </span>
       </div>
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
-        contentLabel="Banner Details"
+        contentLabel="Portfolio Details"
         className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
       >
         <div className="bg-white p-8 rounded shadow-lg w-96 relative">
-        <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
+          <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
             <FaTimes size={20} />
           </button>
-          <h2 className="text-xl font-bold mb-4 font-">Portfolio</h2>
+          <h2 className="text-xl font-bold mb-4">Portfolio</h2>
           {selectedPortfolio && (
             <div>
               <div className="flex mt-2">
-                <p className="mr-2 font-semibold ">Category :</p>
+                <p className="mr-2 font-semibold">Category :</p>
                 <p>{selectedPortfolio.categoryName}</p>
               </div>
               <div className="flex mt-2">
-                <p className="mr-2 font-semibold ">title:</p>
+                <p className="mr-2 font-semibold">Title:</p>
                 <p>{selectedPortfolio.title}</p>
               </div>
-
               <div className="mt-2">
-                <p className="mr-2 font-semibold ">Description :</p>
+                <p className="mr-2 font-semibold">Description :</p>
                 <ReactQuill
                   readOnly={true}
                   value={selectedPortfolio.details}
@@ -375,6 +390,28 @@ const PortfolioTable = () => {
           </button>
         </div>
       </Modal>
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Confirm Deletion</h2>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this portfolio item? This action cannot be undone.</p>
+            <div className="flex justify-end gap-4">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300"
+                onClick={handleCancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

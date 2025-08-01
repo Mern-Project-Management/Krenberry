@@ -45,27 +45,34 @@ const Companies = ({ serviceSlug }) => {
   }
 
   return (
-    <div className="mb-10">
-      <div className="py-6 lg:pt-20 pt-5 px-4 mt-20 ">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl text-black text-center font-semibold">
-          Companies using this{" "}
-          <span className="text-[#ec2127]">service</span>
+    <div className="mb-4">
+      <div className="py-6 px-4 mt-20">
+        <h1 className="heading text-black text-center font-semibold">
+          Companies Using This{" "}
+          <span className="text-[#ec2127]">Service</span>
         </h1>
       </div>
+
       <div className="py-6 mx-4 sm:mx-8 lg:mx-16 mt-8">
-        <div className="flex flex-wrap gap-8 justify-center items-center">
+        <div className="flex flex-wrap justify-center gap-8">
           {companies.map((company, index) => (
-            <img
+            <div
               key={index}
-              src={`/api/industryImages/download/${company.images}`} // Ensure the correct path
-              alt={company.alt || "Company Image"}
-              title={company.imgtitle || "Company Image Title"}
-              className="object-cover w-full h-auto max-w-[120px] sm:max-w-[150px] lg:max-w-[180px]" // Responsive image sizing
-            />
+              className="w-56 h-36 flex items-center justify-center p-4"
+            >
+              <img
+                src={`/api/industryImages/download/${company.images}`}
+                alt={company.alt || "Company Logo"}
+                className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            </div>
           ))}
         </div>
       </div>
     </div>
+
   );
 };
 

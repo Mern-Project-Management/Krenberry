@@ -71,7 +71,7 @@ useEffect(() => {
   }
 
   return (
-    <div className="  bg-[#F7F4EE]">
+    <div className="bg-[#F7F4EE] font-poppins">
       <div className="flex flex-col xl:flex-row justify-center text-center lg:py-5 relative">
         {/* Left Side Animated Photos */}
         <div className="xl:flex flex-col flex-1 hidden" ref={leftImageRef}>
@@ -79,30 +79,35 @@ useEffect(() => {
         </div>
 
         {/* Middle Text Section */}
-        <div className="flex-2 flex flex-col items-center justify-center max-w-2xl pb-5 pt-10 xl:pt-32 mx-auto px-4 md:px-0" ref={textSectionRef}>
-          <h1 className="text-[27px] md:text-[50px] leading-[3rem] md:leading-[4rem] md:mb-5 text-center font-poppins font-semibold py-10  text-gray-700 ">
-            {homeHero.heading.beforeHighlight}{' '}
+        <div
+          className="flex-2 flex flex-col items-center justify-center max-w-2xl pb-10 pt-10 xl:pt-32 mx-auto px-4 md:px-0"
+          ref={textSectionRef}
+        >
+          <h1 className="text-[27px] md:text-[50px] leading-[3rem] md:leading-[4rem] font-semibold text-gray-700 mb-6">
+            {homeHero.heading.beforeHighlight}{" "}
             <Typed
               strings={homeHero.heading.highlightedWords}
               typeSpeed={100}
               backSpeed={60}
               loop
               className="pl-2 text-[#EC2127] font-bold"
-            />{' '}
+            />{" "}
             <br />
             {homeHero.heading.afterHighlight}
-            <span className="text-[#EC2127]">.</span>
+            <span className="text-[#EC2127]"></span>  
           </h1>
+
           <p
-            className="text-lg lg:text-xl text-black-600 pt-4 z-0 text-center font-poppins"
+            className="text-lg lg:text-xl text-gray-700 mb-6 max-w-xl"
             dangerouslySetInnerHTML={{ __html: homeHero.paragraph.text }}
           />
+
           <button
-            className="relative mt-6 py-2 px-7 text-lg font-bold bg-[#EC2127] text-white rounded-3xl overflow-hidden group"
+            className="relative mt-4 py-3 px-7 text-lg font-semibold bg-[#EC2127] text-white rounded-3xl overflow-hidden group"
             onClick={scrollToServices}
           >
             <span className="absolute inset-0 bg-gradient-to-r from-[#EC2127] to-yellow-800 transform origin-left scale-x-0 transition-transform duration-500 ease-out group-hover:scale-x-100" />
-            <span className="relative z-10 font-poppins">See our services</span>
+            <span className="relative z-10">See Our Services</span> 
           </button>
         </div>
 
@@ -112,7 +117,11 @@ useEffect(() => {
         </div>
 
         {/* Wave Image - visible only on smaller screens */}
-        <img src={wave} alt="wave img" className='object-cover xl:hidden absolute bottom-0 w-full -z-10' />
+        <img
+          src={wave}
+          alt="wave img"
+          className="object-cover xl:hidden absolute bottom-0 w-full -z-10"
+        />
       </div>
     </div>
   );

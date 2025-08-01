@@ -184,7 +184,7 @@ const ProjectsSection = () => {
                       <h3 className="text-white text-2xl font-semibold p-2">
                         {item.imgtitle[0]}
                       </h3>
-                      {item.link && (
+                      {item.link ? (
                         <a
                           href={item.link}
                           target="_blank"
@@ -196,6 +196,16 @@ const ProjectsSection = () => {
                             Visit Website
                           </button>
                         </a>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent accidental card click
+                            handleImageClick(item.photo[1] ? item.photo[1] : item.photo[0]);
+                          }}
+                          className="px-4 py-2 bg-[#39B54A] text-white rounded-lg hover:bg-green-600 transition-colors mt-2"
+                        >
+                          View Image
+                        </button>
                       )}
                     </div>
                   </div>

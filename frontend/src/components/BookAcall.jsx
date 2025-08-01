@@ -30,7 +30,7 @@ export default function BookAcall() {
   }
 
   return (
-    <div className="relative bg-[#134C6C] text-white rounded-2xl py-10 px-6 lg:px-20 lg:flex flex-col lg:flex-row items-center justify-between mx-4 lg:mx-40 overflow-hidden mb-10  my-16">
+    <div className="relative bg-[#134C6C] text-white rounded-2xl py-6 px-6 lg:px-20 lg:flex fl  ex-col lg:flex-row items-center justify-between mx-4 lg:mx-40 overflow-hidden mb-10  my-6">
       <div className="absolute -bottom-1/2 left-1/2 transform -translate-x-1/2 w-[800px] h-[400px] bg-[#155376] rounded-t-full"></div>
 
       <div className="lg:w-1/2 mb-6 lg:mb-0 relative z-0">

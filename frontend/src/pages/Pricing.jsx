@@ -5,6 +5,7 @@ import PricingSection from '../components/Pricing/AllPricing'
 import WhyPartnerWithUs from '../components/Websites/WhyPatnerUs'
 import Faq from '../components/Faq'
 import BookAcall from '../components/BookAcall'
+import LatestProject from './../components/Websites/LatestProduct';
 
 export default function Pricing() {
   return (

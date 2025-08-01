@@ -194,11 +194,91 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
   const [resume, setResume] = useState(null);
   const [clientIp, setClientIp] = useState("");
   const [utmParams, setUtmParams] = useState({});
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [mobileNoError, setMobileNoError] = useState("");
+  const [resumeError, setResumeError] = useState("");
+  const [messageError, setMessageError] = useState("");
   const navigate = useNavigate();
 
-  const handleFileChange = (e) => {
-    setResume(e.target.files[0]);
+  const validateName = (value) => {
+    if (!value.trim()) return "Name is required";
+    if (!/^[a-zA-Z\s]+$/.test(value)) return "Name can only contain letters and spaces";
+    if (value.trim().length < 2) return "Name must be at least 2 characters long";
+    if (value.trim().length > 50) return "Name cannot exceed 50 characters";
+    return "";
   };
+
+  const validateEmail = (value) => {
+    if (!value.trim()) return "Email is required";
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(value)) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validateMobileNo = (value) => {
+    if (!value.trim()) return "Phone number is required";
+    if (!/^\d+$/.test(value)) return "Phone number can only contain digits";
+    if (value.length !== 10) return "Phone number must be exactly 10 digits";
+    return "";
+  };
+
+  const validateResume = (file) => {
+    if (!file) return "Resume is required";
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!validTypes.includes(file.type)) return "Resume must be a PDF, DOC, or DOCX file";
+    return "";
+  };
+
+  const validateMessage = (value) => {
+    if (!value.trim()) return ""; // Message is optional
+    if (value.trim().length < 10) return "Message must be at least 10  characters long";
+    if (!/^[a-zA-Z\s]+$/.test(value)) return "Message can only contain letters and spaces";
+    if (value.trim().length > 500) return "Message cannot exceed 500 characters";
+    return "";
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setResume(file);
+    setResumeError(validateResume(file));
+  };
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setName(value);
+    setNameError(validateName(value));
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    setEmailError(validateEmail(value));
+  };
+
+  const handleMobileNoChange = (e) => {
+    const value = e.target.value;
+    setMobileNo(value);
+    setMobileNoError(validateMobileNo(value));
+  };
+
+  const handleMobileNoKeyPress = (e) => {
+    const charCode = e.charCode;
+    if (charCode < 48 || charCode > 57) {
+      e.preventDefault();
+    }
+  };
+
+  const handleMessageChange = (e) => {
+    const value = e.target.value;
+    setMessage(value);
+    setMessageError(validateMessage(value));
+  };
+
   useEffect(() => {
     const fetchClientIp = async () => {
       try {
@@ -226,20 +306,41 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const nameErr = validateName(name);
+    const emailErr = validateEmail(email);
+    const mobileNoErr = validateMobileNo(mobileNo);
+    const resumeErr = validateResume(resume);
+    const messageErr = validateMessage(message);
+
+    setNameError(nameErr);
+    setEmailError(emailErr);
+    setMobileNoError(mobileNoErr);
+    setResumeError(resumeErr);
+    setMessageError(messageErr);
+
+    if (nameErr || emailErr || mobileNoErr || resumeErr || messageErr) {
+      return;
+    }
+
     try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("mobileNo", mobileNo);
+      formData.append("resume", resume);
+      formData.append("message", message);
+      formData.append("ipaddress", clientIp);
+      Object.entries(utmParams).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
       await axios.post(
         "/api/careerInquiries/createCareerInquiry",
-        {
-          name,
-          email,
-          mobileNo,
-          resume,
-          message,
-          ipaddress: clientIp,
-          ...utmParams,
-        },
+        formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
         }
       );
       navigate("/thankyou");
@@ -249,6 +350,11 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
       setMobileNo("");
       setMessage("");
       setResume(null);
+      setNameError("");
+      setEmailError("");
+      setMobileNoError("");
+      setResumeError("");
+      setMessageError("");
     } catch (err) {
       console.error("Failed to submit application", err);
     }
@@ -267,60 +373,74 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium mb-1">
+              Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              onChange={handleNameChange}
+              className={`w-full p-2 border rounded-lg ${nameError ? "border-red-500" : ""}`}
               required
+              maxLength={50}
             />
+            {nameError && <p className="text-red-500 text-sm mt-1">{nameError}</p>}
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">
-              Phone Number
+              Phone Number <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              name="mobileNo"
+              type="tel"
+              name="mobileNo" 
               value={mobileNo}
-              onChange={(e) => setMobileNo(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              onChange={handleMobileNoChange}
+              onKeyPress={handleMobileNoKeyPress}
+              className={`w-full p-2 border rounded-lg ${mobileNoError ? "border-red-500" : ""}`}
               required
+              maxLength={10}
             />
+            {mobileNoError && <p className="text-red-500 text-sm mt-1">{mobileNoError}</p>}
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               name="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              onChange={handleEmailChange}
+              className={`w-full p-2 border rounded-lg ${emailError ? "border-red-500" : ""}`}
               required
             />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">
-              Upload Resume
+              Upload Resume <span className="text-red-500">*</span>
             </label>
             <input
               type="file"
               name="resume"
               onChange={handleFileChange}
-              className="w-full"
+              className={`w-full ${resumeError ? "border-red-500" : ""}`}
+              accept=".pdf,.doc,.docx"
               required
             />
+            {resumeError && <p className="text-red-500 text-sm mt-1">{resumeError}</p>}
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Message</label>
+            <label className="block text-sm font-medium mb-1">Message (optional)</label>
             <textarea
               name="message"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              onChange={handleMessageChange}
+              className={`w-full p-2 border rounded-lg ${messageError ? "border-red-500" : ""}`}
+              maxLength={500}
             />
+            {messageError && <p className="text-red-500 text-sm mt-1">{messageError}</p>}
           </div>
           <button
             type="submit"
@@ -340,6 +460,19 @@ const CareerPage = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [careerOptions, setCareerOptions] = useState([]);
+  const [searchError, setSearchError] = useState("");
+
+  const validateSearch = (value) => {
+    if (value.trim().length === 0) return "";
+    if (/^\s+$/.test(value)) return "Search cannot contain only spaces";
+    return "";
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setSearchError(validateSearch(value));
+  };
 
   const fetchData = async () => {
     try {
@@ -359,8 +492,9 @@ const CareerPage = () => {
 
   const filteredJobs = careerOptions.filter(
     (job) =>
-      job.department.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterDepartment === "All" || job.department === filterDepartment)
+      job.department.toLowerCase().includes(searchTerm.toLowerCase().trim()) &&
+      (filterDepartment === "All" || job.department === filterDepartment) &&
+      !searchError
   );
 
   const openModal = (job) => {
@@ -397,17 +531,20 @@ const CareerPage = () => {
             ))}
           </div>
           <div className="w-full md:w-1/2">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                placeholder="Search jobs..."
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button className="absolute right-3 top-2.5 text-gray-400">
-                <Search size={20} />
-              </button>
+            <div className="relative flex flex-col">
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search jobs..."
+                  className={`w-full pl-10 pr-4 py-2 rounded-full border ${searchError ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-1 focus:ring-black`}
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                <button className="absolute right-3 top-2.5 text-gray-400">
+                  <Search size={20} />
+                </button>
+              </div>
+              {searchError && <p className="text-red-500 text-sm mt-1">{searchError}</p>}
             </div>
           </div>
         </div>

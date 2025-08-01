@@ -111,9 +111,12 @@ const PricingSection = ({ setServiceSlug }) => {
         <div className="text-md text-gray-600 flex-grow">
           <ul className="list-disc list-inside mb-4">
             {whatIsTheir.map((detail, index) => (
-              <li key={index} className="flex gap-2 mb-2">
+              <li
+                key={index}
+                className={`flex gap-2 mb-2 ${index === 0 ? "font-bold" : ""}`}
+              >
                 <FaCheck className="text-[#ec2127] mt-1 flex-shrink-0" />
-                {detail}
+                {detail}  
               </li>
             ))}
           </ul>
@@ -161,7 +164,7 @@ const PricingSection = ({ setServiceSlug }) => {
   };
 
   return (
-    <div className="mt-20">
+    <div className="mt-10">
       <div className="text-center p-6">
         <h2 className="text-2xl md:text-4xl font-bold font-serif text-gray-800 mb-8">
          {splitHeading(heading).firstPart}

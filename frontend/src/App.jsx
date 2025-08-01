@@ -388,9 +388,9 @@ function App() {
                     <Route path="/ourTeam" element={<OurStaff />} />
                     <Route path="/ourTeam/createTeam" element={<CreateStaff />} />
                     <Route path="/ourTeam/editTeam/:id" element={<EditStaff />} />
-                    <Route path="/banner" element={<Banner />} />
-                    <Route path="/banner/createBanner" element={<CreateBanner />} />
-                    <Route path="/banner/editBanner/:id" element={<EditBanner />} />
+                    <Route path="/policy" element={<Banner />} />
+                    <Route path="/policy/createPolicy" element={<CreateBanner />} />
+                    <Route path="/policy/editPolicy/:id" element={<EditBanner />} />
                     <Route path="/ProductCategory" element={<ProductCategory />} />
                     <Route path="/ProductCategory/CreateProductCategory" element={<CreateProductCategory />} />
                     <Route path="/ProductCategory/editProductCategory/:categoryId/:subCategoryId?/:subSubCategoryId?" element={<EditCategory />} />

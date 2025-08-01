@@ -1,107 +1,96 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const sharp = require('sharp');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const sharp = require("sharp");
 
-// Define the directories
-const catalogueDir = path.join(__dirname, '../catalogues');
-const photoDir = path.join(__dirname, '../images');
-const resumeDir = path.join(__dirname, '../resumes');
-const tempDir = path.join(__dirname, '../temp');
+// Define directories
+const catalogueDir = path.join(__dirname, "../catalogues");
+const photoDir = path.join(__dirname, "../images");
+const resumeDir = path.join(__dirname, "../resumes");
+const tempDir = path.join(__dirname, "../temp");
 
-// Ensure the directories exist
-[photoDir, catalogueDir, resumeDir, tempDir].forEach(dir => {
+// Ensure directories exist
+[photoDir, catalogueDir, resumeDir, tempDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 });
 
-// Multer storage setup
+// Multer storage configuration
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    if (file.fieldname === 'catalogue') {
-      cb(null, catalogueDir);
-    } else if (file.fieldname === 'photo') {
-      cb(null, tempDir); // Save temporarily
-    } else if (file.fieldname === 'resume') {
-      cb(null, resumeDir);
-    }
+  destination: (req, file, cb) => {
+    if (file.fieldname === "catalogue") cb(null, catalogueDir);
+    else if (file.fieldname === "photo") cb(null, tempDir); // save temporarily
+    else if (file.fieldname === "resume") cb(null, resumeDir);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     let fileName;
-    if (file.fieldname === 'catalogue') {
+    if (file.fieldname === "catalogue") {
       fileName = file.originalname;
       req.fileName = fileName;
-    } else if (file.fieldname === 'photo') {
-      fileName = `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`;
-    } else if (file.fieldname === 'resume') {
+    } else if (file.fieldname === "photo") {
+      fileName = `photo_${Date.now()}${path.extname(file.originalname)}`;
+    } else if (file.fieldname === "resume") {
       fileName = `resume_${Date.now()}${path.extname(file.originalname)}`;
     }
     cb(null, fileName);
-  }
+  },
 });
 
 const upload = multer({
-  storage: storage,
+  storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // Max 50MB
-  fileFilter: function (req, file, cb) {
-    cb(null, true); // Accept all file types
-  }
+  fileFilter: (req, file, cb) => cb(null, true),
 });
 
-const processLogoImage = async (filePath) => {
+// ✅ Helper function: process & move photo safely
+const processAndMovePhoto = async (tempPath, finalPath) => {
   try {
-    if (path.extname(filePath).toLowerCase() === '.webp') {
-      return filePath;
-    }
-    const webpPath = path.join(
-      path.dirname(filePath),
-      path.basename(filePath, path.extname(filePath)) + '.webp'
-    );
-    await sharp(filePath)
-      .webp({ quality: 80 })
-      .toFile(webpPath);
-    await fs.promises.unlink(filePath);
-    return webpPath;
+    await sharp(tempPath).webp({ quality: 80 }).toFile(finalPath);
+
+    // ✅ Safer delete to avoid EPERM error on Windows
+    await fs.promises.rm(tempPath, { force: true });
+
+    return finalPath;
   } catch (err) {
-    console.error(`Failed to process image at ${filePath}:`, err);
-    throw new Error(`Failed to process image: ${err.message}`);
+    console.error("Image processing error:", err);
+    throw new Error(`Image processing failed: ${err.message}`);
   }
 };
 
-// Middleware to move photo files from temp to final directory
+// ✅ Middleware
 const uploadPhoto = (req, res, next) => {
   upload.fields([
-    { name: 'catalogue', maxCount: 1 },
-    { name: 'photo', maxCount: 5 },
-    { name: 'resume', maxCount: 1 }
-  ])(req, res, async function (err) {
+    { name: "catalogue", maxCount: 1 },
+    { name: "photo", maxCount: 5 },
+    { name: "resume", maxCount: 1 },
+  ])(req, res, async (err) => {
     if (err) {
-      return res.status(400).send({ error: err.message });
+      return res.status(400).json({ error: err.message });
     }
 
     try {
-      if (req.files && req.files['photo']) {
-        for (const photo of req.files['photo']) {
+      if (req.files?.photo) {
+        for (const photo of req.files.photo) {
           const tempPath = path.join(tempDir, photo.filename);
           const finalPath = path.join(
             photoDir,
-            path.basename(photo.filename, path.extname(photo.filename)) + '.webp'
+            `${path.basename(photo.filename, path.extname(photo.filename))}.webp`
           );
 
           if (fs.existsSync(tempPath)) {
-            const newPath = await processLogoImage(tempPath);
-            await fs.promises.rename(newPath, finalPath); // Move file to final location
-            photo.filename = path.basename(finalPath); // Update filename in req.files
+            await processAndMovePhoto(tempPath, finalPath);
+            photo.filename = path.basename(finalPath); // update filename for DB
           } else {
-            throw new Error(`Temporary file not found: ${photo.filename}`);
+            throw new Error(`Temp file not found: ${photo.filename}`);
           }
         }
       }
+
       next();
-    } catch (moveErr) {
-      console.error('Error moving photo:', moveErr);
-      return res.status(500).send({ error: `Error moving photo: ${moveErr.message}` });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 };

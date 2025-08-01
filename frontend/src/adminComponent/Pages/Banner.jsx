@@ -13,7 +13,7 @@ import UseAnimations from "react-useanimations";
 import loading from "react-useanimations/lib/loading";
 Modal.setAppElement('#root'); // Make sure to set the root element for accessibility
 
-const BannersTable = () => {
+const BannersTable = () => {  
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
   const [banners, setBanners] = useState([]);

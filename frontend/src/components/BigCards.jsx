@@ -97,11 +97,10 @@ const TrustedSection = () => {
                 <h3 className={`text-2xl md:text-3xl font-bold pb-4 ${firstCard.textColor}`}>
                   {firstCard.heading}
                 </h3>
-                <Link
-                  to={firstCard.buttonLink}
-                  className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition duration-300 inline-block"
-                >
-                  {firstCard.buttonText}
+                <Link to={firstCard.buttonLink}>
+                  <button className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition duration-300">
+                    {firstCard.buttonText}
+                  </button>
                 </Link>
               </div>
               <img

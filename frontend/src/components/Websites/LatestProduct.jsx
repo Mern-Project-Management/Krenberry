@@ -4,7 +4,7 @@ import { useLocation, useParams } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { IoMdClose, IoMdFunnel } from "react-icons/io";
+import { IoMdClose, IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 
 export default function LatestProject() {
@@ -16,6 +16,28 @@ export default function LatestProject() {
   const location = useLocation();
   const { slug } = useParams();
 
+  const [scrollPosition, setScrollPosition] = useState(0);
+  
+  
+    const NextArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+    >
+      <IoIosArrowForward size={24} color="white" />
+    </button>
+  );
+  
+  const PrevArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+    >
+      <IoIosArrowBack size={24} color="white" />
+    </button>
+  );
+  
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +45,7 @@ export default function LatestProject() {
       setError(null);
       try {
         const response = await axios.get(
-          `/api/Portfolio/getPortfolioByServiceSlug?slug=${slug}`,
+          `/api/Portfolio/getPortfolioByServiceSlug?slug=smm-services`,
           { withCredentials: true }
         );
         if (response.data?.data) {
@@ -42,12 +64,15 @@ export default function LatestProject() {
     fetchData();
   }, [slug, location]);
 
-  const handleImageClick = (image) => {
+   const handleImageClick = (image) => {
+    setScrollPosition(window.scrollY); // store current scroll
     setFullscreenImage(image);
+    document.body.style.overflow = "hidden"; // prevent background scroll
   };
-
   const closeFullscreen = () => {
     setFullscreenImage(null);
+    document.body.style.overflow = "auto"; // enable scroll
+    window.scrollTo({ top: scrollPosition, behavior: "instant" }); // restore position
   };
 
   const settings = {
@@ -58,6 +83,8 @@ export default function LatestProject() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 2000,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />, 
     responsive: [
       {
         breakpoint: 1024,
@@ -122,7 +149,7 @@ export default function LatestProject() {
       >
         <div className="text-center">
           <h3 className="text-white text-2xl font-semibold p-2">{project.imgtitle[0]}</h3>
-          {project.link && (
+           {project.link ? (
             <a
               href={project.link}
               target="_blank"
@@ -134,6 +161,16 @@ export default function LatestProject() {
                 Visit Website
               </button>
             </a>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent accidental fullscreen click
+                onClick(project.photo[1] || project.photo[0]);
+              }}
+              className="px-4 py-2 bg-[#ec2127] text-white rounded-lg hover:bg-red-600 transition-colors mt-2"
+            >
+              View  
+            </button>
           )}
         </div>
       </div>
@@ -142,10 +179,10 @@ export default function LatestProject() {
 
   return (
     <div className="py-16">
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold p-4 text-center">
+      <h2 className="heading font-semibold p-4 text-center">
         Latest <span className="text-[#ec2127]">Projects</span>
       </h2>
-      <p className="text-lg md:text-2xl px-4 md:px-20 text-gray-600 text-center">
+      <p className="subheading px-4 md:px-20 text-gray-600 text-center">
         Discover Our Latest Project Milestones
       </p>
 
@@ -160,7 +197,7 @@ export default function LatestProject() {
           </Slider>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {latestProject.map((project) => (
+            {latestProject.map((project) => ( 
               <ProjectCard
                 key={project._id}
                 project={project}
@@ -177,7 +214,9 @@ export default function LatestProject() {
           <img
             src={`/api/image/download/${fullscreenImage}`}
             alt="Fullscreen view"
-            className="w-full h-auto object-cover"
+            className="w-full h-auto object-cover select-none pointer-events-none"
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
           />
           <button
             className="absolute top-4 right-4 text-white text-3xl md:text-4xl p-2 bg-black bg-opacity-50 rounded-full hover:bg-opacity-75"

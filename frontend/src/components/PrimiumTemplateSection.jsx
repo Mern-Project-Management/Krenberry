@@ -30,7 +30,7 @@ const PremiumTemplatesSection = () => {
   }
 
   return (
-    <div className="relative bg-[#f9f7f1] text-black rounded-2xl py-10 px-6 lg:px-20 lg:flex flex-col lg:flex-row items-center justify-between mx-4 lg:mx-40 overflow-hidden mb-10 my-16">
+    <div className="relative bg-[#f9f7f1] text-black rounded-2xl py-10 px-6 lg:px-20 lg:flex flex-col lg:flex-row items-center justify-between mx-4 lg:mx-40 overflow-hidden mb-10 my-6">
       {/* Decorative background element similar to BookAcall */}
       <div className="absolute -bottom-1/2 left-1/2 transform -translate-x-1/2 w-[800px] h-[400px] bg-[#e5e3dd] rounded-t-full"></div>
 

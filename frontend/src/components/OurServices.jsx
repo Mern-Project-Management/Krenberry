@@ -436,12 +436,12 @@ const ServicesGrid = () => {
   return (
     <section className="md:my-20 md:py-16  py-4 px-4 bg-gray-50">
       <div className="w-[85%] mx-auto">
-        <h2 className="text-4xl md:text-5xl font-semibold text-center">
+        <h2 className="heading font-semibold text-center">
           Our <span className="text-[#ec2127]">Services</span>
         </h2>
-        <h3 className=" md:text-xl text-[#39B54A]/80  text-center  pb-16 mt-4  ">
+        <p className="subheading text-[#39B54A]/80  text-center  pb-16 mt-4  ">
           Dedicated to Your Success
-        </h3>
+        </p>
 
         <div className="grid grid-cols-12 gap-6">
           {services.map((service, index) => (

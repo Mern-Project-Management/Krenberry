@@ -4,14 +4,17 @@ import { FaEdit, FaTrashAlt, FaArrowUp, FaArrowDown, FaPlus } from "react-icons/
 import { BsArrowReturnRight } from "react-icons/bs";
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import UseAnimations from "react-useanimations";
 import loading from "react-useanimations/lib/loading";
-
 
 const CategoryTable = () => {
   const [categories, setCategories] = useState([]);
   const [loadings, setLoading] = useState(true);
-  const navigate = useNavigate()
+  const [showModal, setShowModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const navigate = useNavigate();
 
   const columns = useMemo(
     () => [
@@ -41,7 +44,10 @@ const CategoryTable = () => {
             </button>
             <button
               className="text-red-500 hover:text-red-700 transition"
-              onClick={() => deleteCategory({ id: row.original.slug })}
+              onClick={() => {
+                setItemToDelete({ id: row.original.slug });
+                setShowModal(true);
+              }}
             >
               <FaTrashAlt />
             </button>
@@ -78,6 +84,7 @@ const CategoryTable = () => {
       setCategories(categoriesWithAutoIncrementId);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to fetch categories.");
     } finally {
       setLoading(false);
     }
@@ -96,9 +103,24 @@ const CategoryTable = () => {
     try {
       await axios.delete(url, { withCredentials: true });
       fetchCategories();
+      toast.success("Category deleted successfully!");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to delete category.");
+    } finally {
+      setShowModal(false);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deleteCategory(itemToDelete);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowModal(false);
+    setItemToDelete(null);
   };
 
   useEffect(() => {
@@ -107,26 +129,35 @@ const CategoryTable = () => {
 
   return (
     <div className="p-4 overflow-x-auto">
+      <ToastContainer />
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Categories</h1>
+        <h1 className="text-xl font-bold text-gray-700 font-serif uppercase">Categories</h1>
+        <Link to="/PortfolioCategory/CreatePortfolioCategory">
         <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300">
-          <Link to="/PortfolioCategory/CreatePortfolioCategory"><FaPlus size={15} /></Link>
+          <FaPlus size={15} />
         </button>
+        </Link>
       </div>
       {loadings ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
       ) : (
-        <>{categories.length == 0 ? <div className="flex justify-center items-center"><iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe></div>
-          : <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
+        <>
+          {categories.length === 0 ? (
+            <div className="flex justify-center items-center">
+              <iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
+            </div>
+          ) : (
+            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+              <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+               {headerGroups.map((headerGroup) => (
+                <tr key={headerGroup.id} {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
                     <th
+                      key={column.id}
                       {...column.getHeaderProps(column.getSortByToggleProps())}
                       className="py-2 px-4 border-b border-gray-300 cursor-pointer uppercase font-serif"
                     >
-                      <div className="flex items-center gap-2 ">
+                      <div className="flex items-center gap-2">
                         <span>{column.render("Header")}</span>
                         {column.canSort && (
                           <span className="ml-1">
@@ -146,78 +177,113 @@ const CategoryTable = () => {
                   ))}
                 </tr>
               ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {rows.map((row) => {
-                prepareRow(row);
-                return (
-                  <React.Fragment key={row.id}>
-                    <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="py-2 px-4 ">
-                          {cell.render("Cell")}
-                        </td>
-                      ))}
-                    </tr>
-                    {row.original.subCategories && row.original.subCategories.map((subcategory, subIndex) => (
-                      <React.Fragment key={subIndex}>
-                        <tr className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
-                          <td></td>
-                          <td className="py-2 px-8 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}`)}><BsArrowReturnRight />{subcategory.photo && <img src={`/api/logo/download/${subcategory.photo}`} alt={subcategory.alt} className="w-6 h-6" />}<span>{subcategory.category}</span></td>
-                          <td className="py-2 px-4">
-                            <div className="flex gap-4">
-                              <button className="text-blue-500 hover:text-blue-700 transition">
-                                <Link to={`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}`}>
-                                  <FaEdit />
-                                </Link>
-                              </button>
-                              <button
-                                className="text-red-500 hover:text-red-700 transition"
-                                onClick={() => deleteCategory({
-                                  categoryId: row.original.slug,
-                                  subCategoryId: subcategory.slug
-                                })}
-                              >
-                                <FaTrashAlt />
-                              </button>
-                            </div>
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <React.Fragment key={row.id}>
+                      <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                        {row.cells.map((cell) => (
+                          <td key={cell.id} {...cell.getCellProps()} className="py-2 px-4">
+                            {cell.render("Cell")}
                           </td>
-                        </tr>
-                        {subcategory.subSubCategory && subcategory.subSubCategory.map((subSubcategory, subSubIndex) => (
-                          <tr key={subSubIndex} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
+                        ))}
+                      </tr>
+                      {row.original.subCategories && row.original.subCategories.map((subcategory, subIndex) => (
+                        <React.Fragment key={subIndex}>
+                          <tr className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
                             <td></td>
-                            <td className="py-2 px-12 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subSubcategory.slug}`)} ><BsArrowReturnRight />{subSubcategory.photo && <img alt={subSubcategory.alt} src={`/api/logo/download/${subSubcategory.photo}`} className="w-6 h-6" />}<span>{subSubcategory.category}</span></td>
+                            <td className="py-2 px-8 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}`)}>
+                              <BsArrowReturnRight />
+                              {subcategory.photo && <img src={`/api/logo/download/${subcategory.photo}`} alt={subcategory.alt} className="w-6 h-6" />}
+                              <span>{subcategory.category}</span>
+                            </td>
                             <td className="py-2 px-4">
                               <div className="flex gap-4">
                                 <button className="text-blue-500 hover:text-blue-700 transition">
-                                  <Link to={`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}/${subSubcategory.slug}`}>
+                                  <Link to={`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}`}>
                                     <FaEdit />
                                   </Link>
                                 </button>
                                 <button
                                   className="text-red-500 hover:text-red-700 transition"
-                                  onClick={() => deleteCategory({
-                                    categoryId: row.original.slug,
-                                    subCategoryId: subcategory.slug,
-                                    subSubCategoryId: subSubcategory.slug
-                                  })}
+                                  onClick={() => {
+                                    setItemToDelete({
+                                      categoryId: row.original.slug,
+                                      subCategoryId: subcategory.slug
+                                    });
+                                    setShowModal(true);
+                                  }}
                                 >
                                   <FaTrashAlt />
                                 </button>
                               </div>
                             </td>
                           </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        }
+                          {subcategory.subSubCategory && subcategory.subSubCategory.map((subSubcategory, subSubIndex) => (
+                            <tr key={subSubIndex} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                              <td></td>
+                              <td className="py-2 px-12 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subSubcategory.slug}`)}>
+                                <BsArrowReturnRight />
+                                {subSubcategory.photo && <img alt={subSubcategory.alt} src={`/api/logo/download/${subSubcategory.photo}`} className="w-6 h-6" />}
+                                <span>{subSubcategory.category}</span>
+                              </td>
+                              <td className="py-2 px-4">
+                                <div className="flex gap-4">
+                                  <button className="text-blue-500 hover:text-blue-700 transition">
+                                    <Link to={`/PortfolioCategory/editPortfolioCategory/${row.original.slug}/${subcategory.slug}/${subSubcategory.slug}`}>
+                                      <FaEdit />
+                                    </Link>
+                                  </button>
+                                  <button
+                                    className="text-red-500 hover:text-red-700 transition"
+                                    onClick={() => {
+                                      setItemToDelete({
+                                        categoryId: row.original.slug,
+                                        subCategoryId: subcategory._id,
+                                        subSubCategoryId: subSubcategory.slug
+                                      });
+                                      setShowModal(true);
+                                    }}
+                                  >
+                                    <FaTrashAlt />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </>
-
+      )}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Confirm Deletion</h2>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this category? This action cannot be undone.</p>
+            <div className="flex justify-end gap-4">
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300"
+                onClick={handleCancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

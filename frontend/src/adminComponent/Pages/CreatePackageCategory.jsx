@@ -49,7 +49,7 @@ const NewCategoryForm = () => {
     };
 
     const generateUrl = () => {
-        let baseUrl = "https://rndtechnosoft.com";
+        let baseUrl = "https://krenberry.com";
         if (parentCategoryId && !subCategoryId) {
             return `${baseUrl}/${slug}`;
         } else if (parentCategoryId && subCategoryId) {

@@ -7,21 +7,18 @@ import { FaEye } from "react-icons/fa";
 
 export default function HowRndHelp() {
   const [blogData, setBlogData] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(4); // Initially show 4 cards
-  const [selectedCategory, setSelectedCategory] = useState(""); // State for the selected category
+  const [visibleCount, setVisibleCount] = useState(4);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch data from the API when the component mounts
     const fetchBlogData = async () => {
       try {
-        // Extract the last part of the URL
         const slug = location.pathname.split("/").filter(Boolean).pop();
         const response = await axios.get(`/api/news/getNewsFront`, {
           withCredentials: true,
         });
-        // Update state with the fetched data
         setBlogData(response.data.data);
       } catch (error) {
         console.error("Error fetching blog data:", error);
@@ -31,18 +28,14 @@ export default function HowRndHelp() {
     fetchBlogData();
   }, [location]);
 
-  // Get unique service categories for filtering
-  const categories = [
-    ...new Set(blogData.map((blog) => blog.serviceCategoryName)),
-  ];
+  const categories = [...new Set(blogData.map((blog) => blog.serviceCategoryName))];
 
-  // Filter blog data based on the selected category
   const filteredData = selectedCategory
     ? blogData.filter((blog) => blog.serviceCategoryName === selectedCategory)
     : blogData;
 
   const handleLoadMore = () => {
-    setVisibleCount((prevCount) => prevCount + 4); // Increase the number of visible cards
+    setVisibleCount((prevCount) => prevCount + 4);
   };
 
   const handleReadMore = async (blogslug) => {
@@ -55,13 +48,16 @@ export default function HowRndHelp() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="container mx-auto px-4 py-8 sm:py-12 lg:py-16">
       {/* Filter section */}
-      <div className="mb-4">
+      <div className="mb-6">
+        <label htmlFor="category-select" className="sr-only">Select Category</label>
         <select
+          id="category-select"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-2 border rounded"
+          className="w-full sm:w-auto p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white text-gray-800"
+          aria-label="Filter blog posts by category"
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -72,62 +68,75 @@ export default function HowRndHelp() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 pb-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredData.slice(0, visibleCount).map((blog) => (
-          <div
+          <article
             key={blog._id}
-            className="relative blog-card border border-lg border-black rounded-xl p-4 sm:p-6 flex flex-col gap-3 items-center bg-white shadow-lg transition-transform duration-300 hover:shadow-xl hover:scale-105"
+            className="blog-card border border-gray-200 rounded-xl p-4 flex flex-col gap-4 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:-translate-y-1 focus-within:shadow-xl"
+            tabIndex={0}
+            role="article"
+            aria-labelledby={`blog-title-${blog._id}`}
           >
-            <p className="bg-[#333] rounded-xl text-white px-3 py-1 absolute top-2 right-2">
-              {blog.serviceCategoryName}
-            </p>
-            <img
-              src={`/api/image/download/${blog.photo[0]}`}
-              alt={blog.alt[0]}
-              title={blog.imgtitle[0]}
-              className="w-full h-48 sm:h-40 lg:h-48 rounded-md object-cover mb-2"
-            />
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg md:text-xl font-semibold line-clamp-2 mb-2">
+            <div className="relative">
+              <span className="absolute top-2 right-2 bg-gray-800 text-white text-xs px-3 py-1 rounded-full font-medium">
+                {blog.serviceCategoryName}
+              </span>
+              <img
+                src={`/api/image/download/${blog.photo[0]}`}
+                alt={blog.alt[0]}
+                title={blog.imgtitle[0]}
+                loading="lazy"
+                className="w-full h-48 rounded-md object-cover mb-4"
+                aria-describedby={`blog-description-${blog._id}`}
+              />
+            </div>
+            <div className="flex flex-col flex-grow">
+              <h3
+                id={`blog-title-${blog._id}`}
+                className="text-lg sm:text-xl font-semibold mb-2 text-gray-900"
+              >
                 {blog.title}
               </h3>
-              <p className="text-sm md:text-md text-black line-clamp-2 mb-2">
+              <div
+                id={`blog-description-${blog._id}`}
+                className="text-sm sm:text-base text-gray-600 line-clamp-3 mb-4"
+              >
                 {blog?.details ? (
                   <div dangerouslySetInnerHTML={{ __html: blog.details }} />
                 ) : (
                   "Easily manage your design projects with our convenient portal. Provide important details like"
                 )}
-              </p>
-
+              </div>
               <button
-                onClick={() => handleReadMore(blog.slug)} // Use blog.slug to navigate
-                className="relative mt-3 py-1 px-4 text-mg font-bold bg-[#ec2127] text-white rounded-3xl overflow-hidden group"
+                onClick={() => handleReadMore(blog.slug)}
+                className="mt-auto py-2 px-6 text-sm font-semibold bg-red-600 text-white rounded-full hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-300"
+                aria-label={`Read more about ${blog.title}`}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-[#ec2127] to-red-600 transform origin-left scale-x-0 transition-transform duration-500 ease-out group-hover:scale-x-100" />
-                <span className="relative z-10">Read More</span>
+                Read More
               </button>
             </div>
-            <div className="flex justify-between w-full items-center">
-              <div className="flex gap-2 items-center  text-gray-500">
-                <CgCalendarDates size={20} />
-                <p className="">
+            <div className="flex justify-between items-center text-sm text-gray-500 mt-4">
+              <div className="flex gap-2 items-center">
+                <CgCalendarDates size={18} aria-hidden="true" />
+                <time dateTime={blog.date}>
                   {format(new Date(blog.date), "MMMM d, yyyy")}
-                </p>
+                </time>
               </div>
-              <div className="flex gap-2 items-center  text-gray-500">
-                <FaEye />
-                <p className=""> {blog.visits || 0}</p>
+              <div className="flex gap-2 items-center">
+                <FaEye aria-hidden="true" />
+                <span>{blog.visits || 0} views</span>
               </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
 
       {visibleCount < filteredData.length && (
-        <div className="flex justify-center mt-5">
+        <div className="flex justify-center mt-8">
           <button
             onClick={handleLoadMore}
-            className="px-4 py-2 bg-[#ec2127] text-white font-medium rounded hover:bg-red-600"
+            className="px-6 py-3 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-300"
+            aria-label="Load more blog posts"
           >
             Load More
           </button>

@@ -10,10 +10,9 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import UseAnimations from "react-useanimations";
 import loading from "react-useanimations/lib/loading";
-
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 Modal.setAppElement('#root');
-
 
 const ProductsTable = () => {
   const [products, setProducts] = useState([]);
@@ -29,6 +28,8 @@ const ProductsTable = () => {
   const [metaFilter, setMetaFilter] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null); // State for the selected banner
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // State for delete confirmation modal
+  const [productToDelete, setProductToDelete] = useState(null); // State for product to delete
   const navigate = useNavigate()
 
   const pageSize = 5;
@@ -50,8 +51,6 @@ const ProductsTable = () => {
       product.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm, metaFilter]);
-
-
 
   const columns = useMemo(
     () => [
@@ -128,7 +127,7 @@ const ProductsTable = () => {
             </button>
             <button
               className="text-red-500 hover:text-red-700 transition"
-              onClick={() => deleteProduct(row.original.slug)}
+              onClick={() => { setIsDeleteModalOpen(true); setProductToDelete(row.original); }}
             >
               <FaTrashAlt />
             </button>
@@ -176,13 +175,17 @@ const ProductsTable = () => {
     }
   };
 
-  const deleteProduct = async (slugs) => {
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
     try {
-      await axios.delete(`/api/product/deleteProduct?slugs=${slugs}`, { withCredentials: true });
-      window.location.href="/product"
+      await axios.delete(`/api/product/deleteProduct?slugs=${productToDelete.slug}`, { withCredentials: true });
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
       fetchProducts();
     } catch (error) {
       console.error(error);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -252,8 +255,6 @@ const ProductsTable = () => {
       });
   }
 
-
-
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
@@ -265,10 +266,8 @@ const ProductsTable = () => {
       return;
     }
 
-
     const formData = new FormData();
     formData.append('file', file);
-
 
     try {
       const response = await axios.post('/api/product/importProduct', formData, {
@@ -415,7 +414,6 @@ const ProductsTable = () => {
             })}
           </tbody>
         </table>}</>
-       
       )}
       <div className="mt-4 flex justify-center">
         <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0} className="mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition">
@@ -440,11 +438,11 @@ const ProductsTable = () => {
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
-        contentLabel="Banner Details"
+        contentLabel="Product Details"
         className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
       >
         <div className="bg-white p-8 rounded shadow-lg w-96 relative">
-        <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
+          <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
             <FaTimes size={20} />
           </button>
           <h2 className="text-xl font-bold mb-4 font-serif">Product</h2>
@@ -467,6 +465,14 @@ const ProductsTable = () => {
                   theme="bubble"
                   className="quill"
                 />
+                <div className="flex mt-2">
+                  <p className="mr-2 font-semibold font-serif">Status :</p>
+                  <p>{selectedProduct.status}</p>
+                </div>
+                <div className="flex mt-2">
+                  <p className="mr-2 font-semibold font-serif">Catalogue :</p>
+                  <p>{selectedProduct.catalogue ? <a href={`/api/product/download/${selectedProduct.catalogue}`} className="text-blue-500 underline" target="_blank" rel="noopener noreferrer">Download</a> : 'N/A'}</p>
+                </div>
               </div>
             </div>
           )}
@@ -478,6 +484,15 @@ const ProductsTable = () => {
           </button>
         </div>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => { setIsDeleteModalOpen(false); setProductToDelete(null); }}
+        onConfirm={handleDeleteConfirm}
+        itemName={productToDelete ? productToDelete.title : ''}
+        itemType="product"
+      />
     </div>
   );
 };

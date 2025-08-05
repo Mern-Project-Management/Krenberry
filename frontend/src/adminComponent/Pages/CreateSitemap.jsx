@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 const SitemapForm = () => {
-  const [urlInput, setUrlInput] = useState('https://rndtechnosoft.com/');
+  const [urlInput, setUrlInput] = useState('https://krenberry.com/');
   const [changefreqInput, setChangefreqInput] = useState("");
   const [priorityInput, setPriorityInput] = useState(0);
   const navigate = useNavigate();

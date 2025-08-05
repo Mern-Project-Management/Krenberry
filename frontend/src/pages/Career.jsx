@@ -490,12 +490,37 @@ const CareerPage = () => {
     fetchData();
   }, []);
 
-  const filteredJobs = careerOptions.filter(
-    (job) =>
-      job.department.toLowerCase().includes(searchTerm.toLowerCase().trim()) &&
-      (filterDepartment === "All" || job.department === filterDepartment) &&
-      !searchError
-  );
+// Replace the filteredJobs logic with this improved version:
+
+const filteredJobs = careerOptions.filter((job) => {
+  // Create a searchable string that includes all relevant job fields
+  const searchableText = [
+    job.department,
+    job.jobtitle,
+    job.jobType,
+    job.employmentType,
+    // You can add more fields here if needed
+  ].join(' ').toLowerCase();
+  
+  const searchTermLower = searchTerm.toLowerCase().trim();
+  
+  // Check if search term matches - split search term into words and check each
+  let matchesSearch = true;
+  if (searchTermLower !== '') {
+    const searchWords = searchTermLower.split(/\s+/);
+    matchesSearch = searchWords.every(word => 
+      searchableText.split(/\s+/).some(textWord => 
+        textWord.startsWith(word) || textWord.includes(word)
+      )
+    );
+  }
+  
+  // Check if department filter matches
+  const matchesDepartment = filterDepartment === "All" || job.department === filterDepartment;
+  
+  // Return true only if there's no search error and both conditions are met
+  return !searchError && matchesSearch && matchesDepartment;
+});
 
   const openModal = (job) => {
     setSelectedJob(job);

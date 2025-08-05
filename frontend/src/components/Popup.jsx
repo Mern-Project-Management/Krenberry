@@ -226,9 +226,9 @@ const AwardLandingPage = () => {
                     </div>
                 </div>
                 {/* Right Section */}
-                <div className="w-full bg-yellow-500 p-6 lg:p-8 relative">
+                <div className="w-full bg-[#EC2127] p-6 lg:p-8 relative">
                     <X className="absolute top-2 right-2 cursor-pointer text-white" onClick={handleClose} />
-                    <h2 className="text-xl lg:text-3xl font-bold mb-2 lg:mb-4 text-white">Let's Innovate Together!</h2>
+                    <h2 className="text-xl lg:text-3xl font-bold mb-2 lg:mb-4 text-white">Let&apos;s Innovate Together!</h2>
                     <p className="text-[18px] lg:text-xl mb-4 lg:mb-6 text-white">Request a FREE Consultation!</p>
 
                     {/* Form */}

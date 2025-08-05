@@ -91,7 +91,7 @@ const EditServiceForm = () => {
       setMetacanonical(service.metacanonical);
       setMetaschema(service.metaschema);
       setOthermeta(service.otherMeta);
-      service.url ? setUrl(service.url) : setUrl(`https://rndtechnosoft.com/${service.slug}`)
+      service.url ? setUrl(service.url) : setUrl(`https://krenberry.com/${service.slug}`)
       setChangeFreq(service.changeFreq)
       setPriority(service.priority)
 
@@ -247,7 +247,7 @@ const EditServiceForm = () => {
 
   useEffect(() => {
     if (slug) {
-      setUrl(`https://rndtechnosoft.com/${slug}`);
+      setUrl(`https://krenberry.com/${slug}`);
     }
   }, [slug]);
 
@@ -466,7 +466,7 @@ const EditServiceForm = () => {
           disabled
           type="url"
           id="url"
-          value={`https://rndtechnosoft.com/${slug}`}
+          value={`https://krenberry.com/${slug}`}
           className="w-full p-2 border rounded focus:outline-none"
         />
       </div>

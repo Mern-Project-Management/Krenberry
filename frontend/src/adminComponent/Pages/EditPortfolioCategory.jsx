@@ -35,7 +35,7 @@ const EditCategory = () => {
         urls = `/api/portfolio/getSpecificCategory?categoryId=${categoryId}`;
       }
 
-      try {
+      try { 
         const response = await axios.get(urls, { withCredentials: true });
         const { category, photo, alt, imgtitle, slug, metatitle, metadescription, metakeywords, metalanguage, metacanonical, metaschema, otherMeta, changeFreq, priority } = response.data;
 
@@ -76,7 +76,7 @@ const EditCategory = () => {
   };
 
   const generateUrl = () => {
-    let baseUrl = "https://rndtechnosoft.com";
+    let baseUrl = "https://krenberry.com";
     if (categoryId && !subCategoryId) {
       return `${baseUrl}/${slug}`;
     } else if (categoryId && subCategoryId) {

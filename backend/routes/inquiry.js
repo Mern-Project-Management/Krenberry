@@ -8,6 +8,6 @@ const {postInquiry , getInquiries , deleteInquiries , getInquiriesById , UpdateI
 router.get('/getInquiries', getInquiries);
 router.post('/addInquiry' , postInquiry)
 router.get('/getInquiryById' , getInquiriesById)
-router.delete('/deleteInquiries', deleteInquiries );
+router.delete('/deleteInquiry', deleteInquiries );
 router.put('/addInquiry' , UpdateInquirues)
 module.exports = router;

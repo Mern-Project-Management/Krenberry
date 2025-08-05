@@ -57,7 +57,7 @@ function EditAdminProfile() {
 
       setIsLoading(false);
       toast.success('Profile updated successfully');
-      window.location.href="https://rndtechnosoft.com/manageProfile"
+      window.location.href="https://krenberry.com/manageProfile"
     } catch (error) {
       setIsLoading(false);
       console.error('Error updating profile:', error);

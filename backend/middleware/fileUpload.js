@@ -43,17 +43,54 @@ const upload = multer({
   fileFilter: (req, file, cb) => cb(null, true),
 });
 
+// ✅ Helper function: safely delete temp file with retries
+const safeDeleteTempFile = async (filePath, maxRetries = 10) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await fs.promises.rm(filePath, { force: true });
+      return; // Success
+    } catch (err) {
+      if ((err.code === 'EBUSY' || err.code === 'ENOTEMPTY' || err.code === 'EPERM') && attempt < maxRetries) {
+        // Wait progressively longer between retries
+        const delay = Math.min(100 * attempt, 1000);
+        console.log(`Temp file delete attempt ${attempt} failed (${err.code}), retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      // If it's not a file lock error or we've exhausted retries, throw
+      if (attempt === maxRetries) {
+        console.warn(`Failed to delete temp file after ${maxRetries} attempts:`, filePath);
+        // Don't throw - just log warning as the main operation succeeded
+        return;
+      }
+      throw err;
+    }
+  }
+};
+
 // ✅ Helper function: process & move photo safely
 const processAndMovePhoto = async (tempPath, finalPath) => {
   try {
+    // Process image with sharp
     await sharp(tempPath).webp({ quality: 80 }).toFile(finalPath);
-
-    // ✅ Safer delete to avoid EPERM error on Windows
-    await fs.promises.rm(tempPath, { force: true });
+    
+    // Wait a bit to ensure file handles are released
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Safely delete temp file with retries
+    await safeDeleteTempFile(tempPath);
 
     return finalPath;
   } catch (err) {
     console.error("Image processing error:", err);
+    
+    // Try to clean up temp file even if processing failed
+    try {
+      await safeDeleteTempFile(tempPath);
+    } catch (cleanupErr) {
+      console.warn("Failed to cleanup temp file:", tempPath, cleanupErr.message);
+    }
+    
     throw new Error(`Image processing failed: ${err.message}`);
   }
 };

@@ -61,7 +61,7 @@ const EditProductForm = () => {
             setMetaschema(product.metaschema);
             setOthermeta(product.otherMeta);
             setBenefits(product.benefits)
-            product.url ? setUrl(product.url) : setUrl(`https://rndtechnosoft.com/${product.slug}`)
+            product.url ? setUrl(product.url) : setUrl(`https://krenberry.com/${product.slug}`)
             setChangeFreq(product.changeFreq)
             setPriority(product.priority)
             setCatalogue(product.catalogue)
@@ -279,7 +279,7 @@ const EditProductForm = () => {
 
     useEffect(() => {
         if (slug) {
-            setUrl(`https://rndtechnosoft.com/${slug}`);
+            setUrl(`https://krenberry.com/${slug}`);
         }
     }, [slug]);
 
@@ -500,7 +500,7 @@ const EditProductForm = () => {
                     disabled
                     type="url"
                     id="url"
-                    value={`https://rndtechnosoft.com/${slug}`}
+                    value={`https://krenberry.com/${slug}`}
                     className="w-full p-2 border rounded focus:outline-none"
                 />
             </div>

@@ -301,7 +301,9 @@ const UpdateInquirues = async (req, res) => {
 
 const deleteInquiries = async (req, res) => {
   try {
+    console.log(req.query.id)
     const deletedInquiry = await Inquiry.findByIdAndDelete(req.query.id);
+    console.log("found inquiry", deletedInquiry)
     if (!deletedInquiry) {
       return res.status(404).json({ message: 'Inquiry not found' });
     }

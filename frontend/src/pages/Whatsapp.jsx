@@ -20,10 +20,13 @@ const WhatsAppButton = () => {
         fetchFooter();
     }, []);
 
+    function removeSpaces(str) {
+        return str.replace(/\s/g, '');
+    }
 
     return (
         <a
-            href={`https://wa.me/${phoneNo}`}
+            href={`https://wa.me/${removeSpaces(phoneNo)}`}
             className="fixed bottom-4 left-6 w-14 h-14 bg-[#25d366] text-white rounded-full flex items-center justify-center text-2xl shadow-lg z-40 hover:bg-green-600 transition-transform transform hover:scale-105"
             target="_blank"
             rel="noopener noreferrer"

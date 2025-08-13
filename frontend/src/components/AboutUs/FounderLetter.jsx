@@ -36,11 +36,11 @@ const WebSolution = () => {
       {/* Shape Divider */}
 
       <div className="mt-16  flex flex-col items-start justify-center md:mx-20 mx-4">
-        <div className="flex flex-col-reverse  justify-center items-center lg:flex-row w-full gap-8 lg:gap-16">
+        <div className="flex flex-col justify-center items-center lg:flex-row w-full gap-8 lg:gap-16">
           <div className="lg:w-1/2">
             <h2 className="text-2xl font-bold mb-4 text-center md:text-start">{service?.title}</h2>
 
-            <p className="mt-4 text-lg pb-4">
+            <p className="mt-4 text-lg pb-4">     
               {service?.description ? (
                 <div className="md:text-justify text-center "
                   dangerouslySetInnerHTML={{ __html: service.description }}

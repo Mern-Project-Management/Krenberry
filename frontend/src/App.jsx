@@ -446,7 +446,7 @@ function App() {
                     <Route path="/benefits" element={<Benefits />} />
                     <Route path="/benefits/createBenefits" element={<CreateBenefits />} />
                     <Route path="/benefits/editBenefits/:id" element={<EditBenefits />} />
-                    <Route path="/manageTheme" element={<ManageColor />} />
+                    {/* <Route path="/manageTheme" element={<ManageColor />} /> */}
 
                     <Route path="/contactinfo" element={<ContactInfoData />} />
                     <Route path="/contactinfo/createContactinfo" element={<CreateContactInfo />} />

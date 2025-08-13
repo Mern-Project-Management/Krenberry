@@ -232,9 +232,9 @@ export const validatePriority = (value) => {
 
 export const validateTitle = (value) => {
   if (!value.trim()) return "Title is required";
-  if (!/^[a-zA-Z0-9\s:,.\-?&]+$/.test(value)) return "Title can only contain letters, numbers, spaces, colons, periods, hyphens, commas, question marks, and ampersands";
   if (value.trim().length < 2) return "Title must be at least 2 characters long";
   if (value.trim().length > 100) return "Title cannot exceed 100 characters";
+  if (/\d/.test(value)) return "Title cannot contain numbers";
   return "";
 };
 
@@ -257,5 +257,13 @@ export const validateDate = (value) => {
 
 export const validateCategoryId = (value) => {
   if (!value) return "Category selection is required";
+  return "";
+};
+
+export const validateCoreValueDescription = (value) => {
+  const text = value.replace(/<[^>]+>/g, "").trim(); // Strip HTML tags
+  if (!text) return "Description is required";
+  if (text.length < 10) return "Description must be at least 10 characters long";
+  if (text.length > 350) return "Description cannot exceed 350 characters";
   return "";
 };

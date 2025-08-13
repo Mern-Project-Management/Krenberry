@@ -400,6 +400,7 @@ const ServicesGrid = () => {
           credentials: "include",
         });
         const data = await response.json();
+        console.log("services",data);
         const transformedData = transformServices(data);
         setServices(transformedData);
       } catch (error) {
@@ -423,6 +424,7 @@ const ServicesGrid = () => {
       image: service.photo ? `/api/logo/download/${service.photo}` : null,
       imgtitle: service.imgtitle || "",
       alt: service.alt || "",
+      slug: service.slug || "",
       bgColor: uniqueColors[index],
     }));
   };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import HeroSection from './AboutUs/HeroSection';
 const PrivacyPolicy = () => {
   const [policyData, setPolicyData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +25,9 @@ const PrivacyPolicy = () => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 mt-40">
+    <>
+    <HeroSection title="Cookie Policy" subtitle="Read our cookie policy" />
+    <div className="content">
       {policyData.map((item) => (
         <div key={item._id} className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{item.title}</h1>
@@ -36,6 +38,7 @@ const PrivacyPolicy = () => {
         </div>
       ))}
     </div>
+    </>
   );
 };
 

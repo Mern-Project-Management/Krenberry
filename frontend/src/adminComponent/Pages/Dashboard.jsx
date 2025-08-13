@@ -227,7 +227,7 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Box 6 */}
-                    <div className="bg-orange-500 border border-gray-300 rounded p-4 text-white flex justify-around" onClick={() => navigate("/banner")}>
+                    <div className="bg-orange-500 border border-gray-300 rounded p-4 text-white flex justify-around" onClick={() => navigate("/policy")}>
                         <div>
 
                             <h3 className="text-4xl font-bold mb-2">{countBanners}</h3>

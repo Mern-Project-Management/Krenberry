@@ -76,7 +76,7 @@ exports.deleteCounter = async (req, res) => {
         fs.unlinkSync(filePath); 
       } else {
 
-        console.warn(`File not found: ${filename}`);
+        console.warn(`File not found: ${counter.photo}`);
       }
 
     const deletedCounter = await Counter.findByIdAndDelete(id);

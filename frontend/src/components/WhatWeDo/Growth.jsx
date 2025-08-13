@@ -46,14 +46,17 @@ const ExpertiseComponent = () => {
       const data = response.data;
 
       // Update the counters state with the fetched data
-      const updatedCounters = data.map(item => ({
-        number: item.no,
-        title: item.title,
-        sign:item.sign,
-        image: `/api/logo/download/${item.photo}`, // Adjust the image path based on your setup
-        alt:item.alt,
-        imgtitle:item.imgtitle
-      }));
+      const updatedCounters = data
+        .filter(item => item.status === "active")
+        .map(item => ({
+          number: item.no,
+          title: item.title,
+          sign: item.sign,
+          image: `/api/logo/download/${item.photo}`,
+          alt: item.alt,
+          imgtitle: item.imgtitle,
+          status: item.status
+        }));
 
       setCounters(updatedCounters);
     } catch (error) {

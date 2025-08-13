@@ -16,6 +16,12 @@ exports.createCoreValue = async (req, res) => {
   const { title, description,alt,imgtitle,status } = req.body;
   const photo = req.files['photo'] ? req.files['photo'].map(file => file.filename) : [];
   try {
+    // Duplicate check (case-insensitive)
+    const existing = await Corevalue.findOne({ title: { $regex: `^${title}$`, $options: 'i' } });
+    if (existing) {
+      return res.status(400).json({ error: 'A core value with this title already exists.' });
+    }
+
     const newCorevalue = new Corevalue({
       title,
       description,
@@ -43,7 +49,16 @@ exports.updateCorevalue = async (req, res) => {
       if (!existingCorevalue) {
         return res.status(404).json({ message: 'Corevalue not found' });
       }
-  
+      // Duplicate check (case-insensitive, exclude self)
+      if (updateFields.title) {
+        const duplicate = await Corevalue.findOne({
+          title: { $regex: `^${updateFields.title}$`, $options: 'i' },
+          _id: { $ne: id }
+        });
+        if (duplicate) {
+          return res.status(400).json({ error: 'A core value with this title already exists.' });
+        }
+      }
       // Process new uploaded photos and their alt texts
       if (req.files && req.files['photo'] && req.files['photo'].length > 0) {
         const newPhotoPaths = req.files['photo'].map(file => file.filename); // Using filename to get the stored file names

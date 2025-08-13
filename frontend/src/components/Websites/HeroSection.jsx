@@ -5,6 +5,11 @@ import "react-quill/dist/quill.snow.css";
 import { FaStarOfLife } from "react-icons/fa6";
 import { X } from "lucide-react";
 import axios from "axios";
+import {
+  validateName,
+  validateEmail,
+  validateMobileNo,
+} from "../../utiles/validations"; // Adjust path to validations.js as needed
 
 const AutocompleteInput = ({
   value,
@@ -14,7 +19,8 @@ const AutocompleteInput = ({
   loading,
   disabled,
   resetKey,
-  fieldName, // Add this prop to specify the actual field name
+  fieldName,
+  error, // Add error prop to display validation messages
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -46,13 +52,18 @@ const AutocompleteInput = ({
         onChange={(e) => {
           setSearch(e.target.value);
           setIsOpen(true);
-          onChange({ target: { name: fieldName, value: e.target.value } }); // Use fieldName instead of placeholder
+          onChange({ target: { name: fieldName, value: e.target.value } });
         }}
         onFocus={() => setIsOpen(true)}
-        placeholder={loading ? "Loading cities..." : placeholder}
+        placeholder={loading ? "Loading..." : placeholder}
         disabled={disabled || loading}
-        className="w-full px-3 py-1 rounded-lg bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-red-400 transition-colors duration-300"
+        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
+          error ? "border-red-500" : "border-white/20"
+        } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
       />
+      {error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
       {isOpen && filteredSuggestions?.length > 0 && (
         <ul className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/20 rounded-lg shadow-lg max-h-40 overflow-auto">
           {filteredSuggestions.map((suggestion, index) => (
@@ -60,7 +71,7 @@ const AutocompleteInput = ({
               key={index}
               className="p-3 hover:bg-white/10 cursor-pointer text-white/90 transition-colors duration-200"
               onClick={() => {
-                onChange({ target: { name: fieldName, value: suggestion } }); // Use fieldName instead of placeholder
+                onChange({ target: { name: fieldName, value: suggestion } });
                 setSearch(suggestion);
                 setIsOpen(false);
               }}
@@ -94,6 +105,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [errors, setErrors] = useState({}); // State for validation errors
   const [category, setCategory] = useState([]);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -101,13 +113,12 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   const [resetKey, setResetKey] = useState(0);
 
   const budgetOptions = [
-  "CAD 165K and Above",
-  "CAD 83K - 165K",
-  "CAD 41K - 83K",
-  "CAD 25K - 41K",
-  "CAD 8K - 25K",
-];
-
+    "CAD 165K and Above",
+    "CAD 83K - 165K",
+    "CAD 41K - 83K",
+    "CAD 25K - 41K",
+    "CAD 8K - 25K",
+  ];
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -147,24 +158,48 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     fetchAllCities();
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {
+      name: validateName(formData.name),
+      email: validateEmail(formData.email),
+      phone: validateMobileNo(formData.phone),
+      // city: validateCategory(formData.city),
+      // service: validateCategory(formData.service),
+      // budget: validateCategory(formData.budget),
+    };
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => !error); // Returns true if no errors
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // Validate on change
+    let error = "";
+    if (name === "name") error = validateName(value);
+    else if (name === "email") error = validateEmail(value);
+    else if (name === "phone") error = validateMobileNo(value);
+    // else if (name === "city") error = validateCategory(value);
+    // else if (name === "service") error = validateCategory(value);
+    // else if (name === "budget") error = validateCategory(value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await onSubmit(formData);
-    setFormData(initialFormState);
-    setResetKey((prev) => prev + 1);
-    setShowSuccessMessage(true);
-    // Hide success message after 5 seconds
-    setTimeout(() => {
-      setShowSuccessMessage(false);
-    }, 5000);
+    if (validateForm()) {
+      await onSubmit(formData);
+      setFormData(initialFormState);
+      setErrors({});
+      setResetKey((prev) => prev + 1);
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+    }
   };
 
   return (
@@ -181,22 +216,26 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       </h3>
 
       {["name", "email", "phone"].map((field) => (
-        <input
-          key={field}
-          name={field}
-          type={
-            field === "email" ? "email" : field === "phone" ? "tel" : "text"
-          }
-          placeholder={
-            field.charAt(0).toUpperCase() +
-            field.slice(1) +
-            (field === "phone" ? " No." : "")
-          }
-          value={formData[field]}
-          onChange={handleInputChange}
-          className="w-full mb-4 px-3 py-1 rounded-lg bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300"
-          required
-        />
+        <div key={field} className="mb-4">
+          <input
+            name={field}
+            type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+            placeholder={
+              field.charAt(0).toUpperCase() +
+              field.slice(1) +
+              (field === "phone" ? " No." : "")
+            }
+            value={formData[field]}
+            onChange={handleInputChange}
+            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
+              errors[field] ? "border-red-500" : "border-white/20"
+            } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+            required
+          />
+          {errors[field] && (
+            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
+          )}
+        </div>
       ))}
 
       <AutocompleteInput
@@ -207,6 +246,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         loading={loadingCities}
         fieldName="city"
         resetKey={resetKey}
+        error={errors.city}
       />
 
       <AutocompleteInput
@@ -216,6 +256,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         placeholder="Service"
         fieldName="service"
         resetKey={resetKey}
+        error={errors.service}
       />
 
       <AutocompleteInput
@@ -225,6 +266,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         placeholder="Your Monthly Budget(CAD)"
         fieldName="budget"
         resetKey={resetKey}
+        error={errors.budget}
       />
 
       <button
@@ -239,7 +281,6 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         {loading ? "Submitting..." : "Let's Connect"}
       </button>
 
-      {/* Success Message */}
       {showSuccessMessage && (
         <div className="mt-4 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
           <div className="flex items-center space-x-2">
@@ -272,7 +313,7 @@ const HeroSection = () => {
   const [utmParams, setUtmParams] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading state for form submission
+  const [loading, setLoading] = useState(false);
 
   const location = useLocation();
 
@@ -280,7 +321,6 @@ const HeroSection = () => {
     const fetchClientIp = async () => {
       try {
         const response = await axios.get("https://api.ipify.org?format=json");
-
         setClientIp(response.data.ip);
       } catch (error) {
         console.error("Error fetching IP address", error);
@@ -321,10 +361,10 @@ const HeroSection = () => {
   }, [location]);
 
   const handleFormSubmit = async (formData) => {
-    setLoading(true); // Set loading to true
+    setLoading(true);
     const completeFormData = {
       ...formData,
-      ipaddress: clientIp, // Add client IP
+      ipaddress: clientIp,
       utmSource: utmParams.utm_source,
       utmMedium: utmParams.utm_medium,
       utmCampaign: utmParams.utm_campaign,
@@ -340,13 +380,13 @@ const HeroSection = () => {
         completeFormData
       );
       setSuccessMessage(response.data.message);
-      setIsMessageVisible(true); // Show success message modal
+      setIsMessageVisible(true);
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("There was an error submitting your form. Please try again.");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -382,7 +422,6 @@ const HeroSection = () => {
   const SkeletonLoader = () => (
     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-between text-white">
       <div className="flex flex-col md:flex-row w-11/12 lg:w-4/5 mx-auto gap-12 py-20">
-        {/* Left Side Skeleton */}
         <div className="md:w-[60%] space-y-6 animate-pulse">
           <div className="h-12 bg-slate-700 rounded-lg w-3/4"></div>
           <div className="h-8 bg-slate-700 rounded-lg w-full"></div>
@@ -390,8 +429,6 @@ const HeroSection = () => {
           <div className="h-8 bg-slate-700 rounded-lg w-4/5"></div>
           <div className="h-8 bg-slate-700 rounded-lg w-2/3"></div>
         </div>
-
-        {/* Right Side Skeleton */}
         <div className="md:w-[25%] animate-pulse">
           <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl space-y-4">
             <div className="h-8 bg-slate-700 rounded-lg"></div>
@@ -413,15 +450,14 @@ const HeroSection = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row  justify-center gap-10 xl:gap-40 w-11/12 pt-16 lg:w-4/5 mx-auto my-32 ">
+      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 pt-16 lg:w-4/5 mx-auto my-32">
         <div className="md:w-[50%] space-y-8">
           <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
-            {/* <span className="h-2 w-2 rounded-full bg-blue-500"></span> */}
-            <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1 ">
+            <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
               Best
             </span>
             <span className="ml-2 text-[16px] text-gray-700 font-semibold">
-            {heroSection.title}
+              {heroSection.title}
             </span>
           </div>
           <ReactQuill
@@ -431,13 +467,13 @@ const HeroSection = () => {
             theme="bubble"
             className="quill-content"
           />
-        <Link to="/contact">
-        <button
-           className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg "
-         >
-           Request Proposal
-         </button>
-        </Link>
+          <Link to="/contact">
+            <button
+              className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+            >
+              Request Proposal
+            </button>
+          </Link>
           <button
             onClick={() => setIsModalOpen(true)}
             className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full"

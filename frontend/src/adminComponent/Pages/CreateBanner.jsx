@@ -128,7 +128,7 @@ const NewBannerForm = () => {
       setStatus("active");
       setPhotoAlts([]);
       setImgtitle([])
-      navigate('/banner')
+      navigate('/policy')
     } catch (error) {
       if (error.response && error.response.status === 400) {
         toast.error(error.response.data.message);
@@ -140,7 +140,7 @@ const NewBannerForm = () => {
   return (
     <form onSubmit={handleSubmit} className="p-4">
       <ToastContainer/>
-      <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Banner</h1>
+      <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Policy</h1>
       <div className="mb-4">
         <label htmlFor="section" className="block font-semibold mb-2">
           Section
@@ -287,7 +287,7 @@ const NewBannerForm = () => {
         </div>
       </div>
       <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
-        Add Banner
+        Add Policy
       </button>
     </form>
   );

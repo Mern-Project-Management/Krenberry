@@ -101,7 +101,7 @@ const EditCategory = () => {
   }, [categoryId, subCategoryId, subSubCategoryId]);
 
   const generateUrl = () => {
-    let baseUrl = "https://rndtechnosoft.com";
+    let baseUrl = "https://krenberry.com";
     if (categoryId && !subCategoryId) {
       return `${baseUrl}/${slug}`;
     } else if (categoryId && subCategoryId) {

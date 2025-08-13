@@ -132,11 +132,12 @@ const TrustedSection = () => {
                   {secondCard.heading}
                 </h3>
                 <Link
-                  href={secondCard.buttonLink}
+                  to={secondCard.buttonLink}
                   className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition duration-300 inline-block"
                 >
                   {secondCard.buttonText}
                 </Link>
+
               </div>
               <img
                 src={secondCard.personImages}

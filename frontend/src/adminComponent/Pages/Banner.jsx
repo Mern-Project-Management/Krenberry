@@ -53,7 +53,7 @@ const BannersTable = () => {
         Cell: ({ row }) => (
           <span
             className="hover:text-blue-500 cursor-pointer"
-            onClick={() => navigate(`/banner/editBanner/${row.original._id}`)}
+            onClick={() => navigate(`/policy/editPolicy/${row.original._id}`)}
           >
             {row.original.priority}
           </span>
@@ -65,7 +65,7 @@ const BannersTable = () => {
         Cell: ({ row }) => (
           <span
             className="hover:text-blue-500 cursor-pointer"
-            onClick={() => navigate(`/banner/editBanner/${row.original._id}`)}
+            onClick={() => navigate(`/policy/editPolicy/${row.original._id}`)}
           >
             {row.original.section}
           </span>
@@ -77,7 +77,7 @@ const BannersTable = () => {
         Cell: ({ row }) => (
           <span
             className="hover:text-blue-500 cursor-pointer"
-            onClick={() => navigate(`/banner/editBanner/${row.original._id}`)}
+            onClick={() => navigate(`/policy/editPolicy/${row.original._id}`)}
           >
             {row.original.title}
           </span>
@@ -106,7 +106,7 @@ const BannersTable = () => {
               <FaEye />
             </button>
             <button className="text-blue-500 hover:text-blue-700 transition">
-              <Link to={`/banner/editBanner/${row.original._id}`}>
+              <Link to={`/policy/editPolicy/${row.original._id}`}>
                 <FaEdit />
               </Link>
             </button>
@@ -243,7 +243,7 @@ const BannersTable = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Banners</h1>
         <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
-          <Link to="/banner/createBanner">
+          <Link to="/policy/createPolicy">
             <FaPlus size={15} />
           </Link>
         </button>

@@ -26,3 +26,7 @@
 .subheading {
   @apply text-xl lg:text-xl text-[#39B54A];
 }
+
+.content {
+  @apply max-w-6xl mx-auto mt-8 p-6;
+}

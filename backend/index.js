@@ -111,6 +111,34 @@ cron.schedule('59 23 31 * *', () => {
     timezone: "Asia/Kolkata"
 });
 
+
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        let filePath = path.join(__dirname, 'dist', 'sitemap.xml'); // Local variable
+      try {
+        // First try in dist directory
+        await fs.access(filePath);
+      } catch (error) {
+        // If not found in dist, try in public directory
+        filePath = path.join(__dirname, 'public', 'sitemap.xml');
+        try {
+          await fs.access(filePath);
+        } catch (err) {
+          console.error('Sitemap not found in either location:', err);
+          return res.status(404).send('Sitemap not found');
+        }
+      }
+      
+      // Read the file
+      const data = await fs.readFile(filePath);
+      res.set('Content-Type', 'application/xml');
+      res.send(data);
+    } catch (err) {
+      console.error('Error serving sitemap:', err);
+      return res.status(500).send('Error serving sitemap');
+    }
+  });
+
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

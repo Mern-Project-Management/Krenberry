@@ -61,9 +61,9 @@ const OurValues = () => {
         </div>
       </div>
 
-      <div className="flex flex-col-reverse md:flex-row justify-around mb-20 md:mb-48 mx-4 sm:mx-8 lg:mx-20">
+      <div className="flex flex-col-reverse md:flex-row justify-around mb-28 mx-6 md:mb-48 lg:mx-10 lg:mb-24 xl:mb-32">
         <div className="flex flex-col gap-6 md:gap-8 w-full md:w-1/2">
-          {values.map((value, index) => (
+          {values.filter(value => value.status === "active").map((value, index) => (
             <div key={value._id} className="bg-light-beige p-4 sm:p-6 rounded-lg bg-white">
               <div className="flex items-center gap-2 mb-4">
                 <p className="py-2 px-4 bg-[#333] rounded-full text-white font-bold text-lg sm:text-xl">
@@ -100,9 +100,9 @@ const OurValues = () => {
       </div>
 
       {/* Shape Divider Bottom */}
-      <div className="absolute inset-x-0 bottom-0">
+      <div className="absolute  inset-x-0 bottom-0">
         <svg
-          className="w-full h-[100px] block"
+          className="w-full relative   md:top-1"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 1000 100"
           preserveAspectRatio="none"

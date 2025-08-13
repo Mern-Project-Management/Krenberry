@@ -19,8 +19,9 @@ import ServiceSlider from "../components/Websites/ServiceSlider";
 export default function Website() {
   return (
     <div>
-      <HeroSection />
+      {/* This is the main component of Service Page */}
       
+      <HeroSection />
       <CraftRight />
       <CraftLeft />
       <LatestProduct />
@@ -37,6 +38,7 @@ export default function Website() {
       <FAQ />
       <BookAcall />
       <LatestBlog />
+      list of items would render here are hero craft righ & left latest Product serviesslider tagline we are expert logo type review companies why partner with us
     </div>
   );
 }

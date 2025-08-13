@@ -64,8 +64,8 @@ export default function Sidebar() {
         { title: "Counter", icon: <GoNumber size={20} />, path: "/counter" },
         // { title: "Mission & Vision", icon: <GoGoal size={20} />, path: "/missionandvision" },
         { title: "Core Value", icon: <IoMdPricetags size={20} />, path: "/corevalue" },
-        { title: "Certificates", icon: <GiAchievement size={20} />, path: "/certificates" },
-        { title: "Our Team", icon: <FaPeopleGroup size={20} />, path: "/ourTeam" },
+        // { title: "Certificates", icon: <GiAchievement size={20} />, path: "/certificates" },
+        // { title: "Our Team", icon: <FaPeopleGroup size={20} />, path: "/ourTeam" },
       ]
     },
     {
@@ -138,11 +138,11 @@ export default function Sidebar() {
     },
     {
       title: "Settings", icon: <IoSettings size={20} />, submenu: [
-        { title: "Menu Listing", icon: <FaListOl size={20} />, path: "/menulisting" },
+        // { title: "Menu Listing", icon: <FaListOl size={20} />, path: "/menulisting" },
         { title: "Manage Section Visibility", icon: < FaEarthAsia size={20} />, path: "/managesectionvisibility" },
         { title: "Manage Theme", icon: <FaCode size={20} />, path: "/manageTheme" },
         { title: "Footer Settings", icon: <AiOutlineVerticalAlignBottom size={20} />, path: "/footer" },
-        { title: "Header Settings", icon: <AiOutlineVerticalAlignTop size={20} />, path: "/header" },
+        // { title: "Header Settings", icon: <AiOutlineVerticalAlignTop size={20} />, path: "/header" },
         { title: "Manage Logo", icon: <FaPager size={20} />, path: "/manageLogo" },
         { title: "Whatsapp Settings", icon: <RiWhatsappFill size={20} />, path: "/whatsappSettings" },
 

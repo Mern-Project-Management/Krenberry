@@ -5,18 +5,29 @@ import "react-quill/dist/quill.snow.css";
 import { FaStarOfLife } from "react-icons/fa6";
 import { X } from "lucide-react";
 import axios from "axios";
+import {
+  validateName,
+  validateEmail,
+  validateMobileNo
+} from "../../utiles/validations"; // Adjust path to validations.js as needed
 
-const AutocompleteInput = ({ 
-  value, 
-  onChange, 
-  suggestions, 
-  placeholder, 
+const AutocompleteInput = ({
+  value,
+  onChange,
+  suggestions,
+  placeholder,
   loading,
-  disabled 
+  disabled,
+  name,
+  error, // Add error prop for validation messages
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    setSearch(value);
+  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -28,9 +39,9 @@ const AutocompleteInput = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredSuggestions = suggestions?.filter(item =>
-    item.toLowerCase().startsWith(search.toLowerCase())
-  ).slice(0, 10);
+  const filteredSuggestions = suggestions
+    ?.filter((item) => item.toLowerCase().startsWith(search.toLowerCase()))
+    .slice(0, 10);
 
   return (
     <div ref={wrapperRef} className="relative mb-4">
@@ -40,13 +51,16 @@ const AutocompleteInput = ({
         onChange={(e) => {
           setSearch(e.target.value);
           setIsOpen(true);
-          onChange({ target: { name: e.target.name, value: e.target.value }});
+          onChange({ target: { name, value: e.target.value } });
         }}
         onFocus={() => setIsOpen(true)}
-        placeholder={loading ? "Loading cities..." : placeholder}
+        placeholder={loading ? "Loading..." : placeholder}
         disabled={disabled || loading}
-        className="w-full px-3 py-1 rounded-lg bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-red-500 transition-colors duration-300"
+        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
+          error ? "border-red-500" : "border-white/20"
+        } text-white placeholder:text-white/50 focus:outline-none focus:border-red-500 transition-colors duration-300`}
       />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
       {isOpen && filteredSuggestions?.length > 0 && (
         <ul className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/20 rounded-lg shadow-lg max-h-40 overflow-auto">
           {filteredSuggestions.map((suggestion, index) => (
@@ -54,7 +68,7 @@ const AutocompleteInput = ({
               key={index}
               className="p-3 hover:bg-white/10 cursor-pointer text-white/90 transition-colors duration-200"
               onClick={() => {
-                onChange({ target: { name: placeholder.toLowerCase(), value: suggestion }});
+                onChange({ target: { name, value: suggestion } });
                 setSearch(suggestion);
                 setIsOpen(false);
               }}
@@ -68,7 +82,6 @@ const AutocompleteInput = ({
   );
 };
 
-
 const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   const initialFormState = {
     name: "",
@@ -76,20 +89,21 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     phone: "",
     service: "",
     budget: "",
-    city: ""
+    city: "",
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [errors, setErrors] = useState({}); // State for validation errors
   const [category, setCategory] = useState([]);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
   const budgetOptions = [
-      "CAD 165K and Above",
-      "CAD 83K - 165K",
-      "CAD 41K - 83K",
-      "CAD 25K - 41K",
-      "CAD 8K - 25K",
+    "CAD 165K and Above",
+    "CAD 83K - 165K",
+    "CAD 41K - 83K",
+    "CAD 25K - 41K",
+    "CAD 8K - 25K",
   ];
 
   useEffect(() => {
@@ -98,7 +112,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         const response = await axios.get(`/api/services/getCategory`, {
           withCredentials: true,
         });
-        setCategory(response.data.map(item => item.category));
+        setCategory(response.data.map((item) => item.category));
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -107,14 +121,13 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     const fetchAllCities = async () => {
       setLoadingCities(true);
       try {
-        const response = await axios.get('https://countriesnow.space/api/v0.1/countries');
+        const response = await axios.get("https://countriesnow.space/api/v0.1/countries");
         const allCities = response.data.data.reduce((acc, country) => {
           if (country.cities) {
             acc.push(...country.cities);
           }
           return acc;
         }, []);
-        // Remove duplicates and sort
         const uniqueCities = [...new Set(allCities)].sort();
         setCities(uniqueCities);
       } catch (error) {
@@ -129,18 +142,43 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     fetchAllCities();
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {
+      name: validateName(formData.name),
+      email: validateEmail(formData.email),
+      phone: validateMobileNo(formData.phone),
+      // city: validateCategory(formData.city),
+      // service: validateCategory(formData.service),
+      // budget: validateCategory(formData.budget),
+    };
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => !error); // Returns true if no errors
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+    // Validate on change
+    let error = "";
+    if (name === "name") error = validateName(value);
+    else if (name === "email") error = validateEmail(value);
+    else if (name === "phone") error = validateMobileNo(value);
+    // else if (name === "city") error = validateCategory(value);
+    // else if (name === "service") error = validateCategory(value);
+    // else if (name === "budget") error = validateCategory(value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await onSubmit(formData);
-    setFormData(initialFormState);
+    if (validateForm()) {
+      await onSubmit(formData);
+      setFormData(initialFormState);
+      setErrors({});
+    }
   };
 
   return (
@@ -157,16 +195,26 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       </h3>
 
       {["name", "email", "phone"].map((field) => (
-        <input
-          key={field}
-          name={field}
-          type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-          placeholder={field.charAt(0).toUpperCase() + field.slice(1) + (field === "phone" ? " No." : "")}
-          value={formData[field]}
-          onChange={handleInputChange}
-          className="w-full mb-4 px-3 py-1 rounded-lg bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-red-500 transition-colors duration-300"
-          required
-        />
+        <div key={field} className="mb-4">
+          <input
+            name={field}
+            type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+            placeholder={
+              field.charAt(0).toUpperCase() +
+              field.slice(1) +
+              (field === "phone" ? " No." : "")
+            }
+            value={formData[field]}
+            onChange={handleInputChange}
+            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
+              errors[field] ? "border-red-500" : "border-white/20"
+            } text-white placeholder:text-white/50 focus:outline-none focus:border-red-500 transition-colors duration-300`}
+            required
+          />
+          {errors[field] && (
+            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
+          )}
+        </div>
       ))}
 
       <AutocompleteInput
@@ -176,6 +224,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         placeholder="City"
         loading={loadingCities}
         name="city"
+        error={errors.city}
       />
 
       <AutocompleteInput
@@ -184,6 +233,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         suggestions={category}
         placeholder="Service"
         name="service"
+        error={errors.service}
       />
 
       <AutocompleteInput
@@ -192,6 +242,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         suggestions={budgetOptions}
         placeholder="Your Monthly Budget(CAD)"
         name="budget"
+        error={errors.budget}
       />
 
       <button
@@ -209,30 +260,28 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   );
 });
 
-
 export default function HeroSection() {
   const [heroSection, setHeroSection] = useState("");
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading state for form submission
+  const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [isMessageVisible, setIsMessageVisible] = useState(false); // State for message visibility
- 
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
 
   useEffect(() => {
     const fetchHeroSection = async () => {
       try {
-        // Extract the last part of the URL
-        const slug = location.pathname.split('/').filter(Boolean).pop();
-
-        // Fetch data from the API using the slug
-        const response = await axios.get(`/api/industiesHeroSection/front/${slug}`, { withCredentials: true });
+        const slug = location.pathname.split("/").filter(Boolean).pop();
+        const response = await axios.get(`/api/industiesHeroSection/front/${slug}`, {
+          withCredentials: true,
+        });
         const heroData = response.data;
         setHeroSection(heroData);
         setTimeout(() => setIsLoading(false), 1000);
       } catch (error) {
         console.error("Error fetching hero section:", error);
+        setIsLoading(false);
       }
     };
 
@@ -240,20 +289,23 @@ export default function HeroSection() {
   }, [location]);
 
   const handleFormSubmit = async (formData) => {
-    setLoading(true); // Set loading to true
+    setLoading(true);
     try {
       const response = await axios.post(
         "/api/herosectioninquiry/createHomesectionInquiry",
         formData
       );
       setSuccessMessage(response.data.message);
-      setIsMessageVisible(true); // Show success message modal
+      setIsMessageVisible(true);
       setIsModalOpen(false);
+      setTimeout(() => {
+        setIsMessageVisible(false);
+      }, 5000);
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("There was an error submitting your form. Please try again.");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -288,27 +340,24 @@ export default function HeroSection() {
 
   const SkeletonLoader = () => (
     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-between text-white">
-    <div className="flex flex-col md:flex-row w-11/12 lg:w-4/5 mx-auto gap-12 py-20">
-      {/* Left Side Skeleton */}
-      <div className="md:w-[60%] space-y-6 animate-pulse">
-        <div className="h-12 bg-slate-700 rounded-lg w-3/4"></div>
-        <div className="h-8 bg-slate-700 rounded-lg w-full"></div>
-        <div className="h-8 bg-slate-700 rounded-lg w-5/6"></div>
-        <div className="h-8 bg-slate-700 rounded-lg w-4/5"></div>
-        <div className="h-8 bg-slate-700 rounded-lg w-2/3"></div>
-      </div>
-
-      {/* Right Side Skeleton */}
-      <div className="md:w-[25%] animate-pulse">
-        <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl space-y-4">
-          <div className="h-8 bg-slate-700 rounded-lg"></div>
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-10 bg-slate-700 rounded-lg"></div>
-          ))}
+      <div className="flex flex-col md:flex-row w-11/12 lg:w-4/5 mx-auto gap-12 py-20">
+        <div className="md:w-[60%] space-y-6 animate-pulse">
+          <div className="h-12 bg-slate-700 rounded-lg w-3/4"></div>
+          <div className="h-8 bg-slate-700 rounded-lg w-full"></div>
+          <div className="h-8 bg-slate-700 rounded-lg w-5/6"></div>
+          <div className="h-8 bg-slate-700 rounded-lg w-4/5"></div>
+          <div className="h-8 bg-slate-700 rounded-lg w-2/3"></div>
+        </div>
+        <div className="md:w-[25%] animate-pulse">
+          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl space-y-4">
+            <div className="h-8 bg-slate-700 rounded-lg"></div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-10 bg-slate-700 rounded-lg"></div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 
   if (isLoading) return <SkeletonLoader />;
@@ -320,7 +369,7 @@ export default function HeroSection() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row  justify-center gap-10 xl:gap-40 w-11/12 lg:w-4/5 mx-auto pt-44 ">
+      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 lg:w-4/5 mx-auto pt-44">
         <div className="md:w-[50%] space-y-8">
           <ReactQuill
             readOnly={true}
@@ -329,7 +378,6 @@ export default function HeroSection() {
             theme="bubble"
             className="quill-content"
           />
-
           <button
             onClick={() => setIsModalOpen(true)}
             className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full"

@@ -9,21 +9,20 @@ const RatingStars = ({ rating }) => {
 
   for (let i = 0; i < totalStars; i++) {
     if (i < Math.floor(rating)) {
-      stars.push(<IoStarSharp key={i} />);
+      stars.push(<IoStarSharp key={i} className="text-yellow-300 w-6 h-6" />);
     } else if (i < rating) {
-      stars.push(<IoStarHalfSharp key={i} />);
+      stars.push(<IoStarHalfSharp key={i} className="text-yellow-300 w-6 h-6" />);
     } else {
-      stars.push(<IoStarOutline key={i} />);
+      stars.push(<IoStarOutline key={i} className="text-yellow-300 w-6 h-6" />);
     }
   }
 
-  return <div className="flex text-yellow-300 text-3xl">{stars}</div>;
+  return <div className="flex items-center">{stars}</div>;
 };
 
 export default function HeroSection({ serviceGridRef }) {
   const [heroSection, setHeading] = useState("");
   const [rating, setRating] = useState(null);
-
   const location = useLocation();
 
   useEffect(() => {
@@ -41,7 +40,6 @@ export default function HeroSection({ serviceGridRef }) {
       try {
         const response = await axios.get('/api/testimonial/getTestimonialRating', { withCredentials: true });
         const { averageRating } = response.data;
-        // Ensure averageRating is a number
         setRating(Number(averageRating) || 0);
       } catch (error) {
         console.error(error);
@@ -59,15 +57,18 @@ export default function HeroSection({ serviceGridRef }) {
   };
 
   return (
-    <div className="bg-[#333] flex flex-col items-center justify-center text-center pt-44 pb-16 p-6">
-      <h2 className="text-white text-6xl md:text-4xl lg:text-7xl font-serif mb-3">
-        {heroSection}
-      </h2>
-      {rating !== null && (
-        <div className="mt-4 lg:flex items-center gap-4 font-bold ">
-          <RatingStars rating={rating} />  <p className="text-white text-2xl mt-2">{rating.toFixed(1)} out of 5</p>
-        </div>
-      )}
+    <div className="flex flex-col items-center justify-center py-24 md:pt-36 pb-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="text-center mx-4 md:mx-10 lg:mx-20">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7 font-serif">
+          {heroSection || "Testimonials"}
+        </h1>
+        {rating !== null && (
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <RatingStars rating={rating} />
+            <p className="text-white text-lg md:text-xl font-medium">{rating.toFixed(1)} out of 5</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -38,24 +38,24 @@ const Banner = () => {
     fetchHeadings();
   }, []);
   return (
-    <div className="relative bg-gradient-to-r from-[#ec2127] to-black h-80 md:h-[70vh] leading-none overflow-hidden">
+    <div className="relative bg-gradient-to-r from-[#ec2127] to-black h-[50vh] leading-none overflow-hidden">
       <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative h-full flex items-center justify-center px-4">
+      <div className="relative h-full flex items-center justify-center px-4 mt-10 lg:mt-14">
         <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-semibold text-white mb-4">
+          <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7">
             {heading}
           </h1>
-          <p className="text-xl md:text-2xl text-red-100 font-semibold">
+          <p className="text-gray-300 text-lg md:text-xl lg:text-2xl mb-6">
             {subheading}
           </p>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 -mb-[1px]">
+      <div className="absolute bottom-0 left-0 right-0 -mb-[24px]">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
           <path
             fill="#f3f4f6"
             fillOpacity="1"
-            d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,235,864,250.7C960,267,1056,245,1152,224C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            d="M0,300L48,295C96,290,192,280,288,265C384,250,480,230,576,240C672,250,768,275,864,280C960,285,1056,270,1152,255C1248,240,1344,225,1392,218L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
           ></path>
         </svg>
       </div>
@@ -436,7 +436,7 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
             <textarea
               name="message"
               value={message}
-              onChange={handleMessageChange}
+              onChange={handleMessageChange}  
               className={`w-full p-2 border rounded-lg ${messageError ? "border-red-500" : ""}`}
               maxLength={500}
             />

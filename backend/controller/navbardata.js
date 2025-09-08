@@ -88,13 +88,13 @@ console.log(sortedPackageCategories)
         component: 'MainService',
         subItems: formatCategories(sortedServiceCategories, '2'), // Use sortedServiceCategories
       },
-      {
-        id: '3',
-        name: 'Packages',
-        slug: 'website-packages',
-        component: 'MainPackage',
-        subItems: formatCategories(sortedPackageCategories, '3'), // Use sortedPackageCategories
-      },
+      // {
+      //   id: '3',
+      //   name: 'Packages',
+      //   slug: 'website-packages',
+      //   component: 'MainPackage',
+      //   subItems: formatCategories(sortedPackageCategories, '3'), // Use sortedPackageCategories
+      // },
       {
         id: '4',
         name: 'Industries',

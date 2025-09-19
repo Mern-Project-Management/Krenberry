@@ -342,12 +342,12 @@ const TestimonialsTable = () => {
               </div>
             </div>
           )}
-          <button
+          {/* <button
             onClick={closeModal}
             className="mt-4 px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 absolute"
           >
             Close
-          </button>
+          </button> */}
         </div>
       </Modal>
     </div>

@@ -34,8 +34,6 @@ const sections = [
   { value: "Collaborationinquiries", label: "Collaboration inquiries" },
 ];
 
-
-
 const NewBannerForm = () => {
   const [section, setSection] = useState("Privacy Policy");
   const [title, setTitle] = useState("");
@@ -44,12 +42,9 @@ const NewBannerForm = () => {
   const [photoAlts, setPhotoAlts] = useState([]);
   const [imgtitle,setImgtitle] = useState([])
   const [status, setStatus] = useState("active");
-  const [priorityOptions, setPriorityOptions] = useState([]);
-  const [selectedPriority, setSelectedPriority] = useState(1); // State to hold selected priority
+  const [priority, setPriority] = useState(0);
 
   const navigate = useNavigate();
-
-
 
   const handlePhotoChange = (e) => {
     const files = Array.from(e.target.files); // Convert FileList to array
@@ -68,26 +63,6 @@ const NewBannerForm = () => {
   };
 
 
-  const fetchPriorityOptions = async (section) => {
-    try {
-        const response = await axios.get(`/api/banner/getCountBySection?section=${section}`, { withCredentials: true });
-        const count = response.data;
-        if (count > 0) {
-            const options = Array.from({ length: count + 1 }, (_, i) => i + 1);
-            setPriorityOptions(options);
-        } else {
-            setPriorityOptions([1]);
-        }
-    } catch (error) {
-        console.error(error);
-        setPriorityOptions([1]);
-    }
-  };
-
-  useEffect(() => {
-    fetchPriorityOptions(section);
-  }, [section]); 
-
   const handleDeleteImage = (index) => {
     setPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
     setPhotoAlts((prevPhotoAlts) => prevPhotoAlts.filter((_, i) => i !== index));
@@ -104,7 +79,7 @@ const NewBannerForm = () => {
       formData.append('title', title);
       formData.append('details', details);
       formData.append('status', status);
-      formData.append('priority', selectedPriority);
+      formData.append('priority', Number(priority));
       photos.forEach((photo, index) => {
         formData.append(`photo`, photo);
         formData.append(`alt`, photoAlts[index]);
@@ -126,6 +101,7 @@ const NewBannerForm = () => {
       setDetails("");
       setPhotos([]);
       setStatus("active");
+      setPriority(0);
       setPhotoAlts([]);
       setImgtitle([])
       navigate('/policy')
@@ -143,7 +119,7 @@ const NewBannerForm = () => {
       <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Policy</h1>
       <div className="mb-4">
         <label htmlFor="section" className="block font-semibold mb-2">
-          Section
+          Section <span className="text-red-500">*</span>
         </label>
         <select
           value={section}
@@ -158,7 +134,7 @@ const NewBannerForm = () => {
       </div>
       <div className="mb-4">
         <label htmlFor="title" className="block font-semibold mb-2">
-          Title</label>
+          Title <span className="text-red-500">*</span></label>
         <input
           type="text"
           id="title"
@@ -170,18 +146,35 @@ const NewBannerForm = () => {
       </div>
       <div className="mb-8">
                 <label htmlFor="details" className="block font-semibold mb-2">
-                    Description
+                    Description <span className="text-red-500">*</span>
                 </label>
                 <ReactQuill
                     value={details}
                     onChange={setDetails}
                     modules={modules} // Include modules for image handling
                     className="quill"
+                    style={{ height: '150px', marginBottom: '5rem' }}
                 />
             </div>
+      <div className="mb-1zzzzzzzzzz">
+        <label htmlFor="priority" className="block font-semibold mb-2">
+          Priority (0 to 1) <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="priority"
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+          className="w-full p-2 border rounded focus:outline-none"
+          required
+        />
+      </div>
       <div className="mt-12">
         <label htmlFor="photo" className="block font-semibold mb-2">
-          Photos
+          Photos <span className="text-red-500">*</span>  
         </label>
         <input
           type="file"
@@ -241,24 +234,6 @@ const NewBannerForm = () => {
           </div>
         )}
       </div>
-      <div className="mb-4">
-                <label htmlFor="priority" className="block font-semibold mb-2">
-                    Priority
-                </label>
-                <select
-                    id="priority"
-                    className="w-full p-2 border rounded focus:outline-none"
-                    value={selectedPriority}
-                    onChange={(e) => setSelectedPriority(parseInt(e.target.value))}
-                    required
-                >
-                    {priorityOptions.map(option => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
-            </div>
       <div className="mb-4">
         <label htmlFor="status" className="block font-semibold mb-2">
           Status

@@ -181,13 +181,13 @@ useEffect(() => {
               alt={altText}
               className="h-32 w-56 object-cover"
             />
-            <button
+            {/* <button
               type="button"
               onClick={handleDeleteImage}
               className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 size-6 flex items-center justify-center hover:bg-red-600 focus:outline-none"
             >
               X
-            </button>
+            </button> */}
             <div className="mb-4">
           <label htmlFor="alt" className="block font-semibold mb-2">Alternative Text</label>
           <input

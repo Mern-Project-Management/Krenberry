@@ -5,6 +5,11 @@ const fs=require("fs")
 // Create a new Counter
 exports.createCounter = async (req, res) => {
   try {
+    // Enforce a maximum of 6 counters
+    const existingCount = await Counter.countDocuments();
+    if (existingCount >= 6) {
+      return res.status(400).json({ error: 'Maximum of 6 counters allowed. Delete an existing one to add a new counter.' });
+    }
     const { title, no, sign,status,alt,imgtitle } = req.body;
     const photo = req.file.filename
     const newCounter = new Counter({ title, sign,no,photo,alt,imgtitle,status });

@@ -52,7 +52,7 @@ const ExpertiseComponent = () => {
           number: item.no,
           title: item.title,
           sign: item.sign,
-          image: `/api/logo/download/${item.photo}`,
+          image: `/api/icon/download/${item.photo}`,
           alt: item.alt,
           imgtitle: item.imgtitle,
           status: item.status

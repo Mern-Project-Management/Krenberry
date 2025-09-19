@@ -1,6 +1,7 @@
 const IndustriesCategory = require("../model/industriescategory");
 const fs = require('fs');
 const path = require('path');
+const Service = require("../model/service");
 
 const deleteFile = (filePath) => {
   fs.unlink(filePath, (err) => {
@@ -263,35 +264,27 @@ const updatesubsubcategory = async (req, res) => {
 
 const deletecategory = async (req, res) => {
   const { id } = req.query;
-
+console.log(id);
   try {
     // Find the category by its ID
     const category = await IndustriesCategory.findById(id);
-
-    // Check if the category exists
+console.log(category);
+    // If not found, treat as idempotent delete to avoid noisy errors on double requests
     if (!category) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(200).json({ message: 'Category not found or already deleted' });
     }
 
     // Check if there are subcategories or sub-subcategories
-    const hasSubcategories = category.subCategories.length > 0;
-    const hasSubSubcategories = category.subCategories.some(subCat => subCat.subSubCategory.length > 0);
+    const hasSubcategories = Array.isArray(category.subCategories) && category.subCategories.length > 0;
+    const hasSubSubcategories = Array.isArray(category.subCategories) && category.subCategories.some(subCat => Array.isArray(subCat.subSubCategory) && subCat.subSubCategory.length > 0);
 
     if (hasSubcategories || hasSubSubcategories) {
       return res.status(400).json({ message: 'Category has associated subcategories or sub-subcategories and cannot be deleted' });
     }
-
-    
-    // const photoPath = path.join(__dirname, '../logos', category.photo);
-    // deleteFile(photoPath);
-
     // Proceed to delete the category
     const deletedCategory = await IndustriesCategory.findByIdAndDelete(id);
-
-    if (!deletedCategory) {
-      return res.status(404).json({ message: 'Category not found' });
-    }
-
+console.log(deletedCategory);
+   
     // Find and update all services that reference this category, removing the category reference
     await Service.updateMany(
       { categories: id },
@@ -300,6 +293,7 @@ const deletecategory = async (req, res) => {
 
     res.status(200).json({ message: 'Category deleted successfully and references removed from services' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: 'Server error', error });
   }
 };

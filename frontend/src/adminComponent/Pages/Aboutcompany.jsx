@@ -414,7 +414,7 @@ const VisionForm = () => {
                     type="submit"
                     className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
                 >
-                    Update Service
+                    Update About Company Info
                 </button>
             </form>
         </div>

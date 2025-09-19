@@ -7,8 +7,6 @@ const { requireAuth } = require('../middleware/authmiddleware');
 const {uploadfiles} = require('../middleware/files');
 const {uploadLogo}=require("../middleware/logoUpload")
 
-
-
 router.post('/insertCategory',requireAuth,uploadLogo,insertCategory)
 router.post('/insertSubCategory',requireAuth,uploadLogo,insertSubCategory)
 router.post('/insertSubSubCategory',requireAuth,uploadLogo,insertSubSubCategory)

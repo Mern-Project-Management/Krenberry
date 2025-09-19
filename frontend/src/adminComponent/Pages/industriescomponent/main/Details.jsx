@@ -36,9 +36,8 @@ const IndustriessTable = ({ categoryId ,subcategoryId,subsubcategoryId}) => {
           <span
             className="hover:text-blue-500 cursor-pointer"
             onClick={() => navigate(`/industries/editIndustries/${row.original._id}`)}
-          >
-            {row.original.heading}
-          </span>
+            dangerouslySetInnerHTML={{ __html: row.original.heading }}
+          />
         ),
       },
       {
@@ -145,7 +144,7 @@ const IndustriessTable = ({ categoryId ,subcategoryId,subsubcategoryId}) => {
       <ToastContainer />
 
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold font-serif text-gray-700 uppercase">Industriess</h1>
+        <h1 className="text-xl font-bold font-serif text-gray-700 uppercase">Industries</h1>
         <Link to={`/industries/createIndustries/${categoryId}`} className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
           <FaPlus size={15} />
         </Link>
@@ -193,7 +192,7 @@ const IndustriessTable = ({ categoryId ,subcategoryId,subsubcategoryId}) => {
 
       {/* Modal for viewing Industries details */}
       <Modal isOpen={isModalOpen} onRequestClose={closeModal}>
-        <h2 className="text-xl font-bold">{selectedIndustries?.heading}</h2>
+        <h2 className="text-xl font-bold" dangerouslySetInnerHTML={{ __html: selectedIndustries?.heading || '' }} />
         <div dangerouslySetInnerHTML={{ __html: selectedIndustries?.description }} />
         <h3 className="font-bold mt-4">Questions</h3>
         <ul>

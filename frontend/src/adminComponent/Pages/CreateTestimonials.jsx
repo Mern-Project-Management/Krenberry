@@ -117,7 +117,7 @@ const NewTestimonialForm = () => {
       setVideotitle("")
       setStatus(true);
       setPhotoAlts([]);
-      navigate('/services');
+      navigate('/testimonials');
     } catch (error) {
       console.error(error);
     }

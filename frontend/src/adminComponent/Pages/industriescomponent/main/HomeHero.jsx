@@ -117,14 +117,14 @@ const HeroSection = ({ categoryId }) => {
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">
               Middle Tagline
             </label>
-            <input
-              type="text"
+            <textarea
               name="subheading"
               value={subheading}
               onChange={handleInputChange}
               disabled={loading}
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
               placeholder="Enter subheading"
+              rows={4}
             />
           </div>
         </div>

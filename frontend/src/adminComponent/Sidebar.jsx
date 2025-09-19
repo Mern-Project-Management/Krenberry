@@ -50,13 +50,10 @@ export default function Sidebar() {
       title: "Home", icon: <FaHome size={20} />, submenu: [
         { title: "Hero Section", icon: <GiVerticalBanner size={20} />, path: "/homehero" },
         { title: "Testimonials", icon: <FaPager size={20} />, path: "/testimonials" },
-        { title: "Extra Pages", icon: <RiPagesFill size={20} />, path: "/extrapages" },
         
+        { title: "Extra Pages", icon: <RiPagesFill size={20} />, path: "/extrapages" },
+        { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
       ]
-    },
-    { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
-    {
-      title:"Policy",icon:<GiVerticalBanner size={20}/>,path:"/policy"
     },
     {
       title: "About us", icon: <BsFillPersonLinesFill size={20} />, submenu: [
@@ -68,6 +65,11 @@ export default function Sidebar() {
         // { title: "Our Team", icon: <FaPeopleGroup size={20} />, path: "/ourTeam" },
       ]
     },
+   
+    {
+      title:"Policy",icon:<GiVerticalBanner size={20}/>,path:"/policy"
+    },
+   
     {
       title: "Career", icon: <FaGraduationCap size={20} />, submenu: [
         { title: "Career Options", icon: <FaEnvelopeOpenText size={20} />, path: "/careeroption" },

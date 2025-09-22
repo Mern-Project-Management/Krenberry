@@ -8,10 +8,10 @@ const getFormattedCategoriesFromAllSchemas = async () => {
   try {
     // Fetch data from all schemas
     // const newsCategories = await NewsCategory.find().lean();
-    const serviceCategories = await ServiceCategory.find().lean();
-    const packageCategories = await PackageCategory.find().lean();
-    const portfolioCategories = await PortfolioCategory.find().lean();
-    const industryCategories = await Industriescategory.find().lean();
+    const serviceCategories = await ServiceCategory.find({status:"active"}).lean();
+    const packageCategories = await PackageCategory.find({status:"active"}).lean();
+    const portfolioCategories = await PortfolioCategory.find({status:"active"}).lean();
+    const industryCategories = await Industriescategory.find({status:"active"}).lean();
 
     // Sort serviceCategories to prioritize "Graphic Designing"
     const sortedServiceCategories = serviceCategories.sort((a, b) => {
@@ -33,31 +33,41 @@ const getFormattedCategoriesFromAllSchemas = async () => {
 console.log(sortedPackageCategories)
     // Recursive function to format the categories into the desired structure
     const formatCategories = (items, parentId = '', parentName = '') => {
-      return items.map((item, index) => {
-        const id = parentId ? `${parentId}-${index + 1}` : `${index + 1}`;
-        const formattedItem = {
-          id,
-          name: item.category || parentName, // Use 'category' as the main name
-          slug: item.slug,
-          component: item.component || 'DefaultComponent', // Fallback to 'DefaultComponent' if undefined
-        };
+      return items
+        .filter(item => item && item.status === 'active')  // Only include active items
+        .map((item, index) => {
+          const id = parentId ? `${parentId}-${index + 1}` : `${index + 1}`;
+          const formattedItem = {
+            id,
+            name: item.category || parentName,
+            slug: item.slug,
+            component: item.component || 'DefaultComponent',
+          };
 
-        // Check for sub-items and format them recursively
-        if (item.subCategories && item.subCategories.length > 0) {
-          formattedItem.subItems = formatCategories(item.subCategories, id, item.category);
-        }
-        if (item.subSubCategory && item.subSubCategory.length > 0) {
-          if (!formattedItem.subItems) {
-            formattedItem.subItems = [];
+          // Filter and process subCategories (only active ones)
+          if (item.subCategories && Array.isArray(item.subCategories)) {
+            const activeSubs = item.subCategories.filter(sub => sub && sub.status === 'active');
+            if (activeSubs.length > 0) {
+              formattedItem.subItems = formatCategories(activeSubs, id, item.category);
+            }
           }
-          formattedItem.subItems = [
-            ...formattedItem.subItems,
-            ...formatCategories(item.subSubCategory, id, item.category),
-          ];
-        }
 
-        return formattedItem;
-      });
+          // Filter and process subSubCategory (only active ones)
+          if (item.subSubCategory && Array.isArray(item.subSubCategory)) {
+            const activeSubSubs = item.subSubCategory.filter(sub => sub && sub.status === 'active');
+            if (activeSubSubs.length > 0) {
+              if (!formattedItem.subItems) {
+                formattedItem.subItems = [];
+              }
+              formattedItem.subItems = [
+                ...(formattedItem.subItems || []),
+                ...formatCategories(activeSubSubs, id, item.category),
+              ];
+            }
+          }
+
+          return formattedItem;
+        });
     };
 
     const formatPortfolioCategories = (items, parentId = '', parentName = '') => {

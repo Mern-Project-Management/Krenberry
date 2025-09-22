@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { FaLinkedin, FaInstagram, FaGoogle, FaBehance, FaPaperPlane } from 'react-icons/fa';
+import { FaLinkedin, FaInstagram, FaGoogle, FaBehance, FaPaperPlane, FaPlus, FaMinus } from 'react-icons/fa';
 import { validateName, validateEmail } from '../utiles/validations';
 
 const Footer = () => {
@@ -123,51 +123,58 @@ const Footer = () => {
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h4 className="font-bold text-lg mb-3 text-gray-800 text-center">
+            <div className="bg-white p-5 sm:p-10 rounded-xl shadow-sm border border-gray-100  w-full">
+              <h4 className="font-bold text-lg sm:text-xl mb-3 sm:mb-4 text-gray-800">
                 Weekly Design Juice
               </h4>
-              <p className="text-gray-600 text-sm mb-4 leading-relaxed text-center">
+              <p className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-5 leading-relaxed">
                 Subscribe to get weekly updates on design trends and inspiration.
               </p>
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                <div>
                 <input
                   type="text"
                   name="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm 
-                    focus:outline-none focus:border-[#ec2127] focus:ring-2 focus:ring-[#ec2127]/20 
-                    transition-all duration-300 bg-gray-50 hover:bg-white"
+                  onChange={handleNameChange}
+                  className={`w-full px-4 py-3.5 border rounded-lg text-base 
+                    focus:outline-none focus:ring-2 transition-all duration-300 bg-gray-50 hover:bg-white
+                    ${errors.name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-[#ec2127] focus:ring-[#ec2127]/20"}`}
                   placeholder="Your Name"
                   required
                 />
+                {errors.name && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.name}</p>}
+              </div>
+
+              <div>
                 <input
                   type="email"
                   name="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm 
-                    focus:outline-none focus:border-[#ec2127] focus:ring-2 focus:ring-[#ec2127]/20 
-                    transition-all duration-300 bg-gray-50 hover:bg-white"
+                  onChange={handleEmailChange}
+                  className={`w-full px-4 py-3.5 border rounded-lg text-base 
+                    focus:outline-none focus:ring-2 transition-all duration-300 bg-gray-50 hover:bg-white
+                    ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-[#ec2127] focus:ring-[#ec2127]/20"}`}
                   placeholder="Your Email"
                   required
                 />
+                {errors.email && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>}
+              </div>
                 <button
                   type="submit"
-                  className={`w-full px-4 py-3 bg-[#ec2127] text-white rounded-lg 
+                  className={`w-full px-4 py-3.5 bg-[#ec2127] text-white rounded-lg 
                     hover:bg-red-600 hover:shadow-lg active:transform active:scale-95
                     transition-all duration-300 flex items-center justify-center space-x-2 
-                    text-sm font-medium shadow-sm
+                    text-base font-medium shadow-sm
                     ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                   disabled={loading}
                 >
                   <span>{loading ? 'Subscribing...' : 'Subscribe Now'}</span>
-                  {!loading && <FaPaperPlane className="w-4 h-4" />}
+                  {!loading && <FaPaperPlane className="w-5 h-5" />}
                 </button>
               </form>
               {message && (
-                <div className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium ${
+                <div aria-live="polite" className={`mt-3 sm:mt-4 px-4 py-3 rounded-lg text-sm sm:text-base font-medium ${
                   message.includes('successfully') 
                     ? 'bg-green-50 text-green-700 border border-green-200' 
                     : 'bg-red-50 text-red-700 border border-red-200'
@@ -181,17 +188,17 @@ const Footer = () => {
               {/* Services Section */}
               <div>
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-base uppercase text-gray-800">Services</h4>
+                  <h4 className="font-semibold text-base uppercase text-gray-800">Services</h4>
                   <button
                     onClick={() => toggleSection('services')}
-                    className="flex items-center justify-center text-gray-800 hover:text-[#ec2127] 
-                      transition-colors duration-300 text-lg font-bold"
+                    className="flex items-center justify-center text-gray-800
+                      transition-colors duration-300 text-lg font-medium"
                   >
-                    <span className="relative inline-block w-5 h-5">
-                      <span className={`absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2 
-                        transition-transform duration-300 ${openSections.services ? 'rotate-0' : 'rotate-90'}`}></span>
-                      <span className="absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2"></span>
-                    </span>
+                    {openSections.services ? (
+                      <FaMinus className="w-5 h-5" />
+                    ) : (
+                      <FaPlus className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out 
@@ -201,7 +208,7 @@ const Footer = () => {
                       <li key={index}>
                         <Link 
                           to={`/${service.slug}`} 
-                          className="text-gray-600 text-sm hover:text-[#ec2127] transition-colors duration-300"
+                          className="text-gray-600 text-md hover:text-[#ec2127] transition-colors duration-300"
                         >
                           {service.name}
                         </Link>
@@ -214,17 +221,17 @@ const Footer = () => {
               {/* About Section */}
               <div>
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-base uppercase text-gray-800">About</h4>
+                  <h4 className="font-medium text-base uppercase text-gray-800">About</h4>
                   <button
                     onClick={() => toggleSection('about')}
                     className="flex items-center justify-center text-gray-800 hover:text-[#ec2127] 
-                      transition-colors duration-300 text-lg font-bold"
+                      transition-colors duration-300 text-lg font-medium"
                   >
-                    <span className="relative inline-block w-5 h-5">
-                      <span className={`absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2 
-                        transition-transform duration-300 ${openSections.about ? 'rotate-0' : 'rotate-90'}`}></span>
-                      <span className="absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2"></span>
-                    </span>
+                    {openSections.about ? (
+                      <FaMinus className="w-5 h-5" />
+                    ) : (
+                      <FaPlus className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out 
@@ -234,7 +241,7 @@ const Footer = () => {
                       <li key={index}>
                         <Link 
                           to={link.path} 
-                          className="text-gray-600 text-sm hover:text-[#ec2127] transition-colors duration-300"
+                          className="text-gray-600 text-md hover:text-[#ec2127] transition-colors duration-300"
                         >
                           {link.name}
                         </Link>
@@ -247,17 +254,17 @@ const Footer = () => {
               {/* Legal Section */}
               <div>
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-base uppercase text-gray-800">Legal</h4>
+                  <h4 className="font-medium text-md uppercase text-gray-800">Legal</h4>
                   <button
                     onClick={() => toggleSection('legal')}
                     className="flex items-center justify-center text-gray-800 hover:text-[#ec2127] 
-                      transition-colors duration-300 text-lg font-bold"
+                      transition-colors duration-300 text-lg font-medium"
                   >
-                    <span className="relative inline-block w-5 h-5">
-                      <span className={`absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2 
-                        transition-transform duration-300 ${openSections.legal ? 'rotate-0' : 'rotate-90'}`}></span>
-                      <span className="absolute w-5 h-1 bg-gray-800 top-1/2 transform -translate-y-1/2"></span>
-                    </span>
+                    {openSections.legal ? (
+                      <FaMinus className="w-4 h-4" />
+                    ) : (
+                      <FaPlus className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out 
@@ -267,7 +274,7 @@ const Footer = () => {
                       <li key={index}>
                         <Link 
                           to={link.path} 
-                          className="text-gray-600 text-sm hover:text-[#ec2127] transition-colors duration-300"
+                          className="text-gray-600 text-md hover:text-[#ec2127] transition-colors duration-300"
                         >
                           {link.name}
                         </Link>
@@ -349,7 +356,7 @@ const Footer = () => {
               </div>
               <div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                  <h4 className="font-bold text-xl mb-4 text-gray-800">
+                  <h4 className="font-bold text-lg mb-4 text-gray-800">
                     Weekly Design Juice
                   </h4>
                   <p className="text-gray-600 text-sm mb-5 leading-relaxed">
@@ -362,8 +369,9 @@ const Footer = () => {
                       name="name"
                       value={name}
                       onChange={handleNameChange}
-                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border rounded-lg text-sm md:text-base 
-                        focus:outline-none focus:ring-2 transition-all duration-300 bg-gray-50 hover:bg-white
+                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border border-gray-200 rounded-lg text-sm md:text-base 
+                        focus:outline-none focus:border-[#ec2127] focus:ring-2 focus:ring-[#ec2127]/20 
+                        transition-all duration-300 bg-gray-50 hover:bg-white
                         ${errors.name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-[#ec2127] focus:ring-[#ec2127]/20"}`}
                       placeholder="Your Name"
                       required
@@ -377,8 +385,9 @@ const Footer = () => {
                       name="email"
                       value={email}
                       onChange={handleEmailChange}
-                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border rounded-lg text-sm md:text-base 
-                        focus:outline-none focus:ring-2 transition-all duration-300 bg-gray-50 hover:bg-white
+                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border border-gray-200 rounded-lg text-sm md:text-base 
+                        focus:outline-none focus:border-[#ec2127] focus:ring-2 focus:ring-[#ec2127]/20 
+                        transition-all duration-300 bg-gray-50 hover:bg-white
                         ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-[#ec2127] focus:ring-[#ec2127]/20"}`}
                       placeholder="Your Email"
                       required
@@ -399,7 +408,7 @@ const Footer = () => {
                     </button>
                   </form>
                   {message && (
-                    <div className={`mt-4 px-4 py-3 rounded-lg text-sm font-medium ${
+                    <div className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium ${
                       message.includes('successfully') 
                         ? 'bg-green-50 text-green-700 border border-green-200' 
                         : 'bg-red-50 text-red-700 border border-red-200'
@@ -429,7 +438,7 @@ const Footer = () => {
                     ) : null}
                   </Link>
                   <div className="flex-1 flex flex-col justify-between">
-                    <p className="text-sm md:text-sm text-gray-600 leading-relaxed mb-4">
+                    <p className="text-sm md:text-md text-justify text-gray-600 leading-relaxed mb-4">
                       {footerData.description}
                     </p>
                   </div>
@@ -491,7 +500,7 @@ const Footer = () => {
               </div>
 
               <div className="col-span-3 md:col-span-3 lg:col-span-2">
-                <div className="bg-white px-6 md:px-0 md:py-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white px-6 md:px-5 md:py-4 rounded-xl shadow-sm border border-gray-100">
                   <h4 className="font-bold text-lg md:text-xl mb-4 md:mb-6 text-gray-800">
                     Weekly Design Juice
                   </h4>

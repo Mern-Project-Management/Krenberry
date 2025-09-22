@@ -11,6 +11,7 @@ const HeroSection = ({ categoryId }) => {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const notifySuccess = useCallback(() => {
     toast.success("Updated Successfully!");
@@ -35,6 +36,22 @@ const HeroSection = ({ categoryId }) => {
     },
   };
 
+  // Helper to strip HTML from ReactQuill value
+  const stripHtml = (html) =>
+    (html || "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+
+  // Validate all required fields
+  const validate = () => {
+    const newErrors = {};
+    if (!title.trim()) newErrors.title = "Tagline is required";
+    if (!stripHtml(heading)) newErrors.heading = "Paragraph is required";
+    if (!subheading.trim()) newErrors.subheading = "Middle Tagline is required";
+    return newErrors;
+  };
+
   // Fetch headings from the API
   const fetchHeadings = useCallback(async () => {
     setLoading(true);
@@ -47,11 +64,14 @@ const HeroSection = ({ categoryId }) => {
       setHeading(heading);
       setTitle(title);
       setSubheading(subheading);
+      setErrors({});
     } catch (error) {
       console.error(error);
       setError("Failed to fetch headings. Please try again later.");
       setHeading("");
       setSubheading("");
+      setTitle("");
+      setErrors({});
     } finally {
       setLoading(false);
     }
@@ -59,8 +79,15 @@ const HeroSection = ({ categoryId }) => {
 
   // Save headings to the API
   const saveHeadings = async () => {
-    setLoading(true);
     setError("");
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+
+    setLoading(true);
     try {
       await axios.put(
         `/api/herosection/main/${categoryId}`,
@@ -85,11 +112,20 @@ const HeroSection = ({ categoryId }) => {
     const { name, value } = e.target;
     if (name === "heading") {
       setHeading(value);
+      setErrors((prev) => ({ ...prev, heading: stripHtml(value) ? "" : prev.heading }));
     } else if (name === "subheading") {
       setSubheading(value);
+      setErrors((prev) => ({ ...prev, subheading: value.trim() ? "" : prev.subheading }));
     } else if (name === "title") {
       setTitle(value);
+      setErrors((prev) => ({ ...prev, title: value.trim() ? "" : prev.title }));
     }
+  };
+
+  // Separate handler for ReactQuill
+  const handleQuillChange = (value) => {
+    setHeading(value);
+    setErrors((prev) => ({ ...prev, heading: stripHtml(value) ? "" : prev.heading }));
   };
 
   // Fetch headings on component mount and when categoryId changes
@@ -106,42 +142,51 @@ const HeroSection = ({ categoryId }) => {
         <div className="">
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">
-              Tagline
+              Tagline <span className="text-red-500">*</span>
             </label>
-            <input
+            <textarea
               type="text"
               name="title"
               value={title}
               onChange={handleInputChange}
               disabled={loading}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              required
+              aria-invalid={!!errors.title}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300 ${errors.title ? "border-red-500" : ""}`}
               placeholder="Enter title"
             />
+            {errors.title && <p className="text-red-500 mt-1 text-sm">{errors.title}</p>}
           </div>
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">
-              Paragraph
+              Paragraph <span className="text-red-500">*</span>
             </label>
             <ReactQuill
               value={heading}
-              onChange={setHeading} // Directly update heading
+              onChange={handleQuillChange}
               modules={modules}
-              className="quill"
+              className={`quill ${errors.heading ? "border border-red-500" : ""}`}
             />
+            {errors.heading && <p className="text-red-500 mt-1 text-sm">{errors.heading}</p>}
           </div>
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">
-              Middle Tagline
+              Middle Tagline <span className="text-red-500">*</span>
             </label>
-            <input
+            <textarea
               type="text"
               name="subheading"
               value={subheading}
               onChange={handleInputChange}
               disabled={loading}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              required
+              aria-invalid={!!errors.subheading}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300 ${errors.subheading ? "border-red-500" : ""}`}
               placeholder="Enter subheading"
             />
+            {errors.subheading && (
+              <p className="text-red-500 mt-1 text-sm">{errors.subheading}</p>
+            )}
           </div>
         </div>
         <button

@@ -21,7 +21,7 @@ export default function CraftRight() {
         
         // Ensure data exists and has the expected structure
         const data = response.data.data && response.data.data.length > 0 ? response.data.data[0] : null;
-        
+        console.log("Left Card",data)
         if (data) {
           setService(data);
           setVideoUrl(data.video ? `/api/video/download/${data.video}` : null);
@@ -122,7 +122,7 @@ export default function CraftRight() {
 
         {/* Video or Photo Content */}
         <div className="w-full lg:w-[40%] flex items-center  justify-center order-2">
-          <div className="relative rounded-2xl border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
+          <div className="relative rounded-2xl xl:border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
             {videoUrl ? (
               <video 
                 src={videoUrl}

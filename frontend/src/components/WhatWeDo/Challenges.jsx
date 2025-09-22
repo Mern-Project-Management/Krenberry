@@ -108,7 +108,18 @@ const CustomNextArrow = (props) => (
   };
 
   const renderHeading = (heading) => {
-    return <div className="text-[30px] md:text-[50px] font-semibold md:p-4 text-center flex flex-col flex-wrap" dangerouslySetInnerHTML={{ __html: heading }} />;
+    if (!heading) return null;
+    
+    // Split by space and capitalize first letter of each word
+    const formattedHeading = heading
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  
+    return <div 
+      className="text-[30px] md:text-[50px] font-semibold md:px-4 text-center flex flex-col flex-wrap" 
+      dangerouslySetInnerHTML={{ __html: formattedHeading }} 
+    />;
   };
 
   if (!dataLoaded || challengesData.length === 0) {
@@ -116,9 +127,9 @@ const CustomNextArrow = (props) => (
   }
 
   return (
-    <div className=" pt-16 pb-16 w-[90%] mx-auto">
+    <div className=" pt-12 pb-16 w-[90%] mx-auto">
         <>
-          <div className=" mb-8  ">
+          <div className=" mb-8 capitalize ">
             {renderHeading(challengesData[0]?.heading)}
           </div>
           <div className="relative text-white">

@@ -22,7 +22,7 @@ export default function LatestProject() {
     const NextArrow = ({ onClick }) => (
     <button
       onClick={onClick}
-      className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+      className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 px-2 rounded-full hover:bg-opacity-75"
     >
       <IoIosArrowForward size={24} color="white" />
     </button>
@@ -31,7 +31,7 @@ export default function LatestProject() {
   const PrevArrow = ({ onClick }) => (
     <button
       onClick={onClick}
-      className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+      className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 px-2 rounded-full hover:bg-opacity-75"
     >
       <IoIosArrowBack size={24} color="white" />
     </button>
@@ -179,7 +179,7 @@ export default function LatestProject() {
 
   return (
     <div className="py-16">
-      <h2 className="heading font-semibold p-4 text-center">
+      <h2 className="heading font-semibold px-4 text-center">
         Latest <span className="text-[#ec2127]">Projects</span>
       </h2>
       <p className="subheading px-4 md:px-20 text-gray-600 text-center">

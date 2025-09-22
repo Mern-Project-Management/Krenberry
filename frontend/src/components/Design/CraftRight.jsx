@@ -16,7 +16,9 @@ export default function CraftRight() {
       try {
         const slug = location.pathname.split('/').filter(Boolean).pop();
         const response = await axios.get(`/api/industiesDetails/front/${slug}`, { withCredentials: true });
+ 
         const data = response.data.data[0]; // Access the first item in the data array
+        
         setService(data);
         setVideoUrl(data.video ? `/api/video/download/${data.video}` : null);
       } catch (error) {
@@ -55,7 +57,7 @@ export default function CraftRight() {
   const faqData = service ? service.questions : [];
 
   return (
-    <div className="flex xl:flex-col items-center mt-20">
+    <div className="flex xl:flex-col items-center mt-5 pb-12">
       <div className="flex flex-col lg:flex-row gap-10 px-5 lg:px-28 w-full">
         {/* Text Content for Large Screens */}
         <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">

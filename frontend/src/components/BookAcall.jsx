@@ -30,24 +30,24 @@ export default function BookAcall() {
   }
 
   return (
-    <div className="relative bg-[#134C6C] text-white rounded-2xl py-6 px-6 lg:px-20 lg:flex fl  ex-col lg:flex-row items-center justify-between mx-4 lg:mx-40 overflow-hidden mb-10  my-6">
+    <div className="relative bg-[#134C6C] mb-12 sm:mb-0 text-white rounded-2xl p-5 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between mx-4 sm:mx-6 md:mx-8 lg:mx-16 xl:mx-24 overflow-hidden my-6">
       <div className="absolute -bottom-1/2 left-1/2 transform -translate-x-1/2 w-[800px] h-[400px] bg-[#155376] rounded-t-full"></div>
 
-      <div className="lg:w-1/2 mb-6 lg:mb-0 relative z-0">
+      <div className="lg:w-1/2 mb-6 lg:mb-0 relative z-10">
         <h2
-          className="text-3xl lg:text-4xl font-semibold mb-4"
+          className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-3 sm:mb-4"
           dangerouslySetInnerHTML={{ __html: call.heading }}
         ></h2>
         <p
-          className="mb-6 text-base lg:text-lg"
+          className="mb-6 text-sm sm:text-base lg:text-lg opacity-90"
           dangerouslySetInnerHTML={{ __html: call.description }}
         ></p>
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         
             <Link to="/contact">
             <button
             
-              className={`bg-[#ec2127] text-white hover:bg-red-600 text-md py-2 px-6 rounded-lg mr-4 mb-4 lg:mb-0 font-semibold w-md`}
+              className={`bg-[#ec2127] text-white hover:bg-red-600 text-base py-3 px-6 rounded-lg font-semibold`}
             >
               Get Started
             </button>
@@ -56,12 +56,12 @@ export default function BookAcall() {
         </div>
       </div>
 
-      <div className="lg:w-1/2 xl:flex justify-center xl:justify-end relative z-0 hidden lg:block">
+      <div className="lg:w-1/2 xl:flex justify-center xl:justify-end relative z-10 hidden lg:block">
         <img
           src={`/api/image/download/${call.photo[0]}`}
           alt={call.photoAlt}
           title={call.imgtitle}
-          className="w-full h-auto max-w-[400px] mx-auto"
+          className="w-full h-auto max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] xl:max-w-[460px] mx-auto object-contain"
         />
       </div>
     </div>

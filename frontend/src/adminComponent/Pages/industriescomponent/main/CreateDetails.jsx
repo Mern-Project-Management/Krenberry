@@ -88,17 +88,77 @@ const NewIndustriesForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!heading.trim()) {
+      toast.error("Heading is required");
+      return;
+    }
+    
+    if (!description.trim()) {
+      toast.error("Description is required");
+      return;
+    }
+    
+    if (!serviceparentCategoryId) {
+      toast.error("Please select a service category");
+      return;
+    }
+    
+    if (!servicesubCategoryId) {
+      toast.error("Please select a service sub-category");
+      return;
+    }
+    
+    if (!servicesubSubCategoryId) {
+      toast.error("Please select a service sub-sub-category");
+      return;
+    }
+    
+    // Validate at least one question is added if needed
+    if (questions.length === 0 || !questions[0].question.trim() || !questions[0].answer.trim()) {
+      toast.error("At least one FAQ question and answer is required");
+      return;
+    }
+    
+    // Validate photo alts and titles if photos are uploaded
+    if (photos.length > 0) {
+      for (let i = 0; i < photos.length; i++) {
+        if (!photoAlts[i]?.trim()) {
+          toast.error(`Alt text is required for photo ${i + 1}`);
+          return;
+        }
+        if (!imgtitle[i]?.trim()) {
+          toast.error(`Title is required for photo ${i + 1}`);
+          return;
+        }
+      }
+    }
+    
+    // If video is uploaded, validate its alt text and title
+    if (video) {
+      if (!altVideo.trim()) {
+        toast.error("Video alt text is required");
+        return;
+      }
+      if (!videotitle.trim()) {
+        toast.error("Video title is required");
+        return;
+      }
+    }
+    
     try {
       const formData = new FormData();
-      formData.append('heading', heading); // Use heading as the name field
+      formData.append('heading', heading);
       formData.append('description', description);
       formData.append('status', status);
       formData.append('altVideo', altVideo);
-      formData.append('categoryId', categoryId); // Send categoryId from URL
+      formData.append('categoryId', categoryId);
       formData.append('videotitle', videotitle);
       formData.append("servicecategories", serviceparentCategoryId);
       formData.append("servicesubcategories", servicesubCategoryId);
       formData.append("servicesubSubcategories", servicesubSubCategoryId);
+      
       photos.forEach((photo, index) => {
         formData.append('photo', photo);
         formData.append('alt', photoAlts[index]);
@@ -122,7 +182,7 @@ const NewIndustriesForm = () => {
 
       // Reset form fields
       setDescription("");
-      setHeading(""); // Reset heading
+      setHeading("");
       setPhotos([]);
       setVideo(null);
       setVideoAlt("");
@@ -131,10 +191,15 @@ const NewIndustriesForm = () => {
       setImgtitle([]);
       setVideotitle("");
       setQuestions([{ question: "", answer: "" }]);
+      setServiceParentCategoryId("");
+      setServiceSubCategoryId("");
+      setServiceSubSubCategoryId("");
+      
+      toast.success("Industry details created successfully!");
       navigate(`/industries`);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create Industries.");
+      toast.error(error.response?.data?.message || "Failed to create Industries.");
     }
   };
 
@@ -246,7 +311,7 @@ const NewIndustriesForm = () => {
   
       <div className="mb-4">
         <label htmlFor="parentCategory" className="block font-semibold mb-2">
-          Parent Service Category
+          Parent Service Category <span className="text-red-500">*</span> 
         </label>
         <select
           id="parentCategory"
@@ -264,7 +329,7 @@ const NewIndustriesForm = () => {
       {subServiceCategories.length > 0 && (
         <div className="mb-4">
           <label htmlFor="subCategory" className="block font-semibold mb-2">
-            Sub-Service Category (optional)
+            Sub-Service Category (optional) 
           </label>
           <select
             id="subCategory"
@@ -300,7 +365,7 @@ const NewIndustriesForm = () => {
 
       {/* Heading Field */}
       <div className="mb-4">
-        <label htmlFor="heading" className="block font-semibold mb-2">Heading</label>
+        <label htmlFor="heading" className="block font-semibold mb-2">Heading <span className="text-red-500">*</span></label>
         <ReactQuill
           value={heading}
           onChange={setHeading}
@@ -311,7 +376,7 @@ const NewIndustriesForm = () => {
       
       {/* Description Field */}
       <div className="mb-8">
-        <label htmlFor="description" className="block font-semibold mb-2">Description</label>
+        <label htmlFor="description" className="block font-semibold mb-2">Description <span className="text-red-500">*</span></label>
         <ReactQuill
           value={description}
           onChange={setDescription}
@@ -322,7 +387,7 @@ const NewIndustriesForm = () => {
       
       {/* Photo Upload Field */}
       <div className="mt-12">
-        <label htmlFor="photo" className="block font-semibold mb-2">Photos</label>
+        <label htmlFor="photo" className="block font-semibold mb-2">Photos (image size should be 750x450 for better UI )</label>
         <input
           type="file"
           name="photo"
@@ -420,7 +485,7 @@ const NewIndustriesForm = () => {
 
       {/* Questions Section */}
       <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Questions and Answers</h3>
+        <h3 className="text-lg font-semibold mb-4">Questions and Answers <span className="text-red-500">*</span></h3>
         {questions.map((qa, index) => (
           <div key={index} className="mb-4">
             <label className="block mb-1 font-medium">Question</label>

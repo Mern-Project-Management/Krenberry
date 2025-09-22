@@ -19,12 +19,13 @@ const sliderStyles = `
     color: #ec2127;
     opacity: 1;
   }
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
+    .slick-dots { display: none !important; }
     .slick-dots {
-      bottom: -100px;
+      bottom: -20px;
     }
     .slick-dots li {
-      margin: 0 8px;
+      margin: 0 6px;
     }
     .slick-dots li button:before {
       font-size: 10px;
@@ -87,39 +88,33 @@ function ServiceSlider() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 2000,
+    adaptiveHeight: true,
+    swipeToSlide: true,
+    touchThreshold: 10,
+    pauseOnHover: true,
+    lazyLoad: 'ondemand',
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
     responsive: [
       {
+        breakpoint: 1536,
+        settings: { slidesToShow: 5, slidesToScroll: 1 },
+      },
+      {
         breakpoint: 1280,
-        settings: {
-          slidesToShow: 4,
-          slidesToScroll: 1,
-        },
+        settings: { slidesToShow: 4, slidesToScroll: 1 },
       },
       {
         breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-          slidesToScroll: 1,
-        },
+        settings: { slidesToShow: 3, slidesToScroll: 1 },
       },
       {
         breakpoint: 768,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-          arrows: true,
-        },
+        settings: { slidesToShow: 2, slidesToScroll: 1, arrows: false, dots: false },
       },
       {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-          arrows: true,
-          dots: true,
-        },
+        breakpoint: 640,
+        settings: { slidesToShow: 1, slidesToScroll: 1, arrows: false, dots: false },
       },
     ],
   };
@@ -137,7 +132,7 @@ function ServiceSlider() {
       </div>
 
       {services.length > 5 ? (
-        <div className="service-slider relative overflow-visible mx-8 md:mx-12 mb-16 md:mb-12">
+        <div className="service-slider relative overflow-visible mx-0 sm:mx-4 md:mx-8 lg:mx-12 mb-10 md:mb-12">
           <Slider {...settings}>
             {services.map((service) => (
               <div
@@ -145,12 +140,12 @@ function ServiceSlider() {
                 className="service-card p-2 md:p-4 bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 relative z-10 mx-4"
               >
                 <Link to={`/${service.slug}`}>
-                  <div className="relative aspect-square overflow-hidden mx-autop rounded-xl bg-white">
+                  <div className="relative aspect-square overflow-hidden mx-auto rounded-xl bg-white">
                     <img
                       src={`/api/logo/download/${service.photo}`}
                       alt={service.alt}
                       title={service.imgtitle}
-                      className="w-full max-w-[200px] min-h-[200px] mx-auto object-cover transition-transform duration-300 transform hover:scale-105"
+                      className="w-full h-full max-w-[220px] mx-auto object-contain p-2 transition-transform duration-300 transform hover:scale-105"
                     />
                   </div>
                 </Link>
@@ -179,7 +174,7 @@ function ServiceSlider() {
                     src={`/api/logo/download/${service.photo}`}
                     alt={service.alt}
                     title={service.imgtitle}
-                    className="w-full max-w-[200px] h-auto mx-auto object-cover transition-transform duration-300 transform hover:scale-105 md:max-w-[250px]"
+                    className="w-full h-full max-w-[220px] mx-auto object-contain p-2 md:max-w-[250px] transition-transform duration-300 transform hover:scale-105"
                   />
                 </div>
               </Link>
@@ -201,7 +196,7 @@ function ServiceSlider() {
 
 const NextArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -right-10 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-30 p-2 md:-right-14 md:p-3 hover:bg-gray-50 transition-colors"
+    className="hidden md:flex absolute top-1/2 -right-4 md:-right-10 -translate-y-1/2 items-center justify-center bg-white rounded-full shadow-lg cursor-pointer z-30 p-2 md:p-3 hover:bg-gray-50 transition-colors"
     onClick={onClick}
   >
     <ChevronRightIcon className="w-5 h-5 text-gray-500 hover:text-gray-700 transition-colors md:w-6 md:h-6" />
@@ -210,7 +205,7 @@ const NextArrow = ({ onClick }) => (
 
 const PrevArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -left-10 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-30 p-2 md:-left-14 md:p-3 hover:bg-gray-50 transition-colors"
+    className="hidden md:flex absolute top-1/2 -left-4 md:-left-10 -translate-y-1/2 items-center justify-center bg-white rounded-full shadow-lg cursor-pointer z-30 p-2 md:p-3 hover:bg-gray-50 transition-colors"
     onClick={onClick}
   >
     <ChevronLeftIcon className="w-5 h-5 text-gray-500 hover:text-gray-700 transition-colors md:w-6 md:h-6" />

@@ -35,7 +35,7 @@ const HeroSection = ({ categoryId, subcategoryId }) => {
     } finally {
       setLoading(false);
     }
-  }, [categoryId]);
+  }, [categoryId, subcategoryId]);
 
   // Save headings to the API
   const saveHeadings = async () => {
@@ -51,6 +51,7 @@ const HeroSection = ({ categoryId, subcategoryId }) => {
         { withCredentials: true }
       );
       notifySuccess();
+      await fetchHeadings();
     } catch (error) {
       console.error(error);
       setError("Failed to save headings. Please try again.");

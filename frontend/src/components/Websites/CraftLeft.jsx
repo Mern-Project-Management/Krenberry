@@ -135,7 +135,7 @@ export default function CraftLeft() {
 
         {/* Video Content */}
         <div className="w-full lg:w-[40%] flex items-center justify-center order-2">
-          <div className="relative rounded-2xl border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
+          <div className="relative rounded-2xl xl:border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
             {videoUrl ? (
               <video
                 src={videoUrl}

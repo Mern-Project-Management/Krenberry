@@ -74,10 +74,18 @@ const NewServiceForm = () => {
     return "";
   };
 
-  // Validate photos
+  // Validate photos (optional field). If user attempts upload, enforce constraints; if photos provided, require alt and title per photo
   const validatePhotos = () => {
-    if (hasAttemptedPhotoUpload && photos.length === 0) {
-      return "Please upload at least one image in JPG/PNG format (max size: 10MB). This image will appear on the website.";
+    if (photos.length === 0) return ""; // photos are optional
+    // if present, each photo must have alt and title
+    const missingMetaIndexes = photos.reduce((acc, _p, idx) => {
+      const alt = (photoAlts[idx] || "").trim();
+      const title = (imgtitle[idx] || "").trim();
+      if (!alt || !title) acc.push(idx + 1);
+      return acc;
+    }, []);
+    if (missingMetaIndexes.length > 0) {
+      return `Please provide Alt and Title for image(s): ${missingMetaIndexes.join(', ')}`;
     }
     return "";
   };
@@ -122,6 +130,8 @@ const NewServiceForm = () => {
 
   const handleVideoChange = (e) => {
     setVideo(e.target.files[0]);
+    // clear video-related errors on change
+    setErrors((prev) => ({ ...prev, altVideo: "", videotitle: "" }));
   };
 
   const handleDeleteImage = (index) => {
@@ -135,6 +145,14 @@ const NewServiceForm = () => {
     const newQuestions = [...questions];
     newQuestions[index][field] = value;
     setQuestions(newQuestions);
+    // clear specific question error on edit
+    setErrors((prev) => {
+      const qErrors = Array.isArray(prev.questions) ? [...prev.questions] : [];
+      if (!qErrors[index]) qErrors[index] = { question: "", answer: "" };
+      if (field === 'question') qErrors[index].question = "";
+      if (field === 'answer') qErrors[index].answer = "";
+      return { ...prev, questions: qErrors };
+    });
   };
 
   const handleAddQuestion = () => {
@@ -143,27 +161,44 @@ const NewServiceForm = () => {
 
   const handleRemoveQuestion = (index) => {
     setQuestions(questions.filter((_, i) => i !== index));
+    setErrors((prev) => {
+      const qErrors = Array.isArray(prev.questions) ? prev.questions.filter((_, i) => i !== index) : [];
+      return { ...prev, questions: qErrors };
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate all fields
+    // Validate all fields (photo and video optional)
     const headingError = validateHeading(heading);
     const descriptionError = validateDescription(description);
-    const photosError = photos.length === 0
-      ? "Please upload at least one image in JPG/PNG format (max size: 10MB). This image will appear on the website."
-      : "";
+    const photosError = validatePhotos();
+
+    // Video-related conditional validation
+    const altVideoError = video ? (altVideo.trim() ? "" : "Video Alt Text is required when a video is uploaded.") : "";
+    const videoTitleError = video ? (videotitle.trim() ? "" : "Video Title is required when a video is uploaded.") : "";
+
+    // Questions validation (each question and answer are required)
+    const questionErrors = questions.map((qa) => {
+      const qErr = !qa.question.trim() ? "Question is required" : "";
+      const aErr = !stripHTML(qa.answer).trim() ? "Answer is required" : "";
+      return { question: qErr, answer: aErr };
+    });
+    const hasQuestionErrors = questionErrors.some((qe) => qe.question || qe.answer);
 
     const newErrors = {
       heading: headingError,
       description: descriptionError,
       photos: photosError,
+      altVideo: altVideoError,
+      videotitle: videoTitleError,
+      questions: questionErrors,
     };
 
     setErrors(newErrors);
 
-    if (headingError || descriptionError || photosError) {
+    if (headingError || descriptionError || photosError || altVideoError || videoTitleError || hasQuestionErrors) {
       toast.error("Please fix the errors before submitting.");
       return;
     }
@@ -249,7 +284,7 @@ const NewServiceForm = () => {
       {/* Heading Field */}
       <div className="mb-4">
         <label htmlFor="heading" className="block font-semibold mb-2">
-          Heading
+          Heading <span className="text-red-500">*</span>
         </label>
         <ReactQuill
           value={heading}
@@ -258,7 +293,7 @@ const NewServiceForm = () => {
             setErrors((prev) => ({ ...prev, heading: validateHeading(value) }));
           }}
           modules={modules}
-          className="quill"
+          className={`quill ${errors.heading ? 'border border-red-500' : ''}`}
         />
         {errors.heading && (
           <p className="text-red-500 text-sm mt-1">{errors.heading}</p>
@@ -268,7 +303,7 @@ const NewServiceForm = () => {
       {/* Description Field */}
       <div className="mb-8">
         <label htmlFor="description" className="block font-semibold mb-2">
-          Description
+          Description <span className="text-red-500">*</span>
         </label>
         <ReactQuill
           value={description}
@@ -280,14 +315,14 @@ const NewServiceForm = () => {
             }));
           }}
           modules={modules}
-          className="quill"
+          className={`quill ${errors.description ? 'border border-red-500' : ''}`}
         />
         {errors.description && (
           <p className="text-red-500 text-sm mt-1">{errors.description}</p>
         )}
       </div>
 
-      {/* Photo Upload Field */}
+      {/* Photo Upload Field (optional) */}
       <div className="mt-12">
         <label htmlFor="photo" className="block font-semibold mb-2">
           Photos
@@ -336,7 +371,7 @@ const NewServiceForm = () => {
                   </button>
                 </div>
                 <label className="block mt-2">
-                  Alternative Text:
+                  Alternative Text <span className="text-red-500">*</span>:
                   <input
                     type="text"
                     value={photoAlts[index]}
@@ -344,12 +379,13 @@ const NewServiceForm = () => {
                       const newPhotoAlts = [...photoAlts];
                       newPhotoAlts[index] = e.target.value;
                       setPhotoAlts(newPhotoAlts);
+                      setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
                     }}
-                    className="w-full p-2 border rounded focus:outline-none"
+                    className={`w-full p-2 border rounded focus:outline-none ${errors.photos ? 'border-red-500' : ''}`}
                   />
                 </label>
                 <label className="block mt-2">
-                  Image title Text:
+                  Image title Text <span className="text-red-500">*</span>:
                   <input
                     type="text"
                     value={imgtitle[index]}
@@ -357,8 +393,9 @@ const NewServiceForm = () => {
                       const newImgtitles = [...imgtitle];
                       newImgtitles[index] = e.target.value;
                       setImgtitle(newImgtitles);
+                      setErrors((prev) => ({ ...prev, photos: validatePhotos() }));
                     }}
-                    className="w-full p-2 border rounded focus:outline-none"
+                    className={`w-full p-2 border rounded focus:outline-none ${errors.photos ? 'border-red-500' : ''}`}
                   />
                 </label>
               </div>
@@ -367,7 +404,7 @@ const NewServiceForm = () => {
         )}
       </div>
 
-      {/* Video Upload Field */}
+      {/* Video Upload Field (optional) */}
       <div className="mt-4">
         <label htmlFor="video" className="block font-semibold mb-2">
           Video
@@ -382,53 +419,63 @@ const NewServiceForm = () => {
         {video && (
           <div className="mt-4">
             <label htmlFor="videoAlt" className="block font-semibold mb-2">
-              Video Alt Text
+              Video Alt Text <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               id="videoAlt"
               value={altVideo}
               onChange={(e) => setVideoAlt(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none"
-              required
+              className={`w-full p-2 border rounded focus:outline-none ${errors.altVideo ? 'border-red-500' : ''}`}
             />
+            {errors.altVideo && (
+              <p className="text-red-500 text-sm mt-1">{errors.altVideo}</p>
+            )}
             <div className="mt-4">
               <label htmlFor="videotitle" className="block font-semibold mb-2">
-                Video title Text
+                Video title Text <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 id="videotitle"
                 value={videotitle}
                 onChange={(e) => setVideotitle(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-none"
-                required
+                className={`w-full p-2 border rounded focus:outline-none ${errors.videotitle ? 'border-red-500' : ''}`}
               />
+              {errors.videotitle && (
+                <p className="text-red-500 text-sm mt-1">{errors.videotitle}</p>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Questions Section */}
+      {/* Questions Section (required) */}
       <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Questions and Answers</h3>
+        <h3 className="text-lg font-semibold mb-4">Questions and Answers <span className="text-red-500">*</span></h3>
         {questions.map((qa, index) => (
           <div key={index} className="mb-4 p-4 border rounded bg-gray-50">
-            <label className="block mb-1 font-medium">Question</label>
+            <label className="block mb-1 font-medium">Question <span className="text-red-500">*</span></label>
             <input
               type="text"
               name="question"
               value={qa.question}
               onChange={(e) => handleQuestionChange(index, "question", e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none mb-2"
+              className={`w-full p-2 border rounded focus:outline-none mb-2 ${errors.questions && errors.questions[index] && errors.questions[index].question ? 'border-red-500' : ''}`}
             />
-            <label className="block mb-1 font-medium">Answer</label>
+            {errors.questions && errors.questions[index] && errors.questions[index].question && (
+              <p className="text-red-500 text-sm mt-1">{errors.questions[index].question}</p>
+            )}
+            <label className="block mb-1 font-medium">Answer <span className="text-red-500">*</span></label>
             <ReactQuill
               value={qa.answer}
               onChange={(value) => handleQuestionChange(index, "answer", value)}
               modules={modules}
-              className="quill"
+              className={`quill ${errors.questions && errors.questions[index] && errors.questions[index].answer ? 'border border-red-500' : ''}`}
             />
+            {errors.questions && errors.questions[index] && errors.questions[index].answer && (
+              <p className="text-red-500 text-sm mt-1">{errors.questions[index].answer}</p>
+            )}
             {questions.length > 1 && (
               <button
                 type="button"

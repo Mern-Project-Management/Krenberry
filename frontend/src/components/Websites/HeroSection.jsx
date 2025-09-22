@@ -57,9 +57,8 @@ const AutocompleteInput = ({
         onFocus={() => setIsOpen(true)}
         placeholder={loading ? "Loading..." : placeholder}
         disabled={disabled || loading}
-        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
-          error ? "border-red-500" : "border-white/20"
-        } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${error ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
       />
       {error && (
         <p className="text-red-500 text-xs mt-1">{error}</p>
@@ -205,11 +204,10 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${
-        isModal
+      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${isModal
           ? "w-full max-w-md mx-auto bg-black"
           : "bg-white/10 backdrop-blur-lg border-white/10"
-      }`}
+        }`}
     >
       <h3 className="text-2xl font-bold mb-6 text-white text-center">
         Get Started Today
@@ -227,9 +225,8 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
             }
             value={formData[field]}
             onChange={handleInputChange}
-            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
-              errors[field] ? "border-red-500" : "border-white/20"
-            } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${errors[field] ? "border-red-500" : "border-white/20"
+              } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
             required
           />
           {errors[field] && (
@@ -272,11 +269,10 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       <button
         type="submit"
         disabled={loading}
-        className={`w-full py-3 ${
-          loading
+        className={`w-full py-3 ${loading
             ? "bg-gray-400"
             : "bg-gradient-to-r from-[#ec2127] to-red-600"
-        } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
+          } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
       >
         {loading ? "Submitting..." : "Let's Connect"}
       </button>
@@ -393,14 +389,12 @@ const HeroSection = () => {
   const Modal = useCallback(
     () => (
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${
-          isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       >
         <div
-          className={`relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center ${
-            isModalOpen ? "scale-100" : "scale-95"
-          }`}
+          className={`relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center ${isModalOpen ? "scale-100" : "scale-95"
+            }`}
         >
           <button
             onClick={() => setIsModalOpen(false)}
@@ -450,7 +444,7 @@ const HeroSection = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 pt-16 lg:w-4/5 mx-auto my-32">
+      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
         <div className="md:w-[50%] space-y-8">
           <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
             <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
@@ -460,13 +454,18 @@ const HeroSection = () => {
               {heroSection.title}
             </span>
           </div>
-          <ReactQuill
-            readOnly={true}
-            value={heroSection.heading}
-            modules={{ toolbar: false }}
-            theme="bubble"
-            className="quill-content"
-          />
+          <div className="quill">
+            <ReactQuill
+              readOnly={true}
+              value={heroSection.heading}
+              modules={{ toolbar: false }}
+              theme="bubble"
+              style={{
+                fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+              }}
+              className="quill-content"
+            />
+          </div>
           <Link to="/contact">
             <button
               className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
@@ -476,7 +475,7 @@ const HeroSection = () => {
           </Link>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full"
+            className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-[65%]"
           >
             Get in Touch
           </button>

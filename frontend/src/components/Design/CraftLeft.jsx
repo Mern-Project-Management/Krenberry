@@ -19,11 +19,13 @@ export default function CraftLeft() {
       try {
         const slug = location.pathname.split('/').filter(Boolean).pop();
         const response = await axios.get(`/api/industiesDetails/front/${slug}`, { withCredentials: true });
+      console.log(response.data.data)
+      
         const data =
           response.data.data && response.data.data.length > 0
             ? response.data.data[1]
             : null;
-
+console.log(data)
         if (data) {
           setService(data);
           setVideoUrl(data.video ? `/api/video/download/${data.video}` : null);

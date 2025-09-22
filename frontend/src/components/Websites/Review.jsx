@@ -91,7 +91,7 @@ const Review = ({serviceSlug}) => {
                 <RatingStars rating={review.rating} />
                 <p className="mt-4 text-lg text-white text-center lg:text-left" dangerouslySetInnerHTML={{ __html: review.testimony }}></p>
                 <div className="flex flex-col lg:flex-row lg:justify-between items-center lg:items-center mt-4 w-full">
-                  <p className="text-lg font-semibold text-white">{review.name}, {review.designation}</p>
+                  <p className="text-lg font-semibold text-center lg:text-left text-white">{review.name}, {review.designation}</p>
                   <NavLink to="/all-reviews" className="mt-2 text-white hover:underline lg:ml-4">
                     See all reviews →
                   </NavLink>

@@ -3,31 +3,39 @@ import React, { useState } from 'react';
 const CollaborationInquiries = () => {
   const [formData, setFormData] = useState({
     name: '',
-    company: '',
     email: '',
+    company: '',
     foundUs: '',
-    collaboration: ''
+    message: ''
   });
 
   const [errors, setErrors] = useState({});
-  const [submitStatus, setSubmitStatus] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState({ type: null, message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
+    const maxMessageLength = 1000; // Maximum characters for the message field
 
     // Name validation: Only alphabets and spaces, min 2 characters
-    if (!formData.name || !/^[A-Za-z\s]{2,}$/.test(formData.name.trim())) {
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (!/^[A-Za-z\s]{2,}$/.test(formData.name.trim())) {
       newErrors.name = 'Name must contain only letters and spaces, minimum 2 characters';
     }
 
     // Email validation: Correct email format
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address (e.g., example@domain.com)';
     }
 
     // Company validation: No special characters
-    if (!formData.company || !/^[A-Za-z0-9\s]+$/.test(formData.company.trim())) {
-      newErrors.company = 'Company name must not contain special characters';
+    if (!formData.company.trim()) {
+      newErrors.company = 'Company name is required';
+    } else if (!/^[A-Za-z0-9\s\-&,.'()]+$/.test(formData.company.trim())) {
+      newErrors.company = 'Company name contains invalid characters';
     }
 
     // Found us validation: Must be selected
@@ -35,50 +43,74 @@ const CollaborationInquiries = () => {
       newErrors.foundUs = 'Please select how you found us';
     }
 
-    // Collaboration validation: Optional, max 500 characters
-    if (formData.collaboration && formData.collaboration.length > 500) {
-      newErrors.collaboration = 'Collaboration description must not exceed 500 characters';
+    // Message validation: Optional but with max length
+    if (formData.message && formData.message.length > maxMessageLength) {
+      newErrors.message = `Message cannot exceed ${maxMessageLength} characters`;
     }
 
-    return newErrors;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      setIsSubmitting(true);
+      try {
+        // Replace with your actual API call
+        const response = await axios.post('/api/collaboration', formData);
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setSubmitStatus({
+          type: 'success',
+          message: 'Form submitted successfully! We\'ll get back to you soon.'
+        });
+        
+        // Reset form after successful submission
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          foundUs: '',
+          message: ''
+        });
+      } catch (error) {
+        setSubmitStatus({
+          type: 'error',
+          message: 'Failed to submit form. Please try again later.'
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setSubmitStatus({
+        type: 'error',
+        message: 'Please fix the errors in the form.'
+      });
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    // Clear error for field when user starts typing
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
-    if (submitStatus) {
-      setSubmitStatus(null);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const validationErrors = validateForm();
-
-    if (Object.keys(validationErrors).length === 0) {
-      console.log('Form submitted:', formData);
-      setSubmitStatus('success');
-      // Reset form
-      setFormData({
-        name: '',
-        company: '',
-        email: '',
-        foundUs: '',
-        collaboration: ''
-      });
-      setErrors({});
-    } else {
-      setErrors(validationErrors);
-      setSubmitStatus('error');
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 mt-16 xl:mt-24">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-semibold mb-4">Collaboration Inquiries</h1>
       <p className="mb-6">At Krenberry, we value the power of partnerships and believe in rewarding those who help us grow.</p>
 
@@ -96,14 +128,9 @@ const CollaborationInquiries = () => {
         team will respond within 24 hours.
       </p>
 
-      {submitStatus === 'success' && (
-        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
-          Form submitted successfully!
-        </div>
-      )}
-      {submitStatus === 'error' && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-          Please correct the errors in the form and try again.
+      {submitStatus.message && (
+        <div className={`p-4 mb-4 rounded ${submitStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {submitStatus.message}
         </div>
       )}
 
@@ -123,20 +150,6 @@ const CollaborationInquiries = () => {
         </div>
 
         <div>
-          <label className="block mb-1">Company (required)</label>
-          <input
-            type="text"
-            name="company"
-            value={formData.company}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded bg-[#F7F4F4] ${errors.company ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Your company name"
-            required
-          />
-          {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
-        </div>
-
-        <div>
           <label className="block mb-1">Email (required)</label>
           <input
             type="email"
@@ -148,6 +161,20 @@ const CollaborationInquiries = () => {
             required
           />
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+        </div>
+
+        <div>
+          <label className="block mb-1">Company (required)</label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleChange}
+            className={`w-full p-2 border rounded bg-[#F7F4F4] ${errors.company ? 'border-red-500' : 'border-gray-300'}`}
+            placeholder="Your company name"
+            required
+          />
+          {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
         </div>
 
         <div>
@@ -173,18 +200,18 @@ const CollaborationInquiries = () => {
         <div>
           <label className="block mb-1">How do you envision collaborating with us?</label>
           <textarea
-            name="collaboration"
-            value={formData.collaboration}
+            name="message"
+            value={formData.message}
             onChange={handleChange}
-            className={`w-full p-2 border rounded bg-[#F7F4F4] ${errors.collaboration ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full p-2 border rounded bg-[#F7F4F4] ${errors.message ? 'border-red-500' : 'border-gray-300'}`}
             placeholder="Please explain"
             rows="4"
           ></textarea>
-          {errors.collaboration && <p className="text-red-500 text-sm mt-1">{errors.collaboration}</p>}
+          {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
         </div>
 
-        <button type="submit" className="bg-[#ec2127] text-white font-bold py-2 px-4 rounded hover:bg-[#d11c22]">
-          Submit
+        <button type="submit" className="bg-[#ec2127] text-white font-bold py-2 px-4 rounded hover:bg-[#d11c22]" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </button>
       </form>
     </div>

@@ -48,7 +48,7 @@ const EditCategory = () => {
 
       try {
         const response = await axios.get(urls, { withCredentials: true });
-        const { category,tag,description, photo, alt, imgtitle, slug, metatitle, metadescription, metakeywords, metalanguage, metacanonical, metaschema, otherMeta, changeFreq, priority } = response.data;
+        const { category,tag,description, photo, alt, imgtitle, slug, metatitle, metadescription, metakeywords, metalanguage, metacanonical, metaschema, otherMeta, changeFreq, priority, status } = response.data;
 
         setCategory(category);
         setTag(tag);
@@ -57,8 +57,7 @@ const EditCategory = () => {
         setAltText(alt);
         setImgtitle(imgtitle)
         setSlug(slug);
-        setStatus(status);
-
+        setStatus(status || "active"); // Set status from API, default to "active" if undefined
         setMetatitle(metatitle);
         setMetadescription(metadescription)
         setMetakeywords(metakeywords);
@@ -145,7 +144,7 @@ const EditCategory = () => {
       newErrors.category = "Category is required";
     } else {
       if (category.length > MAX_CATEGORY_LEN) newErrors.category = `Category must be ${MAX_CATEGORY_LEN} characters or fewer`;
-      if (!/^[A-Za-z-]+$/.test(category)) newErrors.category = "Category Name should only contain letters and hyphens";
+      if (!/^[A-Za-z -]+$/.test(category)) newErrors.category = "Category Name should only contain letters, spaces, and hyphens";
     }
     if (!slug.trim()) newErrors.slug = "Slug is required";
     else if (!/^[a-z0-9-]+$/.test(slug)) newErrors.slug = "Slug must contain lowercase letters, numbers and hyphens only";
@@ -251,12 +250,12 @@ const EditCategory = () => {
           value={category}
           onChange={(e) => {
             const val = e.target.value;
-            if (val === '' || /^[A-Za-z-]+$/.test(val)) {
+            if (val === '' || /^[A-Za-z -]+$/.test(val)) {
               setCategory(val);
               setErrors(prev => ({ ...prev, category: '' }));
             } else {
               setCategory(val);
-              setErrors(prev => ({ ...prev, category: 'Category Name should only contain letters and hyphens' }));
+              setErrors(prev => ({ ...prev, category: 'Category Name should only contain letters, spaces, and hyphens' }));
             }
           }}
           maxLength={MAX_CATEGORY_LEN}

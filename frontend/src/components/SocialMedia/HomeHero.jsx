@@ -363,13 +363,13 @@ export default function HeroSection() {
   if (isLoading) return <SkeletonLoader />;
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[80vh] py-4 flex items-center justify-between text-white overflow-hidden">
+    <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[90vh] py-4 flex items-center justify-between text-white overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 lg:w-4/5 mx-auto pt-44">
+      <div className="relative flex flex-col lg:pb-12 md:flex-row justify-center gap-10 xl:gap-40 w-11/12 lg:w-4/5 mx-auto pt-44">
         <div className="md:w-[50%] space-y-8">
           <ReactQuill
             readOnly={true}

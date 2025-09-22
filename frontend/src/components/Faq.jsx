@@ -71,7 +71,7 @@ const FAQ = () => {
   }
 
   return (
-    <div className="max-w-4xl sm:w-[63%] md:w-[63%] mx-auto p-4 sm:p-6 lg:max-w-4xl xl:max-w-4xl">
+    <div className="max-w-4xl sm:w-[63%] md:w-[97%] lg:w-full mx-auto m-12 mb-16  lg:max-w-4xl xl:max-w-4xl">
       <h2 className="text-4xl md:text-5xl  text-center  font-semibold">
         {heading}
       </h2>
@@ -80,6 +80,7 @@ const FAQ = () => {
       </h3>
       {faqs.map((faq, index) => (
         <div key={faq._id} className="mb-2 sm:mb-4">
+        
           <div
             className="flex justify-between items-center px-4 sm:px-7 md:px-10 lg:px-14 bg-[#f9f7f1] rounded-[20px] py-3 sm:py-4 lg:py-[17px] cursor-pointer"
             onClick={() => toggleFAQ(index)}

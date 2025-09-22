@@ -132,9 +132,9 @@ const upsertHeroSection = async (req, res) => {
       });
     }
 
-    // Update existing HeroSection
-    if (heading) heroSection.heading = heading;
-    if (subheading) heroSection.subheading = subheading;
+    // Update existing HeroSection (allow empty string updates)
+    if (heading !== undefined) heroSection.heading = heading;
+    if (subheading !== undefined) heroSection.subheading = subheading;
     heroSection.headingType =  'main'; // Default to 'main' if not provided
     heroSection.slug = slug; // Update the slug from the category
 
@@ -186,8 +186,8 @@ const upsertHeroSectionSub = async (req, res) => {
   console.log(existingHeroSection)
     if (existingHeroSection) {
       // Update existing HeroSection
-      if (heading) existingHeroSection.heading = heading;
-      if (subheading) existingHeroSection.subheading = subheading;
+      if (heading !== undefined) existingHeroSection.heading = heading;
+      if (subheading !== undefined) existingHeroSection.subheading = subheading;
       existingHeroSection.headingType = 'sub'; // Default to 'sub' if not provided
       existingHeroSection.slug = slug; // Update the slug based on subcategory
 

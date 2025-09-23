@@ -67,8 +67,8 @@ export default function CraftRight() {
   const faqData = service.questions || [];
 
   return (
-    <div className="flex xl:flex-col items-center mt-20">
-      <div className="flex flex-col lg:flex-row gap-10 px-5 lg:px-28 w-full">
+    <div className="flex xl:flex-col items-center sm:my-16">
+      <div className="flex flex-col lg:flex-row sm:gap-10 px-5 lg:px-28 w-full">
         {/* Text Content for Large Screens */}
         <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">
           {/* Render the heading only if service and heading are available */}
@@ -76,14 +76,14 @@ export default function CraftRight() {
             {service.heading ? (
               <div
                 dangerouslySetInnerHTML={{ __html: service.heading }}
-                className="text-4xl font-bold pb-6 break-words"
+                className="text-2xl text-semibold mt-10 sm:mt-0 sm:text-3xl md:text-5xl lg:text-4xl font-bold pb-4 sm:pb-6 break-words leading-tight"
               />
             ) : (
-              <h2 className="text-4xl font-bold pb-6">Default Heading</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold pb-4 sm:pb-6">Default Heading</h2>
             )}
           </div>
 
-          <p className="mt-4 text-lg pb-4 text-justify">
+          <p className="mt-4 text-lg  pb-4 text-justify">
             {service.description ? (
               <div dangerouslySetInnerHTML={{ __html: service.description }} />
             ) : (
@@ -112,8 +112,8 @@ export default function CraftRight() {
                 ref={(el) => (answerRefs.current[index] = el)}
                 className={`overflow-hidden ${openIndex === index ? "block" : "hidden"}`}
               >
-                <div className="p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify">
-                  <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                <div className="pt-3 px-8 sm:px-10 lg:px-12 font-inter text-md sm:text-base lg:text-base text-justify">
+                  <p dangerouslySetInnerHTML={{ __html: faq.answer }} className="text-justify text-md  lg:text-md"/>
                 </div>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function CraftRight() {
                   <img
                     src={`/api/image/download/${service.photo[0]}`} 
                     alt="Service Image"
-                     className="w-full max-w-[750px] h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain rounded-2xl"
+                     className="w-full max-w-[750px] -mt-4 sm:-mt-0 sm:h-[400px] h-[200px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain object-contain rounded-2xl"
                   />
                 </div>
               )

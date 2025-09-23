@@ -1,9 +1,9 @@
-const HeroSection = require('../model/heroSection'); // Adjust the path as necessary
-const ServiceCategory = require('../model/serviceCategory'); // Import the ServiceCategory model
+const HeroSection = require('../model/heroSection'); 
+const ServiceCategory = require('../model/serviceCategory'); 
 
 // Get HeroSection by category ID
 const getHeroSectionByCategory = async (req, res) => {
-  const { categoryId } = req.params; // Get categoryId from request parameters
+  const { categoryId } = req.params; 
 
   try {
     const heroSection = await HeroSection.findOne({ category: categoryId }).populate('category');
@@ -25,7 +25,7 @@ const getHeroSectionByCategory = async (req, res) => {
 
 // Get HeroSection by category ID
 const getHeroSectionByCategorySub = async (req, res) => {
-  const { categoryId, subcategoryId} = req.params; // Get categoryId from request parameters
+  const { categoryId, subcategoryId} = req.params; 
    console.log(categoryId, subcategoryId)
   try {
     const heroSection = await HeroSection.findOne({ category: categoryId,subcategory:subcategoryId }).populate('category');
@@ -46,7 +46,7 @@ const getHeroSectionByCategorySub = async (req, res) => {
 };
 // Get HeroSection by category ID, subcategory ID, and subsubcategory ID
 const getHeroSectionByCategorySubSub = async (req, res) => {
-  const { categoryId, subcategoryId, subsubcategoryId } = req.params; // Get categoryId, subcategoryId, subsubcategoryId from request parameters
+  const { categoryId, subcategoryId, subsubcategoryId } = req.params; 
   console.log(categoryId, subcategoryId, subsubcategoryId);
 
   try {
@@ -54,7 +54,7 @@ const getHeroSectionByCategorySubSub = async (req, res) => {
     const heroSection = await HeroSection.findOne({
       category: categoryId,
       subcategory: subcategoryId,
-      subsubcategory: subsubcategoryId, // Add subsubcategory to the query
+      subsubcategory: subsubcategoryId, 
     }).populate('category').populate('subcategory').populate('subsubcategory');
 
     if (heroSection) {
@@ -77,7 +77,7 @@ const getHeroSectionByCategorySubSub = async (req, res) => {
 
 
 const getHeroSectionBySlug = async (req, res) => {
-  const { slug } = req.params; // Get slug from request parameters
+  const { slug } = req.params; 
  console.log(slug)
   try {
     // Find the HeroSection directly by the slug
@@ -99,69 +99,60 @@ const getHeroSectionBySlug = async (req, res) => {
 };
 
 const upsertHeroSection = async (req, res) => {
-  const { categoryId } = req.params; // Extract categoryId from request parameters
-  const { heading, subheading, title} = req.body;
-
   try {
-    // Find the category in the ServiceCategory schema using the categoryId
-    const category = await ServiceCategory.findById(categoryId);
-
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found' });
-    }
-
-    // Extract the slug from the category
-    const slug = category.slug;
-
-    // Search for an existing HeroSection based on the categoryId only
-    let heroSection = await HeroSection.findOne({ category: categoryId });
-
-    if (!heroSection) {
-      // Create a new HeroSection if it doesn't exist
-      heroSection = new HeroSection({
-        heading: heading,
-        subheading: subheading,
-        title:title,
-        category: categoryId,
-        slug: slug, // Store the slug from the category
-        headingType:  'main', // Default to 'main' if not provided
+    const { category, heading, subheading, title, slug } = req.body;
+    
+    // Check if a hero section with this category already exists
+    const existingHeroSection = await HeroSection.findOne({ category });
+    
+    if (existingHeroSection) {
+      // Update existing record
+      existingHeroSection.heading = heading || existingHeroSection.heading;
+      existingHeroSection.subheading = subheading || existingHeroSection.subheading;
+      existingHeroSection.title = title || existingHeroSection.title;
+      existingHeroSection.slug = slug || existingHeroSection.slug;
+      
+      const updatedHeroSection = await existingHeroSection.save();
+      return res.status(200).json({
+        message: 'Hero section updated successfully',
+        data: updatedHeroSection
       });
-      await heroSection.save();
+    } else {
+      // Create new record
+      const newHeroSection = new HeroSection({
+        category,
+        heading,
+        subheading,
+        title,
+        slug
+      });
+      
+      const savedHeroSection = await newHeroSection.save();
       return res.status(201).json({
-        message: `Hero section created for category ${categoryId}`,
-        heading: heroSection.heading,
-        subheading: heroSection.subheading,
-        title:heroSection.title,
-        slug: heroSection.slug,
-        headingType: heroSection.headingType,
+        message: 'Hero section created successfully',
+        data: savedHeroSection
       });
     }
-
-    // Update existing HeroSection
-    if (heading) heroSection.heading = heading;
-    if (subheading) heroSection.subheading = subheading;
-    if (title) heroSection.title = title;
-    heroSection.headingType =  'main'; // Default to 'main' if not provided
-    heroSection.slug = slug; // Update the slug from the category
-
-    await heroSection.save();
-    res.status(200).json({
-      message: `Hero section updated for category ${categoryId}`,
-      heading: heroSection.heading,
-      subheading: heroSection.subheading,
-      title: heroSection.title,
-      slug: heroSection.slug,
-      headingType: heroSection.headingType,
+  } catch (error) {
+    console.error('Error in upsertHeroSection:', error);
+    
+    if (error.code === 11000) {
+      // Handle duplicate key error
+      return res.status(400).json({
+        message: 'A hero section with this category already exists',
+        error: error.message
+      });
+    }
+    
+    res.status(500).json({
+      message: 'Error creating/updating hero section',
+      error: error.message
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error updating hero section' });
   }
 };
 
-
 const upsertHeroSectionSub = async (req, res) => {
-  const { categoryId, subcategoryId } = req.params; // Extract categoryId and subcategoryId from request parameters
+  const { categoryId, subcategoryId } = req.params; 
   const { heading, subheading, title } = req.body;
 
   try {
@@ -196,8 +187,8 @@ const upsertHeroSectionSub = async (req, res) => {
       if (heading) existingHeroSection.heading = heading;
       if (subheading) existingHeroSection.subheading = subheading;
       if (title) existingHeroSection.title = title;
-      existingHeroSection.headingType = 'sub'; // Default to 'sub' if not provided
-      existingHeroSection.slug = slug; // Update the slug based on subcategory
+      existingHeroSection.headingType = 'sub'; 
+      existingHeroSection.slug = slug; 
 
       await existingHeroSection.save();
       return res.status(200).json({
@@ -280,7 +271,7 @@ const upsertHeroSectionSubSub = async (req, res) => {
           slug: slug,
         },
       },
-      { upsert: true, new: true } // Create a new document if it doesn't exist, and return the new document
+      { upsert: true, new: true } 
     );
 
     res.status(200).json({
@@ -297,7 +288,12 @@ const upsertHeroSectionSubSub = async (req, res) => {
   }
 };
 
-
-
-
-module.exports = { upsertHeroSectionSubSub,getHeroSectionByCategory,getHeroSectionByCategorySub,getHeroSectionByCategorySubSub,upsertHeroSectionSub, upsertHeroSection ,getHeroSectionBySlug};
+module.exports = { 
+  upsertHeroSectionSubSub,
+  getHeroSectionByCategory,
+  getHeroSectionByCategorySub,
+  getHeroSectionByCategorySubSub,
+  getHeroSectionBySlug,
+  upsertHeroSectionSub,
+  upsertHeroSection 
+};

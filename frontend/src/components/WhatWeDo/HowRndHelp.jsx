@@ -52,7 +52,8 @@ export default function HowRndHelp() {
   }, []);
 
   useEffect(() => {
-    if (!isLargeScreen) return; // Don't set up animations on small screens
+    // Only run animations on large screens
+    if (!isLargeScreen) return;
 
     const animationDelay = setTimeout(() => {
       const applyAnimation = (elements) => {
@@ -64,7 +65,7 @@ export default function HowRndHelp() {
               opacity: 1,
               y: 0,
               scale: 1,
-              duration: 5,
+              duration: 0.8,
               ease: "power3.out",
               scrollTrigger: {
                 trigger: el,
@@ -77,16 +78,24 @@ export default function HowRndHelp() {
         });
       };
 
-      // Apply animations to both container sections
-      const mainElements = containerRef.current.querySelectorAll(".fade-in");
-      const cardElements = fadeInContainerRef.current.querySelectorAll(".fade-in");
-      
-      applyAnimation(mainElements);
-      applyAnimation(cardElements);
-    }, 3000);
+      // Apply animations to both container sections only if elements exist
+      if (containerRef.current) {
+        const mainElements = containerRef.current.querySelectorAll(".fade-in");
+        if (mainElements.length > 0) {
+          applyAnimation(mainElements);
+        }
+      }
+
+      if (fadeInContainerRef.current) {
+        const cardElements = fadeInContainerRef.current.querySelectorAll(".fade-in");
+        if (cardElements.length > 0) {
+          applyAnimation(cardElements);
+        }
+      }
+    }, 300);
 
     return () => clearTimeout(animationDelay);
-  }, [isLargeScreen]);
+  }, [isLargeScreen, cards]); // Add cards to dependency array
 
   return (
     <div className="relative bg-[#1b1b1b] py-4 md:p-8">
@@ -131,15 +140,15 @@ export default function HowRndHelp() {
       >
         {cards.map((card, index) => (
           <div key={index} className="flex flex-col h-full">
-            <div className={`bg-white text-gray-900 p-6 md:p-12 rounded-3xl shadow-lg transition-transform duration-300 w-full h-full min-h-[500px] flex flex-col ${isLargeScreen ? 'fade-in' : ''}`}>
+            <div className={`bg-white text-gray-900 p-6 md:p-12 rounded-3xl shadow-lg transition-transform duration-300 w-full h-full min-h-[500px] flex flex-col ${isLargeScreen ? 'fade-in' : 'opacity-100'}`}>
               <img src={`/api/icon/download/${card.icon}`} alt={card.title} className="h-12 w-12 mb-4" />
-              <h3 className="text-xl md:text-3xl font-bold mb-4">{card.title}</h3>
+              <h3 className="text-xl md:text-3xl capitalize font-bold mb-4">{card.title}</h3>
               <div className="flex-1">
                 {card.questionsAndAnswers.map((feature, i) => (
                   <div key={i} className="flex flex-col gap-3 mb-2">
                     <div className="flex items-center gap-2 justify-start">
                       <FaCheckCircle className="text-xl text-green-400" />
-                      <span className="text-lg md:text-xl font-bold text-black" dangerouslySetInnerHTML={{ __html: feature.question }}></span>
+                      <span className="text-lg md:text-xl capitalize font-bold text-black" dangerouslySetInnerHTML={{ __html: feature.question }}></span>
                     </div>
                     <span className="pl-6" dangerouslySetInnerHTML={{ __html: feature.answer }}></span>
                   </div>

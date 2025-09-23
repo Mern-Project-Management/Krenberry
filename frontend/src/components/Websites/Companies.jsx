@@ -31,13 +31,13 @@ const Companies = () => {
   
   return (
     <div className="mb-10">
-      <div className="py-6 lg:pt-20 pt-5 px-4 mt-20 ">
-        <h2 className="sm:text-4xl md:text-5xl text-black font-semibold text-center ">
+      <div className="py-6 lg:pt-16 pt-5 px-4  ">
+        <h2 className="sm:text-4xl md:text-5xl text-4xl capitalize text-black font-semibold text-center ">
           Companies using this{" "}
           <span className="text-[#ec2127]">service</span>
         </h2>
       </div>
-      <div className="py-6 mx-4 sm:mx-8 lg:mx-16 mt-8">
+      <div className="py-3 mx-4 sm:mx-8 lg:mx-16 ">
         <div className="flex flex-wrap gap-8 justify-center items-center">
           {companies.map((company, index) => (
             <img
@@ -45,7 +45,7 @@ const Companies = () => {
               src={`/api/serviceImages/download/${company.images}`} // Ensure the correct path
               alt={company.alt}
               title={company.imgtitle}
-              className="object-cover w-full h-auto max-w-[120px] sm:max-w-[150px] lg:max-w-[180px]" // Responsive image sizing
+              className="object-contain w-full h-auto max-w-[120px] sm:max-w-[150px] lg:max-w-[180px]" // Responsive image sizing
             />
           ))}
         </div>

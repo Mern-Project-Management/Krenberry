@@ -16,7 +16,9 @@ const ContactInfoData = () => {
   const [existingPhoto, setExistingPhoto] = useState(null); // State for existing photo from the backend
   const [imgTitle, setImgTitle] = useState("");
   const [alt, setAlt] = useState("");
+  const [error, setError] = useState(""); // Add error state
 
+  const navigate = useNavigate();
 
   const notify = () => {
     toast.success("Updated Successfully!");
@@ -37,6 +39,8 @@ const ContactInfoData = () => {
   };
 
   const saveHeadings = async () => {
+    setError(""); // Reset error state
+    
     const formData = new FormData();
     formData.append("pagetype", 'contactus');
     formData.append("heading", heading);
@@ -53,8 +57,13 @@ const ContactInfoData = () => {
         },
       });
       notify();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error); // Set error message from server
+      } else {
+        setError("An error occurred while uploading the file.");
+      }
+      console.error("Error:", err);
     }
   };
 
@@ -68,8 +77,16 @@ const ContactInfoData = () => {
   // Handle file change and set preview
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    setPhoto(file);
-    setPhotoPreview(URL.createObjectURL(file)); // Generate preview URL for photo
+    if (file) {
+      // Client-side validation
+      if (!file.type.startsWith('image/')) {
+        setError("Only image files are allowed!");
+        return;
+      }
+      setPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file)); // Generate preview URL for photo
+      setError("");
+    }
   };
 
   // Fetch contact info data with authentication
@@ -116,7 +133,7 @@ const ContactInfoData = () => {
               type="text"
               value={heading}
               onChange={handleHeadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-gray-500 transition duration-300"
             />
           </div>
           <div className="mb-6">
@@ -125,7 +142,7 @@ const ContactInfoData = () => {
               type="text"
               value={subheading}
               onChange={handleSubheadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-gray-500 transition duration-300"
             />
           </div>
           <div className="mb-6">
@@ -133,8 +150,14 @@ const ContactInfoData = () => {
             <input
               type="file"
               onChange={handlePhotoChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              accept="image/*"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-gray-500 transition duration-300"
             />
+            {error && (
+              <div className="text-red-500 text-sm mt-2">
+                {error}
+              </div>
+            )}
           </div>
           {/* Preview Section */}
           <div className="mb-6">
@@ -161,7 +184,7 @@ const ContactInfoData = () => {
             type="text"
             value={imgTitle}
             onChange={(e) => setImgTitle(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-gray-500 transition duration-300"
           />
         </div>
         <div className="mb-6">
@@ -170,7 +193,7 @@ const ContactInfoData = () => {
             type="text"
             value={alt}
             onChange={(e) => setAlt(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-gray-500 transition duration-300"
           />
         </div>
 
@@ -183,19 +206,19 @@ const ContactInfoData = () => {
       </div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold mb-4">Contact Info</h1>
-        <button className="px-4 py-2 mt-3 bg-[#021660] text-white rounded hover:bg-red-600 transition duration-300">
+        <button className="px-4 py-2 mt-3 bg-[#324154] text-white rounded hover:bg-red-600 transition duration-300">
           <Link to={`/contactinfo/createContactinfo`}>Add Contact Info</Link>
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full mt-8 bg-white border border-blue-200">
-          <thead className="bg-[#021045] text-white">
+        <table className="min-w-full mt-8 bg-white border border-gray-200">
+          <thead className="bg-[#324154] text-white">
             <tr>
               <th className="px-4 py-2 border">Photo</th>
               <th className="px-4 py-2 border">Image Title</th>
               <th className="px-4 py-2 border">Alt Text</th>
               <th className="px-4 py-2 border">Title</th>
-              <th className="px-4 py-2 border">Address</th>
+              <th className="px-4 py-2 border">Contact Details</th>
               <th className="px-4 py-2 border">Actions</th>
             </tr>
           </thead>
@@ -217,11 +240,31 @@ const ContactInfoData = () => {
                   <td className="px-4 py-2 border">{contactInfo.imgTitle}</td>
                   <td className="px-4 py-2 border">{contactInfo.alt}</td>
                   <td className="px-4 py-2 border">{contactInfo.title}</td>
-                  <td className="px-4 py-2 border">{contactInfo.address}</td>
-                  <td className="px-4 py-2 border w-full flex items-center justify-left space-x-2">
+                  <td className="px-4 py-2 border">
+                    <div className="space-y-1">
+                      {contactInfo.type === 'Head Office Address' || contactInfo.type === 'Sales Office Address' ? (
+                        <div>
+                          <strong>Address:</strong> {contactInfo.address}
+                        </div>
+                      ) : null}
+                      {contactInfo.type === 'Phone No' && contactInfo.phone1 && (
+                        <div>
+                          <strong>Phone:</strong> {contactInfo.phone1}
+                          {contactInfo.phone2 && `, ${contactInfo.phone2}`}
+                        </div>
+                      )}
+                      {contactInfo.type === 'Email' && contactInfo.email1 && (
+                        <div>
+                          <strong>Email:</strong> {contactInfo.email1}
+                          {contactInfo.email2 && `, ${contactInfo.email2}`}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 border-t w-full flex items-center justify-center space-x-2">
                     <Link
                       to={`/contactinfo/editContactinfo/${contactInfo._id}`}
-                      className="bg-blue-500 text-white p-2 rounded flex items-center justify-center"
+                      className="bg-gray-500 text-white p-2 rounded flex items-center justify-center"
                     >
                       <FaEdit title="Edit" />
                     </Link>

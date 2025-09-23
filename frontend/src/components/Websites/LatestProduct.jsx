@@ -140,7 +140,7 @@ export default function LatestProject() {
       <img
         src={`/api/image/download/${project.photo[0]}`}
         alt={project.alt || "Project Image"}
-        className="w-full h-96 object-cover rounded-lg shadow-xl border"
+        className="w-full sm:h-96 sm:object-cover object-contain rounded-lg shadow-xl border"
         loading="lazy"
       />
       <div
@@ -178,7 +178,7 @@ export default function LatestProject() {
   );
 
   return (
-    <div className="py-16">
+    <div className="sm:py-16 pt-16">
       <h2 className="heading font-semibold px-4 text-center">
         Latest <span className="text-[#ec2127]">Projects</span>
       </h2>
@@ -214,7 +214,7 @@ export default function LatestProject() {
           <img
             src={`/api/image/download/${fullscreenImage}`}
             alt="Fullscreen view"
-            className="w-full h-auto object-cover select-none pointer-events-none"
+            className="w-full h-auto sm:object-cover object-contain  select-none pointer-events-none"
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
           />

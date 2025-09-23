@@ -122,22 +122,22 @@ export default function HowRndHelp() {
     <div className="p-4 md:p-8">
       <div
         ref={containerRef}
-        className="flex flex-col items-center mt-12 md:mt-24 space-y-6"
+        className="flex flex-col items-center mt-12 md:mt-10 "
       >
         <div className="text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-4">
+          <h2 className="text-4xl md:text-4xl lg:text-5xl font-semibold mb-4">
             {splitHeading(heading).firstPart}
-  <span className="text-[#ec2127]">{splitHeading(heading).secondPart}</span>
+            <span className="text-[#ec2127]">{splitHeading(heading).secondPart}</span>
           </h2>
           <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
-           {subheading}
+            {subheading}
           </p>
         </div>
       </div>
       <div className="relative">
         <div
           ref={fadeInContainerRef}
-          className="flex flex-col items-center space-y-6 mt-12 pb-20"
+          className="flex flex-col items-center space-y-6 mt-12 pb-16"
         >
           <div className="absolute inset-0  flex-col lg:left-10 xl:left-40  justify-items-start hidden lg:flex">
             <div className="w-1 bg-gray-300 progress-line" />
@@ -164,36 +164,59 @@ export default function HowRndHelp() {
             })}
           </div>
 
-          {services.map((service, index) => (
-            <div
-              key={service._id}
-              className="fade-in border border-lg border-black rounded-xl p-6 flex flex-col md:flex-row items-center space-x-0 md:space-x-6 bg-white shadow-lg transition-transform duration-300 hover:shadow-xl hover:scale-105 max-w-3xl mx-auto relative"
-            >
-              <img
-                src={`/api/designProcess/download/${service.image}`}
-                alt={service.alt}
-                title={service.imgtitle}
-                className="w-full h-52 md:w-52 md:h-52 rounded-md object-cover mb-4 md:mb-0"
-              />
-              <div className="flex flex-col w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl md:text-2xl font-semibold">
-                    {service.title}
-                  </h3>
-                  <span className="bg-[#ec2127] text-black text-xs font-medium px-3 py-1 rounded-full flex-shrink-0">
-                    {" "}
-                    Step {index + 1}
-                  </span>
+          {services.length > 0 ? (
+            services.map((service, index) => (
+              <div
+                key={service._id}
+                className="fade-in border border-lg border-black rounded-xl p-6 flex flex-col md:flex-row items-center space-x-0 md:space-x-6 bg-white shadow-lg transition-transform duration-300 hover:shadow-xl hover:scale-105 max-w-3xl mx-auto relative"
+              >
+                <img
+                  src={`/api/designProcess/download/${service.image}`}
+                  alt={service.alt}
+                  title={service.imgtitle}
+                  className="w-full h-52 md:w-52 md:h-52 rounded-md object-cover mb-4 md:mb-0"
+                />
+                <div className="flex flex-col w-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl md:text-2xl font-semibold">
+                      {service.title}
+                    </h3>
+                    <span className="bg-[#ec2127] text-black text-xs font-medium px-3 py-1 rounded-full flex-shrink-0">
+                      {" "}
+                      Step {index + 1}
+                    </span>
+                  </div>
+                  <p className="text-md md:text-xl text-black mb-2">
+                    {service.subheading}
+                  </p>
+                  <p className="text-sm md:text-md text-black">
+                    {service.description}
+                  </p>
                 </div>
-                <p className="text-md md:text-xl text-black mb-2">
-                  {service.subheading}
-                </p>
-                <p className="text-sm md:text-md text-black">
-                  {service.description}
-                </p>
+              </div>
+            ))
+          ) : (
+            <div className="text-center  w-full">
+              <div className="max-w-md mx-auto">
+                <svg
+                  className="w-24 h-24 mx-auto text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">No Design Process available</h3>
+                <p className="mt-1 text-gray-500">We couldn't find any Design Process at the moment. Please check back later.</p>
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

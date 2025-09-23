@@ -35,9 +35,8 @@ const ServicesTable = ({ categoryId, subcategoryId }) => {
           <span
             className="hover:text-blue-500 cursor-pointer"
             onClick={() => navigate(`/services/editService/${row.original._id}`)}
-          >
-            {row.original.heading}
-          </span>
+            dangerouslySetInnerHTML={{ __html: row.original.heading }}
+          />
         ),
       },
       {
@@ -193,20 +192,66 @@ const ServicesTable = ({ categoryId, subcategoryId }) => {
       )}
 
       {/* Modal for viewing service details */}
-      <Modal isOpen={isModalOpen} onRequestClose={closeModal}>
-        <h2 className="text-xl font-bold">{selectedService?.heading}</h2>
-        <div dangerouslySetInnerHTML={{ __html: selectedService?.description }} />
-        <h3 className="font-bold mt-4">Questions</h3>
-        <ul>
-          {selectedService?.questions?.map((question) => (
-            <li key={question._id}>
-              <strong>{question.question}</strong>: {question.answer}
-            </li>
-          ))}
-        </ul>
-        <button onClick={closeModal} className="mt-4 p-2 bg-red-500 text-white rounded">
-          Close
-        </button>
+      <Modal 
+        isOpen={isModalOpen} 
+        onRequestClose={closeModal}
+        style={{
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 1000,
+          },
+          content: {
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            marginRight: '-50%',
+            transform: 'translate(-50%, -50%)',
+            maxWidth: '80%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            zIndex: 1001,
+            padding: '2rem',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }
+        }}
+      >
+        <div className="relative">
+          <button 
+            onClick={closeModal} 
+            className="absolute top-0 right-0 text-gray-500 hover:text-gray-700"
+            style={{ fontSize: '1.5rem' }}
+          >
+            &times;
+          </button>
+          <div className="flex justify-between items-center mb-4 font-bold text-2xl" dangerouslySetInnerHTML={{ __html: selectedService?.heading }} />
+          <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: selectedService?.description }} />
+          
+          {selectedService?.questions?.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold mb-3">Frequently Asked Questions</h3>
+              <ul className="space-y-4">
+                {selectedService?.questions?.map((question) => (
+                  <li key={question._id} className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-800" dangerouslySetInnerHTML={{ __html: question.question }} />
+                    <p className="text-gray-600 mt-1" dangerouslySetInnerHTML={{ __html: question.answer }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          <div className="mt-6 flex justify-end">
+            <button 
+              onClick={closeModal} 
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

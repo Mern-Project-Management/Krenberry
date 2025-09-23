@@ -72,7 +72,7 @@ console.log(data)
      <div className="w-full lg:w-[60%] px-4 flex flex-col justify-center order-1">
          {/* Render the heading only if service and heading are available */}
          {service?.heading && (
-            <div dangerouslySetInnerHTML={{ __html: service.heading }}  className="text-4xl font-bold pb-6" />
+            <div dangerouslySetInnerHTML={{ __html: service.heading }}  className="sm:text-4xl text-2xl font-bold pb-6"/>
           ) 
         }
           <p className="mt-4 text-lg pb-4 text-justify">
@@ -87,7 +87,7 @@ console.log(data)
                 className="flex justify-between items-center px-4 sm:px-7 md:px-10 lg:px-14 bg-[#f9f7f1] rounded-[20px] py-3 sm:py-4 lg:py-[17px] cursor-pointer"
                 onClick={() => toggleFAQ(index)}
               >
-                <h3 className="text-base sm:text-lg lg:text-xl font-inter font-medium">
+                <h3 className="text-lg sm:text-lg lg:text-xl font-inter font-medium">
                   {faq.question}
                 </h3>
                 <span className="text-lg sm:text-xl lg:text-2xl">
@@ -102,10 +102,10 @@ console.log(data)
                 ref={(el) => (answerRefs.current[index] = el)}
                 className={`overflow-hidden ${openIndex === index ? "block" : "hidden"}`}
               >
-                <div className="p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify">
+                <div className="p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-md sm:text-base lg:text-base text-justify">
                   <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                 </div>
-              </div>
+              </div>   
             </div>
           ))}
         </div>
@@ -127,7 +127,7 @@ console.log(data)
                 <img
                   src={`/api/image/download/${service.photo[0]}`} // Display the first photo if video isn't available
                   alt="Service Image"
-                  className="w-full max-w-[750px] h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain rounded-2xl"
+                 className="w-full max-w-[750px] sm:h-[400px] h-[200px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain object-cover rounded-2xl"
                 />
               )
             )}

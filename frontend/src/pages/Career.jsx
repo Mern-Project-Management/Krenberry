@@ -13,6 +13,8 @@ import axios from "axios";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 Modal.setAppElement("#root");
 
@@ -138,7 +140,7 @@ const JobCard = ({ job, onApply }) => {
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Job Requirements"
-        className="fixed inset-0 bg-white p-8 max-w-lg mx-auto my-16 rounded-lg shadow-lg overflow-auto max-h-[80vh]"
+        className="fixed inset-0 bg-white mx-3 p-8 max-w-lg  my-16 rounded-lg shadow-lg overflow-auto max-h-[80vh]"
         overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-50"
       >
         <div className="flex justify-between items-center relative">
@@ -192,13 +194,14 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
   const [mobileNo, setMobileNo] = useState("");
   const [message, setMessage] = useState("");
   const [resume, setResume] = useState(null);
-  const [clientIp, setClientIp] = useState("");
-  const [utmParams, setUtmParams] = useState({});
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [mobileNoError, setMobileNoError] = useState("");
   const [resumeError, setResumeError] = useState("");
   const [messageError, setMessageError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clientIp, setClientIp] = useState("");
+  const [utmParams, setUtmParams] = useState({});
   const navigate = useNavigate();
 
   const validateName = (value) => {
@@ -304,6 +307,19 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
     });
   }, []);
 
+  const isFormValid = () => {
+    return (
+      name.trim() !== "" &&
+      /^[A-Za-z\s]+$/.test(name) &&
+      email.trim() !== "" &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+      mobileNo.trim() !== "" &&
+      /^\d{10}$/.test(mobileNo) &&
+      resume !== null &&
+      (message === "" || message.length >= 10)
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -320,8 +336,19 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
     setMessageError(messageErr);
 
     if (nameErr || emailErr || mobileNoErr || resumeErr || messageErr) {
+      toast.error('Please fill all required fields correctly', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const formData = new FormData();
@@ -343,8 +370,25 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
           withCredentials: true,
         }
       );
-      navigate("/thankyou");
-      onClose();
+      
+      // Show success toast
+      toast.success('Application submitted successfully!', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        onClose();
+        navigate("/thankyou");
+      }, 1500);
+      
+      // Reset form
       setName("");
       setEmail("");
       setMobileNo("");
@@ -357,6 +401,17 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
       setMessageError("");
     } catch (err) {
       console.error("Failed to submit application", err);
+      toast.error('Failed to submit application. Please try again.', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -365,7 +420,11 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-lg w-full relative">
-        <button className="absolute top-3 right-3" onClick={onClose}>
+        <button 
+          className="absolute top-3 right-3" 
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
           <X size={24} />
         </button>
         <h2 className="text-2xl font-semibold mb-4">
@@ -439,17 +498,45 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
               onChange={handleMessageChange}  
               className={`w-full p-2 border rounded-lg ${messageError ? "border-red-500" : ""}`}
               maxLength={500}
+              disabled={isSubmitting}
             />
             {messageError && <p className="text-red-500 text-sm mt-1">{messageError}</p>}
           </div>
           <button
             type="submit"
-            className="bg-[#ec2127] hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+            disabled={!isFormValid() || isSubmitting}
+            className={`flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg font-bold text-white ${
+              isFormValid() && !isSubmitting 
+                ? 'bg-[#ec2127] hover:bg-red-700' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
-            Submit Application
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </>
+            ) : (
+              'Submit Application'
+            )}
           </button>
         </form>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };
@@ -490,37 +577,30 @@ const CareerPage = () => {
     fetchData();
   }, []);
 
-// Replace the filteredJobs logic with this improved version:
-
-const filteredJobs = careerOptions.filter((job) => {
-  // Create a searchable string that includes all relevant job fields
-  const searchableText = [
-    job.department,
-    job.jobtitle,
-    job.jobType,
-    job.employmentType,
-    // You can add more fields here if needed
-  ].join(' ').toLowerCase();
+  const filteredJobs = careerOptions.filter((job) => {
+    const searchableText = [
+      job.department,
+      job.jobtitle,
+      job.jobType,
+      job.employmentType,
+    ].join(' ').toLowerCase();
   
-  const searchTermLower = searchTerm.toLowerCase().trim();
+    const searchTermLower = searchTerm.toLowerCase().trim();
   
-  // Check if search term matches - split search term into words and check each
-  let matchesSearch = true;
-  if (searchTermLower !== '') {
-    const searchWords = searchTermLower.split(/\s+/);
-    matchesSearch = searchWords.every(word => 
-      searchableText.split(/\s+/).some(textWord => 
-        textWord.startsWith(word) || textWord.includes(word)
-      )
-    );
-  }
+    let matchesSearch = true;
+    if (searchTermLower !== '') {
+      const searchWords = searchTermLower.split(/\s+/);
+      matchesSearch = searchWords.every(word => 
+        searchableText.split(/\s+/).some(textWord => 
+          textWord.startsWith(word) || textWord.includes(word)
+        )
+      );
+    }
   
-  // Check if department filter matches
-  const matchesDepartment = filterDepartment === "All" || job.department === filterDepartment;
+    const matchesDepartment = filterDepartment === "All" || job.department === filterDepartment;
   
-  // Return true only if there's no search error and both conditions are met
-  return !searchError && matchesSearch && matchesDepartment;
-});
+    return !searchError && matchesSearch && matchesDepartment;
+  });
 
   const openModal = (job) => {
     setSelectedJob(job);
@@ -535,7 +615,19 @@ const filteredJobs = careerOptions.filter((job) => {
   ];
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-gray-50">
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Banner />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-4">
         <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -561,7 +653,7 @@ const filteredJobs = careerOptions.filter((job) => {
                 <input
                   type="text"
                   placeholder="Search jobs..."
-                  className={`w-full pl-10 pr-4 py-2 rounded-full border ${searchError ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-1 focus:ring-black`}
+                  className={`w-full pl-3 pr-4 py-2 rounded-full border ${searchError ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-1 focus:ring-black`}
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />

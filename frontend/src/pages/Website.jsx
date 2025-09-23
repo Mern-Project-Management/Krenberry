@@ -25,10 +25,10 @@ export default function Website() {
       <CraftRight />
       <CraftLeft />
       <LatestProduct />
-      <ServiceSlider/>
       <Tagline/>
+      <ServiceSlider/>
       <WeAreExpert />
-      <Logotypes/>
+      {/* <Logotypes/> */}
       <Review />
       <Companies />
       <WhyPartnerWithUs />
@@ -37,8 +37,8 @@ export default function Website() {
       {/* <DesignProcess/> */}
       <FAQ />
       <BookAcall />
-      <LatestBlog />
-      list of items would render here are hero craft righ & left latest Product serviesslider tagline we are expert logo type review companies why partner with us
+      {/* <LatestBlog /> */}
+     
     </div>
   );
 }

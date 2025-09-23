@@ -3,7 +3,6 @@ import { MdKeyboardArrowRight, MdKeyboardArrowDown } from "react-icons/md";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import gsap from "gsap";
-import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 export default function CraftLeft() {
@@ -80,14 +79,14 @@ export default function CraftLeft() {
             {service.heading ? (
               <div
                 dangerouslySetInnerHTML={{ __html: service.heading }}
-                className="text-4xl font-bold pb-6 break-words"
+                className="text-2xl text-semibold px-4  sm:mt-0 sm:text-3xl md:text-5xl lg:text-4xl font-bold  sm:pb-6 break-words leading-tight"
               />
             ) : (
               <h2 className="text-4xl font-bold pb-6">Default Heading</h2>
             )}
           </div>
 
-          <p className="mt-4 text-lg pb-4 text-justify">
+          <p className="mt-4 text-lg pb-4 px-4 text-justify">
             {service.description ? (
               <div dangerouslySetInnerHTML={{ __html: service.description }} />
             ) : (
@@ -118,16 +117,10 @@ export default function CraftLeft() {
                   openIndex === index ? "block" : "hidden"
                 }`}
               >
-                <div className="  list-decimal p-3 sm:p-4 lg:p-5 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify">
-                  {/* <p dangerouslySetInnerHTML={{ __html: faq.answer }} /> */}
-                  <ReactQuill
-                    readOnly={true}
-                    value={faq.answer}
-                    modules={{ toolbar: false }}
-                    theme="bubble"
-                    className="quill text-sm"
-                  />
-                </div>
+                <div 
+                  className="pt-4 px-8 sm:px-10 lg:px-12 font-inter text-sm sm:text-base lg:text-base text-justify"
+                  dangerouslySetInnerHTML={{ __html: faq.answer }}
+                />
               </div>
             </div>
           ))}
@@ -135,7 +128,7 @@ export default function CraftLeft() {
 
         {/* Video Content */}
         <div className="w-full lg:w-[40%] flex items-center justify-center order-2">
-          <div className="relative rounded-2xl xl:border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
+          <div className="relative px-3 sm:px-0 xl:border-[3px] overflow-hidden group transition-all duration-300 mx-4 my-4">
             {videoUrl ? (
               <video
                 src={videoUrl}
@@ -143,7 +136,7 @@ export default function CraftLeft() {
                 autoPlay
                 muted
                 loop
-                className="w-[450px] h-[450px] rounded-2xl transition-all duration-300"
+                className="w-[450px] h-[450px]  transition-all duration-300"
               />
             ) : (
               service.photo &&
@@ -151,11 +144,11 @@ export default function CraftLeft() {
                 <img
                   src={`/api/image/download/${service.photo[0]}`} // Display the first photo if video isn't available
                   alt="Service Image"
-                   className="w-full max-w-[750px] h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain rounded-2xl"
+                   className="w-full max-w-[750px] sm:h-[400px] aspect-[15/8] xl:object-cover lg:object-cover md:object-contain "
                 />
               )
             )}
-            <div className="absolute inset-0 rounded-2xl border-4 border-transparent m-10 transition-all duration-300"></div>
+            <div className="absolute inset-0  border-4 border-transparent m-10 transition-all duration-300"></div>
           </div>
         </div>
       </div>

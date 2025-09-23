@@ -14,6 +14,7 @@ import {
 const AutocompleteInput = ({
   value,
   onChange,
+  onSelect,
   suggestions,
   placeholder,
   loading,
@@ -68,7 +69,7 @@ const AutocompleteInput = ({
               key={index}
               className="p-3 hover:bg-white/10 cursor-pointer text-white/90 transition-colors duration-200"
               onClick={() => {
-                onChange({ target: { name, value: suggestion } });
+                onSelect(suggestion);
                 setSearch(suggestion);
                 setIsOpen(false);
               }}
@@ -82,7 +83,7 @@ const AutocompleteInput = ({
   );
 };
 
-const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
+const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoading = false }) => {
   const initialFormState = {
     name: "",
     email: "",
@@ -90,6 +91,15 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     service: "",
     budget: "",
     city: "",
+    utmSource: "",
+    utmMedium: "",
+    utmCampaign: "",
+    utmId: "",
+    gclid: "",
+    gcidSource: "",
+    utmContent: "",
+    utmTerm: "",
+    ipaddress: "",
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -97,14 +107,12 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   const [category, setCategory] = useState([]);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const budgetOptions = [
-    "CAD 165K and Above",
-    "CAD 83K - 165K",
-    "CAD 41K - 83K",
-    "CAD 25K - 41K",
-    "CAD 8K - 25K",
-  ];
+  // Use parent loading prop if available, otherwise use local isSubmitting state
+  const loading = parentLoading !== undefined ? parentLoading : isSubmitting;
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -121,7 +129,9 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
     const fetchAllCities = async () => {
       setLoadingCities(true);
       try {
-        const response = await axios.get("https://countriesnow.space/api/v0.1/countries");
+        const response = await axios.get(
+          "https://countriesnow.space/api/v0.1/countries"
+        );
         const allCities = response.data.data.reduce((acc, country) => {
           if (country.cities) {
             acc.push(...country.cities);
@@ -147,9 +157,9 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       name: validateName(formData.name),
       email: validateEmail(formData.email),
       phone: validateMobileNo(formData.phone),
-      // city: validateCategory(formData.city),
-      // service: validateCategory(formData.service),
-      // budget: validateCategory(formData.budget),
+      city: !formData.city.trim() ? "City is required" : "",
+      service: !formData.service.trim() ? "Service is required" : "",
+      budget: !formData.budget.trim() ? "Budget is required" : "",
     };
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error); // Returns true if no errors
@@ -157,105 +167,237 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    
+    // Update form data
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
-    // Validate on change
-    let error = "";
-    if (name === "name") error = validateName(value);
-    else if (name === "email") error = validateEmail(value);
-    else if (name === "phone") error = validateMobileNo(value);
-    // else if (name === "city") error = validateCategory(value);
-    // else if (name === "service") error = validateCategory(value);
-    // else if (name === "budget") error = validateCategory(value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // Clear error for this field when user types or selects a value
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
+  };
+
+  const handleAutocompleteChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Clear any existing error for this field
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (validateForm()) {
-      await onSubmit(formData);
-      setFormData(initialFormState);
-      setErrors({});
+    const isValid = validateForm();
+    
+    if (isValid) {
+      // Only set local loading state if parent isn't managing it
+      if (parentLoading === undefined) {
+        setIsSubmitting(true);
+      }
+      
+      try {
+        await onSubmit(formData);
+        setFormData(initialFormState);
+        setErrors({});
+        setResetKey((prev) => prev + 1);
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 5000);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+      } finally {
+        if (parentLoading === undefined) {
+          setIsSubmitting(false);
+        }
+      }
+    } else {
+      // Scroll to first error
+      const firstError = Object.keys(errors).find(key => errors[key]);
+      if (firstError) {
+        document.querySelector(`[name="${firstError}"]`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
     }
   };
+
+  const budgetOptions = [
+    "CAD 165K and Above",
+    "CAD 83K - 165K",
+    "CAD 41K - 83K",
+    "CAD 25K - 41K",
+    "CAD 8K - 25K",
+  ];
 
   return (
     <form
       onSubmit={handleSubmit}
-      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${
-        isModal
-          ? "w-full max-w-md mx-auto bg-black"
+      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${isModal
+          ? "w-full  mx-auto bg-black"
           : "bg-white/10 backdrop-blur-lg border-white/10"
-      }`}
+        }`}
     >
       <h3 className="text-2xl font-bold mb-6 text-white text-center">
         Get Started Today
       </h3>
 
-      {["name", "email", "phone"].map((field) => (
-        <div key={field} className="mb-4">
-          <input
-            name={field}
-            type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-            placeholder={
-              field.charAt(0).toUpperCase() +
-              field.slice(1) +
-              (field === "phone" ? " No." : "")
-            }
-            value={formData[field]}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
-              errors[field] ? "border-red-500" : "border-white/20"
-            } text-white placeholder:text-white/50 focus:outline-none focus:border-red-500 transition-colors duration-300`}
-            required
-          />
-          {errors[field] && (
-            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
-          )}
-        </div>
-      ))}
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="name"
+          type="text"
+          placeholder="Your Name"
+          value={formData.name}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.name ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.name && (
+          <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.city}
-        onChange={handleInputChange}
-        suggestions={cities}
-        placeholder="City"
-        loading={loadingCities}
-        name="city"
-        error={errors.city}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Email <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="email"
+          type="email"
+          placeholder="Your Email"
+          value={formData.email}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.email ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.service}
-        onChange={handleInputChange}
-        suggestions={category}
-        placeholder="Service"
-        name="service"
-        error={errors.service}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Phone Number <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="phone"
+          type="tel"
+          placeholder="Your Phone Number"
+          value={formData.phone}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.phone ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+          maxLength={10}
+          minLength={10}
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.budget}
-        onChange={handleInputChange}
-        suggestions={budgetOptions}
-        placeholder="Your Monthly Budget(CAD)"
-        name="budget"
-        error={errors.budget}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          City <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.city}
+          onChange={(e) => handleAutocompleteChange('city', e.target.value)}
+          onSelect={(value) => handleAutocompleteChange('city', value)}
+          suggestions={cities}
+          placeholder="Select your city"
+          loading={loadingCities}
+          fieldName="city"
+          resetKey={resetKey}
+          error={errors.city}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Service <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.service}
+          onChange={(e) => handleAutocompleteChange('service', e.target.value)}
+          onSelect={(value) => handleAutocompleteChange('service', value)}
+          suggestions={category}
+          placeholder="Select a service"
+          fieldName="service"
+          resetKey={resetKey}
+          error={errors.service}
+        />
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-white mb-1 text-sm">
+          Monthly Budget (CAD) <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.budget}
+          onChange={(e) => handleAutocompleteChange('budget', e.target.value)}
+          onSelect={(value) => handleAutocompleteChange('budget', value)}
+          suggestions={budgetOptions}
+          placeholder="Select your budget range"
+          fieldName="budget"
+          resetKey={resetKey}
+          error={errors.budget}
+        />
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className={`w-full py-3 ${
-          loading
+        className={`w-full py-3 ${loading
             ? "bg-gray-400"
             : "bg-gradient-to-r from-[#ec2127] to-red-600"
-        } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
+          } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
       >
         {loading ? "Submitting..." : "Let's Connect"}
       </button>
+
+      {showSuccessMessage && (
+        <div className="mt-4 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <svg
+              className="w-5 h-5 text-green-500"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-green-500 text-sm">
+              Thank you for your submission! We'll get back to you soon.
+            </p>
+          </div>
+        </div>
+      )}
     </form>
   );
 });
@@ -317,21 +459,33 @@ export default function HeroSection() {
         }`}
       >
         <div
-          className={`relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center ${
-            isModalOpen ? "scale-100" : "scale-95"
-          }`}
+          className={`relative w-full max-w-4xl transform transition-all duration-300 flex ${isModalOpen ? "scale-100" : "scale-95"} mx-auto`}
         >
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="absolute -bottom-10 z-10 bg-[#1111119f] p-1 rounded-full hover:bg-white/20 transition-colors duration-300"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <ContactForm
-            isModal={true}
-            onSubmit={handleFormSubmit}
-            loading={loading}
-          />
+          <div className="w-[50%] p-6 bg-white rounded-l-lg">
+            {/* Left side content - 60% width */}
+            <div className="h-full flex flex-col justify-center">
+              <h3 className="text-2xl font-bold mb-4">Get In Touch</h3>
+              <p className="text-gray-600 mb-6">Fill out the form and our team will get back to you within 24 hours.</p>
+              {/* Add any additional content or image here */}
+            </div>
+          </div>
+          
+          <div className="w-[50%] relative">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute -right-4 -top-4 z-10 bg-[#1111119f] p-1 rounded-full hover:bg-white/20 transition-colors duration-300"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            
+            <div className="bg-[#1a1a1a] p-8 rounded-r-lg h-full">
+              <ContactForm
+                isModal={true}
+                onSubmit={handleFormSubmit}
+                loading={loading}
+              />
+            </div>
+          </div>
         </div>
       </div>
     ),
@@ -369,24 +523,25 @@ export default function HeroSection() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col lg:pb-12 md:flex-row justify-center gap-10 xl:gap-40 w-11/12 lg:w-4/5 mx-auto pt-44">
+      <div className="relative flex flex-col lg:pb-12 md:flex-row justify-center gap-10 xl:gap-20 w-11/12 lg:w-4/5 mx-auto sm:pt-44 md:pt-24 pt-24 pb-12 xl:pt-44">
         <div className="md:w-[50%] space-y-8">
-          <ReactQuill
-            readOnly={true}
-            value={heroSection.heading}
-            modules={{ toolbar: false }}
-            theme="bubble"
-            className="quill-content"
-          />
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full"
-          >
-            Get in Touch
-          </button>
+        <div 
+className="quill-content 
+  [&_h1]:text-xl [&_h1]:md:text-3xl [&_h1]:lg:text-4xl 
+  [&_h2]:text-base [&_h2]:md:text-lg [&_h2]:text-gray-100
+  [&_h3]:text-base [&_h3]:md:text-lg [&_h3]:text-gray-100
+  text-justify"
+  dangerouslySetInnerHTML={{ __html: heroSection.heading }}
+/>
+<button
+  onClick={() => setIsModalOpen(true)}
+  className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full md:w-1/3"
+>
+  Get in Touch
+</button>
         </div>
 
-        <div className="hidden md:block xl:w-[25%] w-[40%] relative">
+        <div className="hidden md:block w-[40%] relative">
           <div className="absolute -top-4 -left-4 z-10">
             <FaStarOfLife className="text-red-500 text-4xl animate-[spin_5s_linear_infinite]" />
           </div>
@@ -394,7 +549,7 @@ export default function HeroSection() {
         </div>
       </div>
       <Modal />
-      {isMessageVisible && (
+      {/* {isMessageVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#141414c7] text-white p-8 rounded-lg shadow-lg">
             {successMessage}
@@ -406,7 +561,7 @@ export default function HeroSection() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

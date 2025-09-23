@@ -36,7 +36,7 @@ const PremiumTemplatesSection = () => {
 
       <div className="lg:w-1/2 mb-6 lg:mb-0 relative z-10">
         <h2
-          className="text-2xl sm:text-3xl lg:text-4xl font-medium mb-3 sm:mb-4 font-inter"
+          className="text-2xl sm:text-3xl lg:text-4xl capitalize font-medium mb-3 sm:mb-4 font-inter"
           dangerouslySetInnerHTML={{ __html: content.heading }}
         />
         <p

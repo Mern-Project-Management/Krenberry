@@ -71,7 +71,7 @@ const FAQ = () => {
   }
 
   return (
-    <div className="max-w-4xl sm:w-[63%] md:w-[97%] lg:w-full mx-auto m-12 mb-16  lg:max-w-4xl xl:max-w-4xl">
+    <div className="max-w-7xl sm:w-[63%] md:w-[97%] lg:w-full mx-auto  mb-16 pt-16  lg:max-w-7xl xl:max-w-7xl">
       <h2 className="text-4xl md:text-5xl  text-center  font-semibold">
         {heading}
       </h2>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { FaStarOfLife } from "react-icons/fa6";
 import { X } from "lucide-react";
@@ -84,7 +83,7 @@ const AutocompleteInput = ({
   );
 };
 
-const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
+const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoading = false }) => {
   const initialFormState = {
     name: "",
     email: "",
@@ -110,14 +109,10 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   const [loadingCities, setLoadingCities] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const budgetOptions = [
-    "CAD 165K and Above",
-    "CAD 83K - 165K",
-    "CAD 41K - 83K",
-    "CAD 25K - 41K",
-    "CAD 8K - 25K",
-  ];
+  // Use parent loading prop if available, otherwise use local isSubmitting state
+  const loading = parentLoading !== undefined ? parentLoading : isSubmitting;
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -162,9 +157,9 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       name: validateName(formData.name),
       email: validateEmail(formData.email),
       phone: validateMobileNo(formData.phone),
-      // city: validateCategory(formData.city),
-      // service: validateCategory(formData.service),
-      // budget: validateCategory(formData.budget),
+      city: !formData.city.trim() ? "City is required" : "",
+      service: !formData.service.trim() ? "Service is required" : "",
+      budget: !formData.budget.trim() ? "Budget is required" : "",
     };
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error); // Returns true if no errors
@@ -176,30 +171,58 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       ...prev,
       [name]: value,
     }));
-    // Validate on change
-    let error = "";
-    if (name === "name") error = validateName(value);
-    else if (name === "email") error = validateEmail(value);
-    else if (name === "phone") error = validateMobileNo(value);
-    // else if (name === "city") error = validateCategory(value);
-    // else if (name === "service") error = validateCategory(value);
-    // else if (name === "budget") error = validateCategory(value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (validateForm()) {
-      await onSubmit(formData);
-      setFormData(initialFormState);
-      setErrors({});
-      setResetKey((prev) => prev + 1);
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 5000);
+    const isValid = validateForm();
+    
+    if (isValid) {
+      // Only set local loading state if parent isn't managing it
+      if (parentLoading === undefined) {
+        setIsSubmitting(true);
+      }
+      
+      try {
+        await onSubmit(formData);
+        setFormData(initialFormState);
+        setErrors({});
+        setResetKey((prev) => prev + 1);
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 5000);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+      } finally {
+        if (parentLoading === undefined) {
+          setIsSubmitting(false);
+        }
+      }
+    } else {
+      // Scroll to first error
+      const firstError = Object.keys(errors).find(key => errors[key]);
+      if (firstError) {
+        document.querySelector(`[name="${firstError}"]`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
     }
   };
+
+  const budgetOptions = [
+    "CAD 165K and Above",
+    "CAD 83K - 165K",
+    "CAD 41K - 83K",
+    "CAD 25K - 41K",
+    "CAD 8K - 25K",
+  ];
 
   return (
     <form
@@ -213,58 +236,113 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
         Get Started Today
       </h3>
 
-      {["name", "email", "phone"].map((field) => (
-        <div key={field} className="mb-4">
-          <input
-            name={field}
-            type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-            placeholder={
-              field.charAt(0).toUpperCase() +
-              field.slice(1) +
-              (field === "phone" ? " No." : "")
-            }
-            value={formData[field]}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${errors[field] ? "border-red-500" : "border-white/20"
-              } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
-            required
-          />
-          {errors[field] && (
-            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
-          )}
-        </div>
-      ))}
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="name"
+          type="text"
+          placeholder="Your Name"
+          value={formData.name}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.name ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.name && (
+          <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.city}
-        onChange={handleInputChange}
-        suggestions={cities}
-        placeholder="City"
-        loading={loadingCities}
-        fieldName="city"
-        resetKey={resetKey}
-        error={errors.city}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Email <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="email"
+          type="email"
+          placeholder="Your Email"
+          value={formData.email}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.email ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.service}
-        onChange={handleInputChange}
-        suggestions={category}
-        placeholder="Service"
-        fieldName="service"
-        resetKey={resetKey}
-        error={errors.service}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Phone Number <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="phone"
+          type="tel"
+          placeholder="Your Phone Number"
+          value={formData.phone}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.phone ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+          maxLength={10}
+          minLength={10}
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.budget}
-        onChange={handleInputChange}
-        suggestions={budgetOptions}
-        placeholder="Your Monthly Budget(CAD)"
-        fieldName="budget"
-        resetKey={resetKey}
-        error={errors.budget}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          City <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.city}
+          onChange={handleInputChange}
+          suggestions={cities}
+          placeholder="Select your city"
+          loading={loadingCities}
+          fieldName="city"
+          resetKey={resetKey}
+          error={errors.city}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Service <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.service}
+          onChange={handleInputChange}
+          suggestions={category}
+          placeholder="Select a service"
+          fieldName="service"
+          resetKey={resetKey}
+          error={errors.service}
+        />
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-white mb-1 text-sm">
+          Monthly Budget (CAD) <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.budget}
+          onChange={handleInputChange}
+          suggestions={budgetOptions}
+          placeholder="Select your budget range"
+          fieldName="budget"
+          resetKey={resetKey}
+          error={errors.budget}
+        />
+      </div>
 
       <button
         type="submit"
@@ -444,7 +522,7 @@ const HeroSection = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
+      <div className="relative flex flex-col md:flex-row justify-center gap-10  xl:gap-20 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
         <div className="md:w-[50%] space-y-8">
           <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
             <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
@@ -455,33 +533,35 @@ const HeroSection = () => {
             </span>
           </div>
           <div className="quill">
-            <ReactQuill
-              readOnly={true}
-              value={heroSection.heading}
-              modules={{ toolbar: false }}
-              theme="bubble"
+            <div 
+              dangerouslySetInnerHTML={{ __html: heroSection.heading }}
               style={{
-                fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+                fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                fontSize: 'inherit',
+                lineHeight: 'inherit',
+                fontWeight: 'inherit'
               }}
-              className="quill-content"
+              className="quill-content [&_h1]:text-xl [&_h1]:md:text-3xl [&_h1]:lg:text-4xl text-justify [&_h2]:text-md [&_h2]:md:text-lg  [&_h2]:text-gray-100"
             />
           </div>
-          <Link to="/contact">
+          <div className="flex sm:block flex-col gap-4 items-center justify-center ">
+            <Link to="/contact">
             <button
-              className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+              className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg "
             >
               Request Proposal
             </button>
           </Link>
-          <button
+            <button
             onClick={() => setIsModalOpen(true)}
             className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-[65%]"
           >
             Get in Touch
           </button>
+          </div>
         </div>
 
-        <div className="hidden md:block xl:w-[25%] w-[40%] relative">
+        <div className="hidden md:block xl:w-[35%] w-[40%] relative">
           <div className="absolute -top-4 -left-4 z-10">
             <FaStarOfLife className="text-[#ec2127] text-4xl animate-[spin_5s_linear_infinite]" />
           </div>

@@ -30,12 +30,12 @@ export default function BookAcall() {
   }
 
   return (
-    <div className="relative bg-[#134C6C] mb-12 sm:mb-0 text-white rounded-2xl p-5 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between mx-4 sm:mx-6 md:mx-8 lg:mx-16 xl:mx-24 overflow-hidden my-6">
+    <div className="relative bg-[#134C6C] m-12 sm:mb-16 text-white rounded-2xl p-5 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between mx-4 sm:mx-6 md:mx-8 lg:mx-16 xl:mx-24 overflow-hidden ">
       <div className="absolute -bottom-1/2 left-1/2 transform -translate-x-1/2 w-[800px] h-[400px] bg-[#155376] rounded-t-full"></div>
 
       <div className="lg:w-1/2 mb-6 lg:mb-0 relative z-10">
         <h2
-          className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-3 sm:mb-4"
+          className="text-2xl sm:text-3xl lg:text-4xl capitalize font-semibold mb-3 sm:mb-4"
           dangerouslySetInnerHTML={{ __html: call.heading }}
         ></h2>
         <p

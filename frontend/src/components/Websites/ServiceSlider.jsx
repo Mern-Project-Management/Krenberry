@@ -62,7 +62,7 @@ function ServiceSlider() {
 
   if (loading) {
     return (
-      <div className="py-8 text-center md:py-16">
+      <div className="py-8 text-center md:py-12">
         <div className="animate-pulse text-base md:text-lg">Loading services...</div>
       </div>
     );
@@ -70,7 +70,7 @@ function ServiceSlider() {
 
   if (error) {
     return (
-      <div className="py-8 text-center text-red-600 md:py-16">
+      <div className="py-8 text-center text-red-600 md:py-12">
         {error}
       </div>
     );
@@ -120,7 +120,7 @@ function ServiceSlider() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-16">
+    <div className="container mx-auto px-4 pb-16">
       <style>{sliderStyles}</style>
       <div className="mb-8 text-center md:mb-12">
         <h2 className="font-semibold heading">

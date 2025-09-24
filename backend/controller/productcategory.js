@@ -2,6 +2,7 @@ const ProductCategory = require("../model/productCategory");
 const Product=require("../model/product")
 const fs = require('fs');
 const path = require('path');
+const { default: mongoose } = require("mongoose");
 
 const deleteFile = (filePath) => {
   fs.unlink(filePath, (err) => {
@@ -70,34 +71,143 @@ const insertSubCategory = async (req, res) => {
 
 
 const insertSubSubCategory = async (req, res) => {
-  const { categoryId, subCategoryId } = req.query;
-  const { category,alt,imgtitle,slug, metatitle, metadescription, metakeywords, metacanonical, metalanguage, metaschema, otherMeta, url, priority, changeFreq } = req.body;
-  const photo=req.file.filename
-  try {
-    const categoryDoc = await ProductCategory.findById(categoryId);
+  console.log('Request Body:', req.body);
+  console.log('Uploaded File:', req.file);
 
-    if (!categoryDoc) {
-      return res.status(404).json({ message: 'Category not found' });
+  try {
+    const categoryId = req.query.categoryId;
+    const subCategoryId = req.query.subCategoryId;
+    // Extract fields from request body
+    const { 
+      category, 
+      slug, 
+      url, 
+      status, 
+      alt, 
+      imgtitle, 
+      metatitle, 
+      metadescription, 
+      metakeywords, 
+      metacanonical, 
+      metalanguage, 
+      metaschema, 
+      otherMeta, 
+      priority, 
+      changeFreq
+    } = req.body;
+
+    // Required fields validation
+    if (!category || !categoryId || !subCategoryId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing required fields. Please provide category, categoryId, and subCategoryId.'
+      });
     }
 
+    // Get photo if file was uploaded, otherwise use empty string
+    const photo = req.file ? req.file.filename : '';
+
+    // Find the category
+    const categoryDoc = await ProductCategory.findById(categoryId);
+    if (!categoryDoc) {
+      // Clean up the uploaded file if it exists and category not found
+      if (req.file && req.file.filename) {
+        cleanupUploadedFile(req.file.filename);
+      }
+      return res.status(404).json({ 
+        success: false,
+        message: 'Category not found' 
+      });
+    }
+
+    // Find the subcategory
     const subCategory = categoryDoc.subCategories.id(subCategoryId);
     if (!subCategory) {
-      return res.status(404).json({ message: 'Subcategory not found' });
+      // Clean up the uploaded file if it exists and subcategory not found
+      if (req.file && req.file.filename) {
+        cleanupUploadedFile(req.file.filename);
+      }
+      return res.status(404).json({ 
+        success: false,
+        message: 'Subcategory not found' 
+      });
     }
 
-    const existingSubSubCategory = subCategory.subSubCategory.find((subSubCat) => subSubCat.category === category);
+    // Check if sub-subcategory already exists
+    const existingSubSubCategory = subCategory.subSubCategory.find(
+      item => item.category.toLowerCase() === category.toLowerCase().trim()
+    );
+    
     if (existingSubSubCategory) {
-      return res.status(400).json({ message: 'Sub-subcategory already exists' });
+      // Clean up the uploaded file if it exists and sub-subcategory exists
+      if (req.file && req.file.filename) {
+        cleanupUploadedFile(req.file.filename);
+      }
+      return res.status(400).json({ 
+        success: false,
+        message: 'A sub-subcategory with this name already exists' 
+      });
     }
 
-    subCategory.subSubCategory.push({ category,alt,imgtitle,photo,slug, metatitle, metadescription, metakeywords, metacanonical, metalanguage, metaschema, otherMeta, url, priority, changeFreq });
+    // Create new sub-subcategory
+    const newSubSubCategory = {
+      category: category.trim(),
+      photo,
+      slug: slug || category.toLowerCase().trim().replace(/\s+/g, '-'),
+      url: url || '',
+      status: status || 'active',
+      alt: alt || '',
+      imgtitle: imgtitle || category.trim(),
+      metatitle: metatitle || category.trim(),
+      metadescription: metadescription || '',
+      metakeywords: metakeywords || '',
+      metacanonical: metacanonical || '',
+      metalanguage: metalanguage || 'en',
+      metaschema: metaschema || '',
+      otherMeta: otherMeta || '',
+      priority: priority || '0.5',
+      changeFreq: changeFreq || 'monthly'
+    };
+
+    // Add to subcategory
+    subCategory.subSubCategory.push(newSubSubCategory);
     await categoryDoc.save();
 
-    res.status(201).json(categoryDoc);
+    res.status(201).json({
+      success: true,
+      message: 'Sub-subcategory added successfully',
+      data: newSubSubCategory
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in insertSubSubCategory:', error);
+    
+    // Clean up any uploaded file if there was an error
+    if (req.file && req.file.filename) {
+      cleanupUploadedFile(req.file.filename);
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to add sub-subcategory',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
+
+// Helper function to clean up uploaded files
+function cleanupUploadedFile(filename) {
+  if (!filename) return;
+  
+  try {
+    const filePath = path.join(__dirname, '../logos', filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (fileError) {
+    console.error('Error cleaning up uploaded file:', fileError);
+  }
+}
 
 const updateCategory = async (req, res) => {
   // Update main category
@@ -232,8 +342,14 @@ const updatesubsubcategory = async (req, res) => {
 
 const deletecategory = async (req, res) => {
   const { id } = req.query;
-  console.log(id)
+  console.log('Deleting category with ID:', id);
+  
   try {
+    // Input validation
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid category ID' });
+    }
+
     // Find the category by its ID
     const category = await ProductCategory.findById(id);
 
@@ -243,83 +359,138 @@ const deletecategory = async (req, res) => {
     }
 
     // Check if there are subcategories or sub-subcategories
-    const hasSubcategories = category.subCategories.length > 0;
-    const hasSubSubcategories = category.subCategories.some(subCat => subCat.subSubCategory.length > 0);
+    const hasSubcategories = category.subCategories && category.subCategories.length > 0;
+    const hasSubSubcategories = hasSubcategories && 
+      category.subCategories.some(subCat => 
+        subCat.subSubCategory && subCat.subSubCategory.length > 0
+      );
 
     if (hasSubcategories || hasSubSubcategories) {
-      return res.status(400).json({ message: 'Category has associated subcategories or sub-subcategories and cannot be deleted' });
+      return res.status(400).json({ 
+        message: 'Category has associated subcategories or sub-subcategories and cannot be deleted' 
+      });
     }
 
-    
-    const photoPath = path.join(__dirname, '../logos', category.photo);
-    deleteFile(photoPath);
+    // Delete the photo file if it exists
+    if (category.photo) {
+      try {
+        const photoPath = path.join(__dirname, '../logos', category.photo);
+        if (fs.existsSync(photoPath)) {
+          fs.unlinkSync(photoPath);
+        }
+      } catch (fileError) {
+        console.error('Error deleting category photo:', fileError);
+        // Continue with category deletion even if file deletion fails
+      }
+    }
 
-
-    // Proceed to delete the category
+    // Delete the category
     const deletedCategory = await ProductCategory.findByIdAndDelete(id);
 
     if (!deletedCategory) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(404).json({ message: 'Category not found or already deleted' });
     }
 
-
-    // Find and update all products that reference this category, removing the category reference
+    // Remove category reference from products
     await Product.updateMany(
       { categories: id },
       { $pull: { categories: id } }
     );
 
-    res.status(200).json({ message: 'Category deleted successfully and references removed from products' });
+    res.status(200).json({ 
+      success: true,
+      message: 'Category deleted successfully' 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in deletecategory:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to delete category',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
 const deletesubcategory = async (req, res) => {
-  // Delete subcategory
   const { categoryId, subCategoryId } = req.query;
 
-
   try {
-    const categoryDoc = await ProductCategory.findById(categoryId);
-    if (!categoryDoc) {
-  
-      return res.status(404).json({ message: 'Category not found' });
+    // Input validation
+    if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId) ||
+        !subCategoryId || !mongoose.Types.ObjectId.isValid(subCategoryId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid category or subcategory ID' 
+      });
     }
 
-    const subCategoryIndex = categoryDoc.subCategories.findIndex(subCat => subCat._id.toString() === subCategoryId);
-    if (subCategoryIndex === -1) {
+    // Find the category
+    const categoryDoc = await ProductCategory.findById(categoryId);
+    if (!categoryDoc) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Category not found' 
+      });
+    }
+
+    // Find the subcategory
+    const subCategoryIndex = categoryDoc.subCategories.findIndex(
+      subCat => subCat._id.toString() === subCategoryId
+    );
     
-      return res.status(404).json({ message: 'Subcategory not found' });
+    if (subCategoryIndex === -1) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Subcategory not found' 
+      });
     }
 
     const subCategory = categoryDoc.subCategories[subCategoryIndex];
-   
+    
     // Check if there are sub-subcategories
     if (subCategory.subSubCategory && subCategory.subSubCategory.length > 0) {
- 
-      return res.status(400).json({ message: 'Subcategory has associated sub-subcategories and cannot be deleted' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Cannot delete: Subcategory contains sub-subcategories' 
+      });
     }
 
-    const photoPath = path.join(__dirname, '../logos', subCategory.photo);
-    deleteFile(photoPath);
+    // Delete the photo file if it exists
+    if (subCategory.photo) {
+      try {
+        const photoPath = path.join(__dirname, '../logos', subCategory.photo);
+        if (fs.existsSync(photoPath)) {
+          fs.unlinkSync(photoPath);
+        }
+      } catch (fileError) {
+        console.error('Error deleting subcategory photo:', fileError);
+        // Continue with subcategory deletion even if file deletion fails
+      }
+    }
 
     // Remove the subcategory from the array
     categoryDoc.subCategories.splice(subCategoryIndex, 1);
 
+    // Save the updated category
     await categoryDoc.save();
-   
 
-    // Find and update all products that reference this subcategory, removing the subcategory reference
+    // Remove subcategory reference from products
     await Product.updateMany(
       { subcategories: subCategoryId },
       { $pull: { subcategories: subCategoryId } }
     );
 
-    res.status(200).json({ message: 'Subcategory deleted successfully and references removed from products' });
+    res.status(200).json({ 
+      success: true,
+      message: 'Subcategory deleted successfully' 
+    });
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in deletesubcategory:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to delete subcategory',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

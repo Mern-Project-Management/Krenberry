@@ -177,7 +177,7 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
       toast.error('Maximum of 2 services allowed per category');
       return;
     }
-    navigate('/services/addNewService', { 
+    navigate(`/services/createService/${categoryId}`, { 
       state: { categoryId, subcategoryId, subsubcategoryId } 
     });
   };
@@ -224,15 +224,25 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
           ) : (
             <table {...getTableProps()} className="min-w-full border-collapse border border-gray-300">
               <thead>
-                {headerGroups.map(headerGroup => (
-                  <tr {...headerGroup.getHeaderGroupProps()} className="bg-gray-100">
-                    {headerGroup.headers.map(column => (
-                      <th {...column.getHeaderProps()} className="border border-gray-300 p-2 text-left font-bold">
-                        {column.render("Header")}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                {headerGroups.map(headerGroup => {
+                  const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+                  return (
+                    <tr key={key} {...restHeaderGroupProps} className="bg-gray-100">
+                      {headerGroup.headers.map(column => {
+                        const { key: headerKey, ...restHeaderProps } = column.getHeaderProps();
+                        return (
+                          <th 
+                            key={headerKey} 
+                            {...restHeaderProps} 
+                            className="border border-gray-300 p-2 text-left font-bold"
+                          >
+                            {column.render("Header")}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </thead>
               <tbody {...getTableBodyProps()}>
                 {rows.map(row => {

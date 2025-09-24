@@ -480,97 +480,130 @@ const HeroSection = () => {
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <ContactForm
-            isModal={true}
-            onSubmit={handleFormSubmit}
-            loading={loading}
-          />
+          <ContactForm onSubmit={handleFormSubmit} loading={loading} isModal={true} />
         </div>
       </div>
     ),
     [isModalOpen, loading]
   );
 
-  const SkeletonLoader = () => (
-    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-between text-white">
-      <div className="flex flex-col md:flex-row w-11/12 lg:w-4/5 mx-auto gap-12 py-20">
-        <div className="md:w-[60%] space-y-6 animate-pulse">
-          <div className="h-12 bg-slate-700 rounded-lg w-3/4"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-full"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-5/6"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-4/5"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-2/3"></div>
+  const renderHeroContent = () => {
+    if (isLoading) {
+      return (
+        <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-[80vh] flex items-center justify-center">
+          <div className="animate-pulse w-full h-96 bg-gray-800 rounded-lg"></div>
         </div>
-        <div className="md:w-[25%] animate-pulse">
-          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl space-y-4">
-            <div className="h-8 bg-slate-700 rounded-lg"></div>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-slate-700 rounded-lg"></div>
-            ))}
+      );
+    }
+
+    if (!heroSection || Object.keys(heroSection).length === 0) {
+      return (
+        <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-[80vh] flex items-center justify-center text-white">
+          <div className="text-center p-8 max-w-2xl mx-auto">
+            <div className="w-32 h-32 mx-auto mb-6 text-gray-400">
+              <svg 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="1" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="w-full h-full"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold mb-4 text-white">Content Coming Soon</h2>
+            <p className="text-gray-300 mb-8 text-lg">
+              We're working on something amazing for this page. Please check back soon!
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[80vh] py-4 flex items-center justify-between text-white overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-20 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
+          <div className="md:w-[50%] space-y-8">
+            <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
+              <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
+                Best
+              </span>
+              <span className="ml-2 text-[16px] text-gray-700 font-semibold">
+                {heroSection.title}
+              </span>
+            </div>
+            <div className="quill">
+              <div 
+                dangerouslySetInnerHTML={{ __html: heroSection.heading }}
+                style={{
+                  fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                  fontSize: 'inherit',
+                  lineHeight: 'inherit',
+                  fontWeight: 'inherit'
+                }}
+                className="quill-content [&_h1]:text-xl [&_h1]:md:text-3xl [&_h1]:lg:text-4xl text-justify [&_h2]:text-md [&_h2]:md:text-lg [&_h2]:text-gray-100"
+              />
+            </div>
+            <div className="flex sm:block flex-col gap-4 items-center justify-center">
+              <Link to="/contact">
+                <button className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                  Request Proposal
+                </button>
+              </Link>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-[65%]"
+              >
+                Get in Touch
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden md:block xl:w-[35%] w-[40%] relative">
+            <div className="absolute -top-4 -left-4 z-10">
+              <FaStarOfLife className="text-[#ec2127] text-4xl animate-[spin_5s_linear_infinite]" />
+            </div>
+            <ContactForm onSubmit={handleFormSubmit} loading={loading} />
           </div>
         </div>
       </div>
-    </div>
-  );
-
-  if (isLoading) return <SkeletonLoader />;
+    );
+  };
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[80vh] py-4 flex items-center justify-between text-white overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
-      </div>
-
-      <div className="relative flex flex-col md:flex-row justify-center gap-10  xl:gap-20 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
-        <div className="md:w-[50%] space-y-8">
-          <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
-            <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
-              Best
-            </span>
-            <span className="ml-2 text-[16px] text-gray-700 font-semibold">
-              {heroSection.title}
-            </span>
-          </div>
-          <div className="quill">
-            <div 
-              dangerouslySetInnerHTML={{ __html: heroSection.heading }}
-              style={{
-                fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-                fontSize: 'inherit',
-                lineHeight: 'inherit',
-                fontWeight: 'inherit'
-              }}
-              className="quill-content [&_h1]:text-xl [&_h1]:md:text-3xl [&_h1]:lg:text-4xl text-justify [&_h2]:text-md [&_h2]:md:text-lg  [&_h2]:text-gray-100"
-            />
-          </div>
-          <div className="flex sm:block flex-col gap-4 items-center justify-center ">
-            <Link to="/contact">
+    <section className="relative">
+      {renderHeroContent()}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
+          <div className="relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center">
             <button
-              className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg "
+              onClick={() => setIsModalOpen(false)}
+              className="absolute -bottom-10 z-10 bg-[#1111119f] p-1 rounded-full hover:bg-white/20 transition-colors duration-300"
             >
-              Request Proposal
+              <X className="w-6 h-6 text-white" />
             </button>
-          </Link>
-            <button
-            onClick={() => setIsModalOpen(true)}
-            className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-[65%]"
-          >
-            Get in Touch
-          </button>
+            <ContactForm onSubmit={handleFormSubmit} loading={loading} isModal={true} />
           </div>
         </div>
-
-        <div className="hidden md:block xl:w-[35%] w-[40%] relative">
-          <div className="absolute -top-4 -left-4 z-10">
-            <FaStarOfLife className="text-[#ec2127] text-4xl animate-[spin_5s_linear_infinite]" />
-          </div>
-          <ContactForm onSubmit={handleFormSubmit} loading={loading} />
-        </div>
-      </div>
-      <Modal />
-    </div>
+      )}
+    </section>
   );
 };
 
+export { ContactForm };
 export default HeroSection;

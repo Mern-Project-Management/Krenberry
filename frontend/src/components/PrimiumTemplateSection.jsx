@@ -30,7 +30,7 @@ const PremiumTemplatesSection = () => {
   }
 
   return (
-    <div className="relative bg-[#f9f7f1] text-black rounded-2xl p-5 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between mx-4 sm:mx-6 md:mx-8 lg:mx-16 xl:mx-24 overflow-hidden my-6">
+    <div className="relative bg-[#f9f7f1] text-black rounded-2xl p-5 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between mx-4 sm:mx-6 md:mx-8 lg:mx-16 xl:mx-24 overflow-hidden my-16">
       {/* Decorative background element similar to BookAcall */}
       <div className="absolute -bottom-1/2 left-1/2 transform -translate-x-1/2 w-[800px] h-[400px] bg-[#e5e3dd] rounded-t-full"></div>
 
@@ -49,7 +49,7 @@ const PremiumTemplatesSection = () => {
             href="https://codecanyon.net/user/rndtechnosoft/portfolio?sso=1&_gl=1*1x7xliu*_gcl_aw*R0NMLjE3Mjg5ODAzMDYuQ2owS0NRandnck80QmhDMkFSSXNBS1E3elVrdlNjNXJ1YVpfRTEyNkstNFoyZDd3RFRvNWVjSVdJMWRVbXltOTNCQlBnQ3otZXlYbldpd2FBalNnRUFMd193Y0I.*_gcl_au*MTkxMTIzNTE3MS4xNzI4OTExMjg1*_ga*NjI3NDIwNDc1LjE3Mjg5MTEyODU.*_ga_ZKBVC1X78F*MTczMDE3MjI0Ny4zLjEuMTczMDE3MjQxNy4xNi4wLjA.&_ga=2.201880597.585621995.1730172247-627420475.1728911285&_gac=1.186169947.1729055186.Cj0KCQjwgrO4BhC2ARIsAKQ7zUkvSc5ruaZ_E126K-4Z2d7wDTo5ecIWI1dUmymym93BBPgCz-eyXnWiwaAjSgEALw_wcB"
           >
             <button
-              className="bg-[#ec2127] text-white hover:bg-red-600 text-base py-3 px-6 rounded-lg font-semibold"
+              className="bg-[#ec2127] text-white hover:bg-red-600 text-base py-3 px-10 rounded-lg font-semibold"
             >
               Buy Now
             </button>

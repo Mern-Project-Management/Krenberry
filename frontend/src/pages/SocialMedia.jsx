@@ -16,8 +16,8 @@ export default function   SocialMedia() {
   return (
     <div>
       <HeroSection />
-      <LatestProduct/>
       <CraftRight />
+      <LatestProduct/>
       <CraftLeft/>
       <IndustryServiceSlider/>
       <Companies/>

@@ -281,8 +281,27 @@ const EditNews = () => {
     }));
   };
 
+  const isDescriptionEmpty = (htmlContent) => {
+    if (!htmlContent) return true;
+    // Remove all HTML tags and trim whitespace
+    const textContent = htmlContent.replace(/<[^>]*>/g, '').trim();
+    // Check if the remaining content is empty
+    return textContent === '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Enhanced description validation
+    if (isDescriptionEmpty(details)) {
+      setErrors(prev => ({
+        ...prev,
+        details: 'Description is required and cannot be empty'
+      }));
+      toast.error('Please enter a valid description');
+      return;
+    }
+
     const newErrors = {
       title: validateTitle(title),
       details: validateBlogDescription(details),
@@ -311,8 +330,11 @@ const EditNews = () => {
     };
 
     setErrors(newErrors);
+
+    // Check if there are any validation errors
     if (
       newErrors.title ||
+      newErrors.details ||
       newErrors.postedBy ||
       newErrors.date ||
       newErrors.parentCategoryId ||
@@ -360,10 +382,33 @@ const EditNews = () => {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
-      navigate("/news");
+      
+      // Show success message
+      toast.success('News updated successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      
+      // Navigate after a short delay to show the success message
+      setTimeout(() => {
+        navigate("/news");
+      }, 1000);
+      
     } catch (error) {
       console.error("Error updating news:", error);
-      toast.error("Error updating news");
+      toast.error("Error updating news. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -559,20 +604,29 @@ const EditNews = () => {
         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
       </div>
       <div className="mb-8">
-        <label htmlFor="details" className="block font-semibold mb-2">Description </label>
+        <label htmlFor="details" className="block font-semibold mb-2">
+          Description <span className="text-red-500">*</span>
+        </label>
         <ReactQuill
+          id="details"
           value={details}
           onChange={(value) => {
             setDetails(value);
-            setErrors(prev => ({ ...prev, details: validateDetails(value) }));
+            // Clear error when user starts typing
+            if (errors.details) {
+              setErrors(prev => ({ ...prev, details: '' }));
+            }
           }}
           modules={modules}
-          className="quill"
+          className={`h-64 mb-12 ${errors.details ? 'border border-red-500' : ''}`}
+          placeholder="Enter news description"
         />
-        {errors.details && <p className="text-red-500 text-sm mt-1">{errors.details}</p>}
+        {errors.details && (
+          <p className="text-red-500 text-sm mt-1">{errors.details}</p>
+        )}
       </div>
-      <div className="mb-4">
-        <label className="block font-semibold mb-2">Current Photos </label>
+      <div className="mb-4 pt-4">
+        <label className="block font-semibold mt-5 mb-2">Current Photos </label>
         <div className="flex flex-wrap gap-4">
           {initialPhotos.map((photo, index) => (
             <div key={index} className="relative w-56">

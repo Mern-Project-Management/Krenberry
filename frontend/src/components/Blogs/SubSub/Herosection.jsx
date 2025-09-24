@@ -49,7 +49,7 @@ const BlogHeader = () => {
       <div className="max-w-screen-xl mx-auto px-6 container flex flex-col md:flex-row items-center gap-8">
         {/* Text Content */}
         <div className="w-full md:w-1/2">
-          <h1 className="text-2xl text-left sm:text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
+          <h1 className="text-2xl text-left sm:text-3xl md:text-4xl  font-bold mb-4 leading-tight">
             {title}
           </h1>
 

@@ -322,6 +322,7 @@ const ServiceCard = ({ service, isLarge }) => {
 
       <div className="relative z-10 backdrop-blur-[2px]">
         <div className="flex flex-col  md:flex-row ">
+          <Link to={`/${service.slug}`}>  
           <div className={`p-8 w-full space-y-6 relative `}>
             {/* Replace the old circle SVG with our new random DecorativeElement */}
             <DecorativeElement color="white" />
@@ -349,7 +350,7 @@ const ServiceCard = ({ service, isLarge }) => {
               />
             </Link>
           </div>
-
+          </Link>
          
         </div>
       </div>
@@ -436,7 +437,7 @@ const ServicesGrid = () => {
   }
 
   return (
-    <section className="md:my-20 md:py-16  py-4 px-4 bg-gray-50">
+    <section className=" md:py-16  py-4 px-4 bg-gray-50">
       <div className="w-[85%] mx-auto">
         <h2 className="heading font-semibold text-center">
           Our <span className="text-[#ec2127]">Services</span>

@@ -66,11 +66,11 @@ function CreateCard() {
     if (!icon) {
       newErrors.icon = 'Photo is required';
     } else if (icon) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png','image/webp','image/gif','image/svg+xml'];
       const maxSize = 2 * 1024 * 1024; // 2MB
       
       if (!validTypes.includes(icon.type)) {
-        newErrors.icon = 'Only JPG, JPEG, and PNG files are allowed';
+        newErrors.icon = 'Only JPG, JPEG, PNG,WEBP,GIF and SVG files are allowed';
       } else if (icon.size > maxSize) {
         newErrors.icon = 'Image size must be less than 2MB';
       }

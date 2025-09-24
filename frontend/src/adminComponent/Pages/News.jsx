@@ -200,13 +200,32 @@ const NewsTable = () => {
 
   const handleDeleteConfirm = async () => {
     if (!newsToDelete) return;
+    
     try {
       await axios.delete(`/api/news/deleteNews?slugs=${newsToDelete.slug}`, { withCredentials: true });
-      toast.success("News item deleted successfully!");
-      fetchData(pageIndex);
+      
+      toast.success('News item deleted successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      
+      // Refresh the news list
+      await fetchData(pageIndex);
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete news item.");
+      console.error('Error deleting news item:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete news item. Please try again.', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setIsDeleteModalOpen(false);
       setNewsToDelete(null);
@@ -323,60 +342,54 @@ const NewsTable = () => {
       {loadings ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
       ) : (
-        <>
-          {news.length === 0 ? (
-            <div className="flex justify-center items-center h-64">
-              <iframe className="w-64 h-64 sm:w-96 sm:h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
-            </div>
-          ) : (
-            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-              <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-                {headerGroups.map((headerGroup) => (
-                  <tr key={headerGroup._id}{...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column) => (
-                      <th
-                      key={column._id}
-                        {...column.getHeaderProps(column.getSortByToggleProps())}
-                        className="py-2 px-2 sm:px-4 border-b border-gray-300 cursor-pointer uppercase font-serif text-sm sm:text-base"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{column.render("Header")}</span>
-                          {column.canSort && (
-                            <span className="ml-1">
-                              {column.isSorted ? (
-                                column.isSortedDesc ? (
-                                  <FaArrowDown />
-                                ) : (
-                                  <FaArrowUp />
-                                )
+        <div className="overflow-x-auto">
+          <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+              {headerGroups.map((headerGroup) => (
+                <tr key={headerGroup._id}{...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                    key={column._id}
+                      {...column.getHeaderProps(column.getSortByToggleProps())}
+                      className="py-2 px-2 sm:px-4 border-b border-gray-300 cursor-pointer uppercase font-serif text-sm sm:text-base"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{column.render("Header")}</span>
+                        {column.canSort && (
+                          <span className="ml-1">
+                            {column.isSorted ? (
+                              column.isSortedDesc ? (
+                                <FaArrowDown />
                               ) : (
-                                <FaArrowDown className="text-gray-400" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </th>
+                                <FaArrowUp />
+                              )
+                            ) : (
+                              <FaArrowDown className="text-gray-400" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr key={row.id} {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                    {row.cells.map((cell) => (
+                      <td key={cell.id} {...cell.getCellProps()} className="py-2 px-2 sm:px-4 text-sm sm:text-base">
+                        {cell.render("Cell")}
+                      </td>
                     ))}
                   </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {rows.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr key={row.id} {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
-                      {row.cells.map((cell) => (
-                        <td key={cell.id} {...cell.getCellProps()} className="py-2 px-2 sm:px-4 text-sm sm:text-base">
-                          {cell.render("Cell")}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       <div className="mt-4 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
         <div className="flex gap-2">
@@ -509,6 +522,10 @@ const NewsTable = () => {
         isOpen={isDeleteModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleDeleteConfirm}
+        title="Delete News"
+        message="Are you sure you want to delete this news item? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
         itemName={newsToDelete?.title || 'news item'}
         itemType="news item"
       />

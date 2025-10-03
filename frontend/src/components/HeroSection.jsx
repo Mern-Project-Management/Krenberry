@@ -72,7 +72,7 @@ useEffect(() => {
 
   return (
     <div className="bg-[#F7F4EE] ">
-      <div className="flex flex-col xl:flex-row justify-center text-center lg:py-5 relative">
+      <div className="flex flex-col xl:flex-row justify-center text-center lg:py-5 py-16 relative">
         {/* Left Side Animated Photos */}
         <div className="xl:flex flex-col flex-1 hidden" ref={leftImageRef}>
           <ImageBubble photos={photos} homeHero={homeHero} />

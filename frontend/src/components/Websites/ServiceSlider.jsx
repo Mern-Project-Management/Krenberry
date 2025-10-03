@@ -119,7 +119,7 @@ function ServiceSlider() {
   // If there's an error but we have static data, show the services with a notice
   if (error && usingFallback) {
     return (
-      <div className="container mx-auto px-4 pb-16">
+      <div className="container mx-auto px-4 ">
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -192,7 +192,7 @@ function ServiceList({ services }) {
   };
 
   return (
-    <div className="container mx-auto px-4 pb-16">
+    <div className="container mx-auto px-4 ">
       <style>{sliderStyles}</style>
       <div className="mb-8 text-center md:mb-12">
         <h2 className="font-semibold heading">

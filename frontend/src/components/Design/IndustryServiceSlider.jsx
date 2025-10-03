@@ -113,54 +113,65 @@ function IndustryServiceSlider() {
 
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: services.length > 1,
     speed: 500,
-    slidesToShow: 5,
+    slidesToShow: Math.min(5, services.length),
     slidesToScroll: 1,
-    autoplay: true,
+    autoplay: services.length > 1,
     autoplaySpeed: 2000,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
+    adaptiveHeight: false,
+    swipeToSlide: true,
+    touchThreshold: 10,
+    cssEase: 'ease-in-out',
     responsive: [
       {
         breakpoint: 1280,
         settings: {
-          slidesToShow: 4,
+          slidesToShow: Math.min(4, services.length),
           slidesToScroll: 1,
-          infinite: true,
-          dots: true
+          infinite: services.length > 1,
+          dots: true,
+          adaptiveHeight: false,
+          arrows: true
         }
       },
       {
         breakpoint: 1024,
         settings: {
-          slidesToShow: 3,
+          slidesToShow: Math.min(3, services.length),
           slidesToScroll: 1,
-          infinite: true,
-          dots: true
+          infinite: services.length > 1,
+          dots: true,
+          adaptiveHeight: false,
+          arrows: true
         }
       },
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: Math.min(2, services.length),
           slidesToScroll: 1,
-          initialSlide: 2
+          infinite: services.length > 1,
+          dots: true,
+          adaptiveHeight: false,
+          arrows: false
         }
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
-          slidesToScroll: 1
+          slidesToScroll: 1,
+          infinite: services.length > 1,
+          dots: true,
+          adaptiveHeight: false,
+          arrows: false,
+          centerMode: false
         }
       }
-    ],
-    centerMode: false,
-    variableWidth: false,
-    centerPadding: '20px',
-    rows: 1,
-    slidesPerRow: 1
+    ]
   };
 
   const getImageSrc = (service) => {
@@ -196,7 +207,7 @@ function IndustryServiceSlider() {
     };
 
     return (
-      <div className="relative aspect-square overflow-hidden  rounded-xl bg-gray-100 flex items-center justify-center">
+      <div className="relative w-full h-64 overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center">
         <img
           src={imgSrc}
           alt={service.alt || service.category || 'Service'}
@@ -234,11 +245,41 @@ function IndustryServiceSlider() {
 
       {services.length > 5 ? (
         // Slider for more than 5 services
-        <div className="service-slider relative px-4">
+        <div className="service-slider relative px-2 md:px-4">
+          <style>{`
+            .slick-slider {
+              position: relative;
+              display: block;
+              box-sizing: border-box;
+              user-select: none;
+              touch-action: pan-y;
+            }
+            .slick-list {
+              position: relative;
+              display: block;
+              overflow: hidden;
+              margin: 0;
+              padding: 0;
+            }
+            .slick-track {
+              position: relative;
+              top: 0;
+              left: 0;
+              display: flex;
+            }
+            .slick-slide {
+              float: left;
+              height: 100%;
+              min-height: 1px;
+            }
+            .slick-slide > div {
+              height: 100%;
+            }
+          `}</style>
           <Slider {...settings}>
             {services.map((service) => (
               <div key={service.slug || service.category} className="px-2">
-                <div className="service-card p-4 mb-2 bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <div className="service-card p-4 mb-2 bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 h-full">
                   <Link to={`/${service.slug || '#'}`} className="block">
                     <ImageWithFallback service={service} />
                   </Link>
@@ -256,16 +297,28 @@ function IndustryServiceSlider() {
           </Slider>
         </div>
       ) : (
-        // Grid for 5 or fewer services
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 w-full">
+        // Grid for 5 or fewer services - centered for 3 or less
+        <div className={`grid gap-6 px-4 w-full ${
+          services.length <= 3 
+            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto justify-items-center' 
+            : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4'
+        }`}>
           {services.map((service) => (
             <div
               key={service.slug || service.category}
-              className="w-full"
+              className={`${services.length <= 3 ? 'max-w-sm w-full' : 'w-full'}`}
             >
               <div className="service-card p-4 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col">
                 <Link to={`/${service.slug || '#'}`} className="block flex-1">
-                  <ImageWithFallback service={service} />
+                  <div className="relative w-full h-64 overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center">
+                    <img
+                      src={getImageSrc(service)}
+                      alt={service.alt || service.category || 'Service'}
+                      title={service.imgtitle || service.category || 'Service'}
+                      className="w-full h-full object-cover transition-transform duration-300 transform hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
                 </Link>
                 <div className="mt-4 text-center">
                   <Link
@@ -274,7 +327,7 @@ function IndustryServiceSlider() {
                   >
                     {service.category || 'Our Service'}
                   </Link>
-                </div>
+                  </div>
               </div>
             </div>
           ))}
@@ -292,19 +345,19 @@ function IndustryServiceSlider() {
 
 const NextArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -right-6 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-10"
+    className="absolute top-1/2 -right-2 md:-right-6 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-10 p-2"
     onClick={onClick}
   >
-    <ChevronRightIcon className="w-6 h-6 text-gray-500 hover:text-gray-700 transition-colors" />
+    <ChevronRightIcon className="w-5 h-5 md:w-6 md:h-6 text-gray-500 hover:text-gray-700 transition-colors" />
   </div>
 );
 
 const PrevArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -left-6 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-10"
+    className="absolute top-1/2 -left-2 md:-left-6 transform -translate-y-1/2 bg-white rounded-full shadow-lg cursor-pointer z-10 p-2"
     onClick={onClick}
   >
-    <ChevronLeftIcon className="w-6 h-6 text-gray-500 hover:text-gray-700 transition-colors" />
+    <ChevronLeftIcon className="w-5 h-5 md:w-6 md:h-6 text-gray-500 hover:text-gray-700 transition-colors" />
   </div>
 );
 

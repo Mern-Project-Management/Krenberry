@@ -357,37 +357,6 @@ const ServiceCard = ({ service, isLarge }) => {
     </div>
   );
 };
-// const LoadingSkeleton = () => {
-//   const skeletonColors = getUniqueColors(4);
-
-//   return (
-//     <>
-//       {[1, 2, 3, 4].map((i) => (
-//         <div
-//           key={i}
-//           className={`${
-//             i <= 2
-//               ? "col-span-12 md:col-span-6"
-//               : "col-span-12 md:col-span-6 lg:col-span-3"
-//           }
-//             animate-pulse rounded-xl min-h-[300px]`}
-//           style={{ backgroundColor: skeletonColors[i - 1] }}
-//         >
-//           <BackgroundPattern color="white" />
-//           <div className="h-full p-8 space-y-6">
-//             <div className="w-24 h-6 bg-white/20 rounded-full" />
-//             <div className="w-3/4 h-8 bg-white/20 rounded" />
-//             <div className="space-y-3">
-//               <div className="w-full h-4 bg-white/20 rounded" />
-//               <div className="w-5/6 h-4 bg-white/20 rounded" />
-//               <div className="w-4/6 h-4 bg-white/20 rounded" />
-//             </div>
-//           </div>
-//         </div>
-//       ))}
-//     </>
-//   );
-// };
 
 const ServicesGrid = () => {
   const [services, setServices] = useState([]);
@@ -437,7 +406,7 @@ const ServicesGrid = () => {
   }
 
   return (
-    <section className=" md:py-16  py-4 px-4 bg-gray-50">
+    <section className=" md:py-12  py-4 px-4 bg-gray-50">
       <div className="w-[85%] mx-auto">
         <h2 className="heading font-semibold text-center">
           Our <span className="text-[#ec2127]">Services</span>

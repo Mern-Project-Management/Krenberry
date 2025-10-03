@@ -30,6 +30,8 @@ app.use(express.json());
 // API Routes first
 app.use('/api/product', require('./routes/product'));
 app.use('/api/services', require('./routes/services'));
+app.use('/api/collaboration', require('./routes/collaboration'));
+
 app.use('/api/news', require('./routes/news'));
 app.use('/api/pageHeading', require('./routes/pageHeading'));
 app.use('/api/image', require('./routes/image'));

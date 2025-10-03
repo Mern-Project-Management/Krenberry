@@ -124,7 +124,7 @@ export default function WeAreExpert() {
 
   if (loading) {
     return (
-      <div className="max-w-8xl mx-auto xl:px-28 px-4 my-16">
+      <div className="max-w-8xl mx-auto xl:px-28 px-4 my-12">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
           <div className="h-4 bg-gray-300 rounded w-96 mx-auto mb-12"></div>
@@ -158,7 +158,7 @@ export default function WeAreExpert() {
   );
 
   return (
-    <div className="max-w-8xl mx-auto xl:px-28 px-4 my-16">
+    <div className="max-w-8xl mx-auto xl:px-28 px-4 my-12">
       {/* Show indicator if using static data */}
       {usingStaticData && (
         <div className="mb-4 text-center">

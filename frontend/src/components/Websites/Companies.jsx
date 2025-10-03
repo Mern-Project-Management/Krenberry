@@ -59,7 +59,7 @@ const Companies = () => {
   }
   
   return (
-    <div className="mb-10">
+    <div className="my-10">
       <div className="py-6 lg:pt-16 pt-5 px-4  ">
         <h2 className="sm:text-4xl md:text-5xl text-4xl capitalize text-black font-semibold text-center ">
           Companies using this{" "}

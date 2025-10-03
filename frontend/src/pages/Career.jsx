@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Briefcase,
   Search,
-  ChevronDown,
   ChevronRight,
   MapPin,
   Clock,
@@ -12,9 +11,7 @@ import Modal from "react-modal";
 import axios from "axios";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate, useLocation } from "react-router-dom";
 
 Modal.setAppElement("#root");
 
@@ -39,25 +36,26 @@ const Banner = () => {
 
     fetchHeadings();
   }, []);
+
   return (
-    <div className="relative bg-gradient-to-r from-[#ec2127] to-black h-[50vh] leading-none overflow-hidden">
-      <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative h-full flex items-center justify-center px-4 mt-10 lg:mt-14">
+    <div className="relative bg-gradient-to-r from-[#ec2127] to-black h-80 md:h-[70vh]">
+     <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="relative h-full flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7">
+          <h1 className="text-4xl md:text-6xl font-semibold text-white mb-4">
             {heading}
           </h1>
-          <p className="text-gray-300 text-lg md:text-xl lg:text-2xl mb-6">
+          <p className="text-xl md:text-2xl text-red-100 font-semibold">
             {subheading}
           </p>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 -mb-[24px]">
+      <div className="absolute bottom-0 left-0 right-0 -mb-[1px]">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
           <path
             fill="#f3f4f6"
             fillOpacity="1"
-            d="M0,300L48,295C96,290,192,280,288,265C384,250,480,230,576,240C672,250,768,275,864,280C960,285,1056,270,1152,255C1248,240,1344,225,1392,218L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,235,864,250.7C960,267,1056,245,1152,224C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
           ></path>
         </svg>
       </div>
@@ -74,7 +72,6 @@ const JobCard = ({ job, onApply }) => {
     } else {
       document.body.style.overflow = "";
     }
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -87,99 +84,81 @@ const JobCard = ({ job, onApply }) => {
   const closeModal = () => {
     setModalIsOpen(false);
   };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full flex flex-col">
-      <img
-        src={`/api/image/download/${job.photo}`}
-        alt={`${job.department} department`}
-        className="w-full h-[17rem] object-cover"
-      />
-      <div className="p-6 flex flex-col flex-grow">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            {job.jobtitle}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <span className="flex items-center text-sm text-gray-500">
-              <MapPin size={16} className="mr-1" /> {job.jobType}
-            </span>
-            <span className="flex items-center text-sm text-gray-500">
-              <Clock size={16} className="mr-1" /> {job.employmentType}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-grow mb-4 text-gray-700">
-          <ReactQuill
-            readOnly={true}
-            value={job.description}
-            modules={{ toolbar: false }}
-            theme="bubble"
-            className="quill"
-          />
-        </div>
-
-        <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={onApply}
-            className="w-full sm:w-auto bg-[#ec2127] hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full flex items-center justify-center transition duration-300"
-          >
-            Apply Now
-            <ChevronRight className="ml-2" size={18} />
-          </button>
-          <button
-            onClick={openModal}
-            className="w-full sm:w-auto text-[#ec2127] hover:text-red-700 font-semibold flex items-center justify-center transition duration-300"
-          >
-            Learn More
-          </button>
-        </div>
+    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden w-full max-w-md mx-auto h-full">
+  <img
+    src={`/api/image/download/${job.photo}`}
+    alt={`${job.department} department`}
+    className="w-full h-48 sm:h-56 md:h-64 object-cover"
+  />
+  <div className="p-5 flex flex-col flex-grow">
+    <div className="mb-3">
+      <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1 leading-snug">
+        {job.jobtitle}
+      </h2>
+      <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+        <span className="flex items-center">
+          <MapPin size={16} className="mr-1" /> {job.jobType}
+        </span>
+        <span className="flex items-center">
+          <Clock size={16} className="mr-1" /> {job.employmentType}
+        </span>
       </div>
+    </div>
 
+    <div className="text-gray-700 text-sm sm:text-base mb-4 flex-grow">
+      <div
+        dangerouslySetInnerHTML={{ __html: job.description }}
+        className="prose prose-sm text-gray-700"
+      />
+    </div>
+
+
+    <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+      <button
+        onClick={onApply}
+        className="flex-1 bg-[#ec2127] hover:bg-[#ec2127] text-white font-semibold py-2 px-4 rounded-full flex items-center justify-center transition"
+      >
+        Apply Now
+        <ChevronRight className="ml-2" size={18} />
+      </button>
+      <button
+        onClick={openModal}
+        className="flex-1 text-[#ec2127] hover:text-[#ec2127] font-semibold py-2 px-4 rounded-full flex items-center justify-center transition border border-[#ec2127]"
+      >
+        Learn More
+      </button>
+    </div>
+  </div>
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Job Requirements"
-        className="fixed inset-0 bg-white mx-3 p-8 max-w-lg  my-16 rounded-lg shadow-lg overflow-auto max-h-[80vh]"
+        className="fixed inset-0 bg-white  p-6 sm:p-8 max-w-lg mx-auto my-8 sm:my-16 rounded-lg shadow-lg overflow-auto max-h-[80vh]"
         overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-50"
       >
         <div className="flex justify-between items-center relative">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">
             Requirements for {job.jobtitle}
           </h2>
           <button
             onClick={closeModal}
             aria-label="Close"
-            className="absolute -top-4 -right-6 text-black hover:text-[#ec2127]"
+            className="absolute -top-4 -right-4 text-black hover:text-[#ec2127]"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X size={24} />
           </button>
         </div>
-        <div className="text-gray-700">
-          <ReactQuill
-            readOnly={true}
-            value={job.requirement}
-            modules={{ toolbar: false }}
-            theme="bubble"
-            className="quill"
-          />
+        <div className="text-gray-700 ">
+        <div 
+  className="prose prose-sm text-gray-700"
+  dangerouslySetInnerHTML={{ __html: job.requirement }} 
+/>
         </div>
         <button
           onClick={closeModal}
-          className="mt-4 bg-[#ec2127] hover:bg-red-700 text-white py-2 px-4 rounded-full transition duration-300"
+          className="mt-4 bg-[#ec2127] hover:bg-[#ec2127] text-white font-semibold py-2 px-4 rounded-full transition duration-300 w-full sm:w-auto"
         >
           Close
         </button>
@@ -194,92 +173,101 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
   const [mobileNo, setMobileNo] = useState("");
   const [message, setMessage] = useState("");
   const [resume, setResume] = useState(null);
-  const [nameError, setNameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [mobileNoError, setMobileNoError] = useState("");
-  const [resumeError, setResumeError] = useState("");
-  const [messageError, setMessageError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [linkedin, setLinkedin] = useState("");
   const [clientIp, setClientIp] = useState("");
   const [utmParams, setUtmParams] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const slug = pathname.slice(1, pathname.length);
 
   const validateName = (value) => {
-    if (!value.trim()) return "Name is required";
-    if (!/^[a-zA-Z\s]+$/.test(value)) return "Name can only contain letters and spaces";
-    if (value.trim().length < 2) return "Name must be at least 2 characters long";
-    if (value.trim().length > 50) return "Name cannot exceed 50 characters";
+    const trimmed = value.trim();
+    if (!trimmed) return "This field is required";
+    if (!/^[A-Za-z ]+$/.test(trimmed)) return "Name must contain only alphabets.";
+    if (trimmed.match(/\s{2,}/)) return "No consecutive spaces allowed.";
+    return "";
+  };
+
+  const validatePhone = (value) => {
+    if (!value) return "This field is required";
+    if (!/^[0-9]{10}$/.test(value)) return "Enter a valid 10-digit phone number.";
     return "";
   };
 
   const validateEmail = (value) => {
-    if (!value.trim()) return "Email is required";
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(value)) return "Please enter a valid email address";
-    return "";
-  };
-
-  const validateMobileNo = (value) => {
-    if (!value.trim()) return "Phone number is required";
-    if (!/^\d+$/.test(value)) return "Phone number can only contain digits";
-    if (value.length !== 10) return "Phone number must be exactly 10 digits";
-    return "";
-  };
-
-  const validateResume = (file) => {
-    if (!file) return "Resume is required";
-    const validTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    if (!validTypes.includes(file.type)) return "Resume must be a PDF, DOC, or DOCX file";
+    const trimmed = value.trim();
+    if (!trimmed) return "This field is required";
+    if (!/^[\w.-]+@[\w.-]+\.\w{2,4}$/.test(trimmed)) return "Please enter a valid email address.";
     return "";
   };
 
   const validateMessage = (value) => {
-    if (!value.trim()) return ""; // Message is optional
-    if (value.trim().length < 10) return "Message must be at least 10  characters long";
-    if (!/^[a-zA-Z\s]+$/.test(value)) return "Message can only contain letters and spaces";
-    if (value.trim().length > 500) return "Message cannot exceed 500 characters";
+    const trimmed = value.trim();
+    if (!trimmed) return "This field is required";
+    if (value.length > 500) return "Message must be less than 500 characters.";
+    return "";
+  };
+
+  const validateResume = (file) => {
+    if (!file) return "Please upload a resume.";
+    const allowed = ['.pdf', '.doc', '.docx'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) return "Please upload a valid resume in .pdf, .doc, or .docx format.";
     return "";
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setResume(file);
-    setResumeError(validateResume(file));
+    const err = validateResume(file);
+    setErrors(prev => ({ ...prev, resume: err }));
   };
 
   const handleNameChange = (e) => {
-    const value = e.target.value;
-    setName(value);
-    setNameError(validateName(value));
+    setName(e.target.value);
+    setErrors(prev => ({ ...prev, name: "" }));
+  };
+
+  const handlePhoneChange = (e) => {
+    setMobileNo(e.target.value);
+    setErrors(prev => ({ ...prev, mobileNo: "" }));
   };
 
   const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-    setEmailError(validateEmail(value));
+    setEmail(e.target.value);
+    setErrors(prev => ({ ...prev, email: "" }));
   };
 
-  const handleMobileNoChange = (e) => {
-    const value = e.target.value;
-    setMobileNo(value);
-    setMobileNoError(validateMobileNo(value));
-  };
-
-  const handleMobileNoKeyPress = (e) => {
-    const charCode = e.charCode;
-    if (charCode < 48 || charCode > 57) {
-      e.preventDefault();
-    }
+  const handleLinkedinChange = (e) => {
+    setLinkedin(e.target.value);
   };
 
   const handleMessageChange = (e) => {
-    const value = e.target.value;
-    setMessage(value);
-    setMessageError(validateMessage(value));
+    setMessage(e.target.value);
+    setErrors(prev => ({ ...prev, message: "" }));
+  };
+
+  const handleNameBlur = (e) => {
+    const err = validateName(e.target.value);
+    setErrors(prev => ({ ...prev, name: err }));
+  };
+
+  const handlePhoneBlur = (e) => {
+    const err = validatePhone(e.target.value);
+    setErrors(prev => ({ ...prev, mobileNo: err }));
+  };
+
+  const handleEmailBlur = (e) => {
+    const err = validateEmail(e.target.value);
+    setErrors(prev => ({ ...prev, email: err }));
+  };
+
+  const handleMessageBlur = (e) => {
+    const err = validateMessage(e.target.value);
+    setErrors(prev => ({ ...prev, message: err }));
   };
 
   useEffect(() => {
@@ -307,236 +295,227 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
     });
   }, []);
 
-  const isFormValid = () => {
-    return (
-      name.trim() !== "" &&
-      /^[A-Za-z\s]+$/.test(name) &&
-      email.trim() !== "" &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-      mobileNo.trim() !== "" &&
-      /^\d{10}$/.test(mobileNo) &&
-      resume !== null &&
-      (message === "" || message.length >= 10)
-    );
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const nameErr = validateName(name);
+    const phoneErr = validatePhone(mobileNo);
     const emailErr = validateEmail(email);
-    const mobileNoErr = validateMobileNo(mobileNo);
+    const msgErr = validateMessage(message);
     const resumeErr = validateResume(resume);
-    const messageErr = validateMessage(message);
 
-    setNameError(nameErr);
-    setEmailError(emailErr);
-    setMobileNoError(mobileNoErr);
-    setResumeError(resumeErr);
-    setMessageError(messageErr);
+    setErrors({
+      name: nameErr,
+      mobileNo: phoneErr,
+      email: emailErr,
+      message: msgErr,
+      resume: resumeErr,
+    });
 
-    if (nameErr || emailErr || mobileNoErr || resumeErr || messageErr) {
-      toast.error('Please fill all required fields correctly', {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
-      return;
-    }
+    if (nameErr || phoneErr || emailErr || msgErr || resumeErr) return;
 
-    setIsSubmitting(true);
-
+    setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("email", email);
-      formData.append("mobileNo", mobileNo);
-      formData.append("resume", resume);
-      formData.append("message", message);
-      formData.append("ipaddress", clientIp);
-      Object.entries(utmParams).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
       await axios.post(
         "/api/careerInquiries/createCareerInquiry",
-        formData,
+        {
+          name: name.trim(),
+          email: email.trim(),
+          mobileNo,
+          resume,
+          message: message.trim(),
+          linkedin: linkedin.trim(),
+          ipaddress: clientIp,
+          path: slug,
+          jobTitle: job.jobtitle,
+          ...utmParams,
+        },
         {
           headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
         }
       );
       
-      // Show success toast
-      toast.success('Application submitted successfully!', {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
-      
-      // Close modal after a short delay
+      setSuccess(true);
       setTimeout(() => {
-        onClose();
+        setName("");
+        setEmail("");
+        setMobileNo("");
+        setMessage("");
+        setResume(null);
+        setLinkedin("");
+        setSuccess(false);
         navigate("/thankyou");
-      }, 1500);
-      
-      // Reset form
-      setName("");
-      setEmail("");
-      setMobileNo("");
-      setMessage("");
-      setResume(null);
-      setNameError("");
-      setEmailError("");
-      setMobileNoError("");
-      setResumeError("");
-      setMessageError("");
+        onClose();
+      }, 3000);
     } catch (err) {
       console.error("Failed to submit application", err);
-      toast.error('Failed to submit application. Please try again.', {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   if (!isOpen) return null;
 
+  if (success) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-4 sm:px-6">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-xl w-full relative shadow-xl">
+          {/* Close Button */}
+          <button
+            className="absolute top-4 right-4 text-gray-500 hover:text-[#ec2127] transition"
+            onClick={onClose}
+          >
+            <X size={24} />
+          </button>
+
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-green-600">
+              Application Submitted Successfully!
+            </h2>
+            <p className="text-gray-700 mb-6 text-lg">
+              Thank you for your application. We will review it and get back to you soon.
+            </p>
+            <p className="text-sm text-gray-500">Redirecting to thank you page in a few seconds...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-lg w-full relative">
-        <button 
-          className="absolute top-3 right-3" 
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-4 sm:px-6">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-xl w-full relative shadow-xl">
+        {/* Close Button */}
+        <button
+          className="absolute top-4 right-4 text-gray-500 hover:text-[#ec2127] transition"
           onClick={onClose}
-          disabled={isSubmitting}
         >
           <X size={24} />
         </button>
-        <h2 className="text-2xl font-semibold mb-4">
-          Apply for {job.jobtitle}
+
+        {/* Heading */}
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800">
+          Apply for <span className="text-[#ec2127]">{job.jobtitle}</span>
         </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="name"
+              placeholder="John Doe"
               value={name}
               onChange={handleNameChange}
-              className={`w-full p-2 border rounded-lg ${nameError ? "border-red-500" : ""}`}
+              onBlur={handleNameBlur}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127]"
               required
-              maxLength={50}
             />
-            {nameError && <p className="text-red-500 text-sm mt-1">{nameError}</p>}
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Phone Number <span className="text-red-500">*</span>
             </label>
             <input
-              type="tel"
-              name="mobileNo" 
+              type="text"
+              name="mobileNo"
+              placeholder="1234567890"
               value={mobileNo}
-              onChange={handleMobileNoChange}
-              onKeyPress={handleMobileNoKeyPress}
-              className={`w-full p-2 border rounded-lg ${mobileNoError ? "border-red-500" : ""}`}
+              onChange={handlePhoneChange}
+              onBlur={handlePhoneBlur}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127]"
               required
-              maxLength={10}
             />
-            {mobileNoError && <p className="text-red-500 text-sm mt-1">{mobileNoError}</p>}
+            {errors.mobileNo && <p className="text-red-500 text-xs mt-1">{errors.mobileNo}</p>}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
               name="email"
+              placeholder="name@gmail.com"
               value={email}
               onChange={handleEmailChange}
-              className={`w-full p-2 border rounded-lg ${emailError ? "border-red-500" : ""}`}
+              onBlur={handleEmailBlur}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127]"
               required
             />
-            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Upload Resume <span className="text-red-500">*</span>
+
+          {/* LinkedIn (optional) */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              LinkedIn Profile <span className="text-gray-400 text-xs">(optional)</span>
+            </label>
+            <input
+              type="url"
+              name="linkedin"
+              value={linkedin}
+              onChange={handleLinkedinChange}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127]"
+              placeholder="https://linkedin.com/in/your-profile"
+            />
+          </div>
+
+          {/* Resume/Portfolio Upload */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Upload Resume/Portfolio <span className="text-red-500">*</span>
             </label>
             <input
               type="file"
               name="resume"
               onChange={handleFileChange}
-              className={`w-full ${resumeError ? "border-red-500" : ""}`}
+              className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded-md file:text-sm file:font-semibold file:bg-[#ec2127] file:text-white hover:file:bg-[#ec2127]"
               accept=".pdf,.doc,.docx"
               required
             />
-            {resumeError && <p className="text-red-500 text-sm mt-1">{resumeError}</p>}
+            {errors.resume && <p className="text-red-500 text-xs mt-1">{errors.resume}</p>}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Message (optional)</label>
+
+          {/* Message */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Project Details <span className="text-red-500">*</span>
+            </label>
             <textarea
               name="message"
+              rows={4}
               value={message}
-              onChange={handleMessageChange}  
-              className={`w-full p-2 border rounded-lg ${messageError ? "border-red-500" : ""}`}
+              onChange={handleMessageChange}
+              onBlur={handleMessageBlur}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127] resize-none"
+              placeholder="Tell us about your background, interest, or relevant experience..."
+              required
               maxLength={500}
-              disabled={isSubmitting}
             />
-            {messageError && <p className="text-red-500 text-sm mt-1">{messageError}</p>}
+            {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
           </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={!isFormValid() || isSubmitting}
-            className={`flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg font-bold text-white ${
-              isFormValid() && !isSubmitting 
-                ? 'bg-[#ec2127] hover:bg-red-700' 
-                : 'bg-gray-400 cursor-not-allowed'
+            disabled={loading}
+            className={`w-full bg-[#ec2127] hover:bg-[#ec2127] text-white font-semibold py-2.5 px-4 rounded-md text-sm transition ${
+              loading ? "opacity-60 cursor-not-allowed" : ""
             }`}
           >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Submitting...
-              </>
-            ) : (
-              'Submit Application'
-            )}
+            {loading ? "Submitting..." : "Submit Application"}
           </button>
         </form>
       </div>
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
     </div>
   );
 };
@@ -547,19 +526,6 @@ const CareerPage = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [careerOptions, setCareerOptions] = useState([]);
-  const [searchError, setSearchError] = useState("");
-
-  const validateSearch = (value) => {
-    if (value.trim().length === 0) return "";
-    if (/^\s+$/.test(value)) return "Search cannot contain only spaces";
-    return "";
-  };
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    setSearchError(validateSearch(value));
-  };
 
   const fetchData = async () => {
     try {
@@ -573,34 +539,16 @@ const CareerPage = () => {
       console.error(error);
     }
   };
+
   useEffect(() => {
     fetchData();
   }, []);
 
-  const filteredJobs = careerOptions.filter((job) => {
-    const searchableText = [
-      job.department,
-      job.jobtitle,
-      job.jobType,
-      job.employmentType,
-    ].join(' ').toLowerCase();
-  
-    const searchTermLower = searchTerm.toLowerCase().trim();
-  
-    let matchesSearch = true;
-    if (searchTermLower !== '') {
-      const searchWords = searchTermLower.split(/\s+/);
-      matchesSearch = searchWords.every(word => 
-        searchableText.split(/\s+/).some(textWord => 
-          textWord.startsWith(word) || textWord.includes(word)
-        )
-      );
-    }
-  
-    const matchesDepartment = filterDepartment === "All" || job.department === filterDepartment;
-  
-    return !searchError && matchesSearch && matchesDepartment;
-  });
+  const filteredJobs = careerOptions.filter(
+    (job) =>
+      job.department.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (filterDepartment === "All" || job.department === filterDepartment)
+  );
 
   const openModal = (job) => {
     setSelectedJob(job);
@@ -615,19 +563,7 @@ const CareerPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+    <div className="bg-gray-100 min-h-screen">
       <Banner />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-4">
         <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -636,41 +572,43 @@ const CareerPage = () => {
               <button
                 key={dept}
                 onClick={() => setFilterDepartment(dept)}
-                className={`px-4 py-2 rounded-full border border-gray-300 
+                className={`px-4 py-2 rounded-full border border-gray-300 text-sm font-medium
                             ${
                               filterDepartment === dept
                                 ? "bg-black text-white"
-                                : "bg-white text-black"
-                            } transition duration-300`}
+                                : "bg-white text-black hover:bg-gray-100"
+                            }`}
               >
                 {dept}
               </button>
             ))}
           </div>
-          <div className="w-full md:w-1/2">
-            <div className="relative flex flex-col">
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="Search jobs..."
-                  className={`w-full pl-3 pr-4 py-2 rounded-full border ${searchError ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-1 focus:ring-black`}
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <button className="absolute right-3 top-2.5 text-gray-400">
-                  <Search size={20} />
-                </button>
-              </div>
-              {searchError && <p className="text-red-500 text-sm mt-1">{searchError}</p>}
+          <div className="w-full md:w-80">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search jobs..."
+                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ec2127] text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
             </div>
           </div>
         </div>
-        <p className="text-gray-400">
-          Can&apos;t find the job you want? Send your resume to <span className="hover:text-blue-900 transition-all duration-300 text-gray-500"><a href="mailto:hr@krenberry.com">hr@krenberry.com</a></span> and we&apos;ll contact you when a new position opens.
+        <p className="text-gray-500 text-sm mb-8">
+          Can’t find the job you want? Send your resume to{" "}
+          <a
+            href="mailto:hr@krenberry.com"
+            className="text-[#ec2127] hover:text-[#ec2127] transition-all duration-300"
+          >
+            hr@krenberry.com
+          </a>{" "}
+          and we’ll contact you when a new position opens.
         </p>
 
-        {filteredJobs.length > 0 ? (
-          <div className="grid gap-8 md:grid-cols-2 my-16">
+        {filteredJobs.length > 0 ? ( 
+          <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 my-8">
             {filteredJobs.map((job) => (
               <JobCard key={job.id} job={job} onApply={() => openModal(job)} />
             ))}
@@ -678,13 +616,13 @@ const CareerPage = () => {
         ) : (
           <div className="text-center py-12">
             <Briefcase className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-xl text-gray-600">
+            <p className="text-lg text-gray-600">
               No job openings match your criteria.
             </p>
           </div>
         )}
       </div>
-   
+
       {selectedJob && (
         <JobApplicationModal
           job={selectedJob}

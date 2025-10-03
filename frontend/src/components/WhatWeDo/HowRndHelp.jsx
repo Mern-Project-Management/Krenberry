@@ -308,7 +308,7 @@ export default function HowRndHelp() {
       {/* Cards grid */}
       <div
         ref={fadeInContainerRef}
-        className="grid lg:grid-cols-2 justify-center items-stretch gap-4 w-[80%] mx-auto mt-12  my-20"
+        className="grid lg:grid-cols-2 justify-center items-stretch gap-4 w-[80%] mx-auto mt-12 pb-24  my-20"
       >
         {cards.map((card, index) => (
           <div key={card.id || index} className="flex flex-col h-full">
@@ -344,7 +344,7 @@ export default function HowRndHelp() {
       </div>
 
       {/* Bottom SVG - Fixed to remove visible line */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-px">
+      <div className="absolute inset-x-0 bottom-0  translate-y-px">
         <svg
           className="w-full h-full"
           xmlns="http://www.w3.org/2000/svg"

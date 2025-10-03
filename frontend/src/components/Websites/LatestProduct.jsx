@@ -218,7 +218,7 @@ export default function LatestProject() {
   );
 
   return (
-    <div className="pb-16 -mt-4">
+    <div className=" mt-12 sm:mt-16">
       <h2 className="heading font-semibold px-4 text-center">
         Latest <span className="text-[#ec2127]">Projects</span>
       </h2>

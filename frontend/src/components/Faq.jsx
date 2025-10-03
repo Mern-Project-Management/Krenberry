@@ -154,7 +154,7 @@ const FAQ = () => {
   }
 
   return (
-    <div className="max-w-7xl sm:w-[63%] md:w-[97%] lg:w-full mx-auto mb-16 pt-16 lg:max-w-7xl xl:max-w-7xl">
+    <div className="max-w-7xl sm:w-[63%] md:w-[97%] lg:w-full mx-auto mb-16 lg:max-w-7xl xl:max-w-7xl">
       {/* Development indicator - remove in production */}
       {isUsingFallback && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-6 text-sm rounded">
@@ -165,7 +165,7 @@ const FAQ = () => {
       <h2 className="text-4xl md:text-5xl text-center font-semibold">
         {heading}
       </h2>
-      <h3 className="md:text-[23px] text-center pb-16 mt-4 text-gray-700">
+      <h3 className="md:text-[23px] text-center pb-12 mt-4 text-gray-700">
         {subheading}
       </h3>
       

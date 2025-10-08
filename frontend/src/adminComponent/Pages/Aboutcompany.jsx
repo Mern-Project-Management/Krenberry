@@ -44,6 +44,7 @@ const VisionForm = () => {
             console.error(error);
         }
     };
+
     const saveHeadings = async () => {
         const formData = new FormData();
         formData.append("pagetype", 'aboutcompany');
@@ -51,7 +52,7 @@ const VisionForm = () => {
         formData.append("subheading", subheading);
         formData.append("alt", alt);
         formData.append("imgTitle", imgTitle);
-        if (photo) formData.append("photo", bannerphoto); // Append photo if a new one is uploaded
+        if (bannerphoto) formData.append("photo", bannerphoto);
 
         try {
             await axios.put('/api/pageHeading/updateHeading?pageType=aboutcompany', formData, {
@@ -62,7 +63,12 @@ const VisionForm = () => {
             });
             notify();
         } catch (error) {
-            console.error(error);
+            if (error.response && error.response.data.error === "Only image files are allowed!") {
+                toast.error("Only image files are allowed!");
+            } else {
+                console.error(error);
+                toast.error("An error occurred while saving. Please try again.");
+            }
         }
     };
 
@@ -238,7 +244,7 @@ const VisionForm = () => {
                         />
                     </div>
                     <div className="mb-6">
-                        <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">Photo</label>
+                        <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">Photo <span className="lowercase">(only image file type )</span></label>
                         <input
                             type="file"
                             onChange={handlePhotoChange}

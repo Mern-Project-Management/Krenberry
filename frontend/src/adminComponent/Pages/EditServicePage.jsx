@@ -75,19 +75,21 @@ const EditServiceDetails = () => {
 
   // Validation functions
   const validateHeading = (value) => {
-    // Only allow alphabets, spaces, and specific special characters: ? ! ' " ,
     const headingRegex = /^[a-zA-Z\s?!'",\-]+$/;
-    if (!value.trim()) {
+    const cleanValue = value.normalize("NFKC").replace(/\u200B|\u00A0/g, " ").trim();
+  
+    if (!cleanValue) {
       return "Heading is required";
     }
-    if (value.length > 100) {
+    if (cleanValue.length > 100) {
       return "Heading must be less than 100 characters";
     }
-    if (!headingRegex.test(value)) {
+    if (!headingRegex.test(cleanValue)) {
       return "Please enter a valid heading using alphabets, spaces, and only these special characters: ? ! ' \" ,";
     }
     return "";
   };
+  
 
   const validateDescription = (value) => {
     const plainText = value.replace(/<[^>]*>/g, '').trim();

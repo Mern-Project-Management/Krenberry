@@ -132,7 +132,7 @@ const NewBannerForm = () => {
           ))}
         </select>
       </div>
-      <div className="mb-4">
+      <div className="mb-5">
         <label htmlFor="title" className="block font-semibold mb-2">
           Title <span className="text-red-500">*</span></label>
         <input
@@ -144,7 +144,7 @@ const NewBannerForm = () => {
           required
         />
       </div>
-      <div className="mb-8">
+      <div className="mb-5">
                 <label htmlFor="details" className="block font-semibold mb-2">
                     Description <span className="text-red-500">*</span>
                 </label>
@@ -154,25 +154,10 @@ const NewBannerForm = () => {
                     modules={modules} // Include modules for image handling
                     className="quill"
                     style={{ height: '150px', marginBottom: '5rem' }}
+                    required
                 />
             </div>
-      <div className="mb-1zzzzzzzzzz">
-        <label htmlFor="priority" className="block font-semibold mb-2">
-          Priority (0 to 1) <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="priority"
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
-          required
-        />
-      </div>
-      <div className="mt-12">
+            <div className="mt-5">
         <label htmlFor="photo" className="block font-semibold mb-2">
           Photos <span className="text-red-500">*</span>  
         </label>
@@ -184,6 +169,7 @@ const NewBannerForm = () => {
           onChange={handlePhotoChange}
           className="border rounded focus:outline-none "
           accept="image/*"
+          required
         />
         {photos.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-4">
@@ -214,6 +200,7 @@ const NewBannerForm = () => {
                       setPhotoAlts(newPhotoAlts);
                     }}
                     className="w-full p-2 border rounded focus:outline-none"
+                    required
                   />
                 </label>
                 <label className="block mt-2">
@@ -234,7 +221,26 @@ const NewBannerForm = () => {
           </div>
         )}
       </div>
-      <div className="mb-4">
+
+      <div className="my-5">
+        <label htmlFor="priority" className="block font-semibold mb-2">
+          Priority
+          {/* Priority (0 to 1) <span className="text-red-500">*</span> */}
+        </label>
+        <input
+          id="priority"
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+          className="w-full p-2 border rounded focus:outline-none"
+          // required
+        />
+      </div>
+     
+      <div className="my-4">
         <label htmlFor="status" className="block font-semibold mb-2">
           Status
         </label>

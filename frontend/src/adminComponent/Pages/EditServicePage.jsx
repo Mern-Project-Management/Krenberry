@@ -73,10 +73,21 @@ const EditServiceDetails = () => {
     }
   };
 
-  // Validation functions
   const validateHeading = (value) => {
     const headingRegex = /^[a-zA-Z\s?!'",\-]+$/;
-    const cleanValue = value.normalize("NFKC").replace(/\u200B|\u00A0/g, " ").trim();
+  
+    // Extract text if HTML was passed
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = value;
+    const textOnly = tempDiv.textContent || tempDiv.innerText || "";
+  
+    const cleanValue = textOnly
+      .normalize("NFKC")
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  
+    console.log(cleanValue, "okay");
   
     if (!cleanValue) {
       return "Heading is required";
@@ -89,6 +100,8 @@ const EditServiceDetails = () => {
     }
     return "";
   };
+  
+  
   
 
   const validateDescription = (value) => {

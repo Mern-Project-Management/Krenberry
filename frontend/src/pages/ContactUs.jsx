@@ -21,12 +21,14 @@ const ContactUs = () => {
   const [headOfficeAddress, setHeadOfficeAddress] = useState('');
   const [salesOfficeAddress, setSalesOfficeAddress] = useState('');
   const [location, setLocation] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
   const [clientIp, setClientIp] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
   const [utmParams, setUtmParams] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -105,33 +107,18 @@ const ContactUs = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    // Update the corresponding state
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-      case 'email':
-        setEmail(value);
-        break;
-      case 'phone':
-        // Only allow numbers
-        if (value === '' || /^\d*$/.test(value)) {
-          setPhone(value);
-        }
-        break;
-      case 'subject':
-        setSubject(value);
-        break;
-      case 'message':
-        setMessage(value);
-        break;
-      default:
-        break;
+    let { name, value } = e.target;
+
+    if (name === 'phone') {
+      // Only allow numbers for phone
+      if (value !== '' && !/^\d*$/.test(value)) {
+        return;
+      }
     }
-    
-    // Clear error when user starts typing
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Validate on change if the field has been touched
     if (formErrors[name]) {
       const error = validateField(name, value);
       setFormErrors(prev => ({
@@ -146,10 +133,10 @@ const ContactUs = () => {
     let isValid = true;
     
     const fields = [
-      { name: 'name', value: name },
-      { name: 'email', value: email },
-      { name: 'phone', value: phone },
-      { name: 'message', value: message }
+      { name: 'name', value: formData.name },
+      { name: 'email', value: formData.email },
+      { name: 'phone', value: formData.phone },
+      { name: 'message', value: formData.message }
     ];
     
     fields.forEach(field => {
@@ -164,32 +151,38 @@ const ContactUs = () => {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
+    setErrorMessage('');
 
+    const payload = {
+      ...formData,
+      ipaddress: clientIp,
+      ...utmParams,
+    };
+
+    const start = performance.now();
     try {
-      await axios.post('/api/contactinquiries/createcontactInquiry', {
-        name,
-        email,
-        phone,
-        subject,
-        message,
-        ipaddress: clientIp,
-        ...utmParams,
-      });
+      // 10s timeout (adjust as needed)
+      await axios.post('/api/contactinquiries/createcontactInquiry', payload, { timeout: 10000 });
 
-      // Reset form on success
-      setName('');
-      setEmail('');
-      setPhone('');
-      setSubject('');
-      setMessage('');
+      const duration = (performance.now() - start).toFixed(0);
+      console.log(`Contact submit completed in ${duration} ms`);
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
       setFormErrors({});
       setIsTouched({
         name: false,
@@ -198,11 +191,17 @@ const ContactUs = () => {
         subject: false,
         message: false
       });
-      
+
       navigate("/thankyou");
     } catch (error) {
-      const errorMsg = error.response?.data?.error || 'An error occurred while submitting the form.';
-      setErrorMessage(errorMsg);
+      const duration = (performance.now() - start).toFixed(0);
+      console.error(`Contact submit failed after ${duration} ms`, error);
+
+      if (error.code === 'ECONNABORTED') {
+        setErrorMessage('The request timed out. Please try again.');
+      } else {
+        setErrorMessage(error.response?.data?.error || 'An error occurred while submitting the form.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -323,7 +322,7 @@ const ContactUs = () => {
                       type="text"
                       id="name"
                       name="name"
-                      value={name}
+                      value={formData.name}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       placeholder="Enter your full name"
@@ -346,7 +345,7 @@ const ContactUs = () => {
                       type="email"
                       id="email"
                       name="email"
-                      value={email}
+                      value={formData.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       placeholder="Enter your email address"
@@ -370,7 +369,7 @@ const ContactUs = () => {
                       type="tel"
                       id="phone"
                       name="phone"
-                      value={phone}
+                      value={formData.phone}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       placeholder="Enter your 10-digit mobile number"
@@ -393,7 +392,7 @@ const ContactUs = () => {
                       type="text"
                       id="subject"
                       name="subject"
-                      value={subject}
+                      value={formData.subject}
                       onChange={handleChange}
                       placeholder="Enter subject"
                       className="w-full p-2 border border-gray-300 rounded focus:border-[#ec2127] outline-none"
@@ -408,7 +407,7 @@ const ContactUs = () => {
                   <textarea
                     id="message"
                     name="message"
-                    value={message}
+                    value={formData.message}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Enter your message (minimum 10 characters)"

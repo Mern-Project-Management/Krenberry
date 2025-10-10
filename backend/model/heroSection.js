@@ -51,7 +51,7 @@ async function initializeIndexes() {
     
     // Create new indexes
     await HeroSection.createIndexes();
-    console.log('Created new indexes');
+    // console.log('Created new indexes');
   } catch (err) {
     console.error('Error initializing indexes:', err);
   }

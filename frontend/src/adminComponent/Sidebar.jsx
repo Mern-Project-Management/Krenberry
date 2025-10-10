@@ -133,7 +133,10 @@ export default function Sidebar() {
     {
       title: "SEO", icon: <TbSeo size={20} />, submenu: [
         { title: "Sitemap Generator", icon: <FaSitemap size={20} />, path: "/sitemap" },
-        { title: "Meta Tags Settings", icon: <FaCode size={20} />, path: "/metadetails" },
+
+        { title: "Static Page Meta Tags", icon: <FaCode size={20} />, path: "/meta-table" },
+        { title: "Meta List", icon: <FaCode size={20} />, path: "/navbar-data" },
+        
         { title: "Google Tag Manager", icon: <FaGoogle size={20} />, path: "/googleSettings" },
         { title: "Inquiries", icon: <FaPhone size={20} />, path: "/Inquiry" },
       ]
@@ -141,14 +144,14 @@ export default function Sidebar() {
     {
       title: "Settings", icon: <IoSettings size={20} />, submenu: [
         // { title: "Menu Listing", icon: <FaListOl size={20} />, path: "/menulisting" },
-        { title: "Manage Section Visibility", icon: < FaEarthAsia size={20} />, path: "/managesectionvisibility" },
-        { title: "Manage Theme", icon: <FaCode size={20} />, path: "/manageTheme" },
+        // { title: "Manage Section Visibility", icon: < FaEarthAsia size={20} />, path: "/managesectionvisibility" },
+        // { title: "Manage Theme", icon: <FaCode size={20} />, path: "/manageTheme" },
         { title: "Footer Settings", icon: <AiOutlineVerticalAlignBottom size={20} />, path: "/footer" },
         // { title: "Header Settings", icon: <AiOutlineVerticalAlignTop size={20} />, path: "/header" },
         { title: "Manage Logo", icon: <FaPager size={20} />, path: "/manageLogo" },
-        { title: "Whatsapp Settings", icon: <RiWhatsappFill size={20} />, path: "/whatsappSettings" },
+        // { title: "Whatsapp Settings", icon: <RiWhatsappFill size={20} />, path: "/whatsappSettings" },
 
-        { title: "Database Management", icon: <FaDatabase size={20} />, path: "/DatabaseManagement" }
+        // { title: "Database Management", icon: <FaDatabase size={20} />, path: "/DatabaseManagement" }
       ]
     }
 

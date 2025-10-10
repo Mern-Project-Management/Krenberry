@@ -12,6 +12,7 @@ import axios from "axios";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useNavigate, useLocation } from "react-router-dom";
+import { validateEmail } from "../utiles/validations";
 
 Modal.setAppElement("#root");
 
@@ -193,16 +194,16 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
 
   const validatePhone = (value) => {
     if (!value) return "This field is required";
-    if (!/^[0-9]{10}$/.test(value)) return "Enter a valid 10-digit phone number.";
+    if (!/^[6-9]\d{9}$/.test(value)) return "Please enter a valid  mobile number.";
     return "";
   };
 
-  const validateEmail = (value) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "This field is required";
-    if (!/^[\w.-]+@[\w.-]+\.\w{2,4}$/.test(trimmed)) return "Please enter a valid email address.";
-    return "";
-  };
+  // const validateEmail = (value) => {
+  //   const trimmed = value.trim();
+  //   if (!trimmed) return "This field is required";
+  //   if (!/^[\w.-]+@[\w.-]+\.\w{2,4}$/.test(trimmed)) return "Please enter a valid email address.";
+  //   return "";
+  // };
 
   const validateMessage = (value) => {
     const trimmed = value.trim();
@@ -426,12 +427,14 @@ const JobApplicationModal = ({ job, isOpen, onClose }) => {
             <input
               type="text"
               name="mobileNo"
-              placeholder="1234567890"
+              placeholder="9876543210"
               value={mobileNo}
               onChange={handlePhoneChange}
               onBlur={handlePhoneBlur}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2127]"
               required
+              maxLength={10}
+              minLength={10}
             />
             {errors.mobileNo && <p className="text-red-500 text-xs mt-1">{errors.mobileNo}</p>}
           </div>
@@ -610,7 +613,7 @@ const CareerPage = () => {
         {filteredJobs.length > 0 ? ( 
           <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 my-8">
             {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} onApply={() => openModal(job)} />
+              <JobCard key={job._id} job={job} onApply={() => openModal(job)} />
             ))}
           </div>
         ) : (

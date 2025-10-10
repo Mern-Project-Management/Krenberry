@@ -59,68 +59,6 @@ const SitemapTable = () => {
   const [loadings, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSitemaps = useMemo(() => {
-    if (!searchTerm) return mainSitemaps;
-    return mainSitemaps.filter((sitemap) =>
-      sitemap.url.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [mainSitemaps, searchTerm]);
-
-  const columns = useMemo(
-
-    () => [
-      // {
-      //   Header: "ID",
-      //   accessor: index + 1,
-      // },
-      {
-        Header: "URL",
-        accessor: "url",
-      },
-      {
-        Header: "Priority",
-        accessor: "priority",
-      },
-      {
-        Header: "Change Frequency",
-        accessor: "changeFreq",
-      },
-      {
-        Header: "Last Modification",
-        accessor: "lastmod",
-      },
-      {
-        Header: "Options",
-        Cell: ({ row }) => (
-          <div className="flex gap-4">
-            <button className="text-blue-500 hover:text-blue-700 transition">
-              <Link to={`/sitemap/editSitemap/${row.original._id}/${row.original.type}`}><FaEdit /></Link>
-            </button>
-            {/* <button className="text-red-500 hover:text-red-700 transition" onClick={() => deleteSitemap(row.original.id, row.original.type)}>
-              <FaTrashAlt />
-            </button> */}
-          </div>
-        ),
-        disableSortBy: true,
-      },
-    ],
-    []
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable(
-    {
-      columns,
-      data: filteredSitemaps,
-    },
-    useSortBy
-  );
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -142,35 +80,7 @@ const SitemapTable = () => {
     }
   };
 
-  // const fetchProductData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const [productResponse, categoryResponse] = await Promise.all([
-  //       axios.get(`/api/product/fetchUrlPriorityFreq`, { withCredentials: true }),
-  //       axios.get(`/api/product/fetchCategoryUrlPriorityFreq`, { withCredentials: true })
-  //     ]);
-
-  //     const productData = productResponse.data.map((item, index) => ({
-  //       id: index + 1,
-  //       _id: item._id,
-  //       url: item.url,
-  //       priority: item.priority,
-  //       changeFreq: item.changeFreq,
-  //       lastmod: item.lastmod,
-  //       type: 'products'
-  //     }));
-
-  //     setProductSitemaps(productData);
-  //     const categoryData = flattenData(productSitemaps, categoryResponse.data, 'product-category');
-
-  //     setProductSitemaps([...productData, ...categoryData]);
-  //   } catch (error) {
-  //     console.error(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
+  
   const fetchServiceData = async () => {
     setLoading(true);
     try {
@@ -235,16 +145,6 @@ const SitemapTable = () => {
     }
   };
 
-  // const generateProductSitemap = async () => {
-  //   try {
-  //     await axios.post('/api/sitemap/generateproductsitemap', { productSitemaps }, { withCredentials: true });
-  //     alert("Sitemap generated successfully!");
-  //   } catch (error) {
-  //     console.error(error);
-  //     alert("Failed to generate sitemap.");
-  //   }
-  // };
-
   const generateServiceSitemap = async () => {
     try {
       await axios.post('/api/sitemap/generateservicesitemap', { serviceSitemaps }, { withCredentials: true });
@@ -277,7 +177,7 @@ const SitemapTable = () => {
 
   const generateSitemapIndex = async () => {
     try {
-      await axios.post('/api/sitemap/generateSitemapIndex', { withCredentials: true });
+      await axios.get('/api/generate-sitemaps', { withCredentials: true });
       alert("Sitemap generated successfully!");
     } catch (error) {
       console.error(error);
@@ -301,27 +201,20 @@ const SitemapTable = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Sitemaps</h1>
       </div>
-      
       <div className="flex gap-4">
-      <Link to="/sitemap.xml"> 
+
+          <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="bg-slate-700 text-white py-2 px-4 rounded">
            <button  className="bg-slate-700 text-white py-2 px-4 rounded">Show Main Sitemap</button>
-          </Link>
+          </a>
+    
         <button onClick={generateSitemapIndex} className="bg-slate-700 text-white py-2 px-4 rounded">Generate Sitemap</button>
-        <button onClick={generateMainSitemap} className="bg-slate-700 text-white py-2 px-4 rounded">Generate Main Sitemap</button>
+       
         {/* <button onClick={generateProductSitemap} className="bg-slate-700 text-white py-2 px-4 rounded">Generate Product Sitemap</button> */}
         <button onClick={generateServiceSitemap} className="bg-slate-700 text-white py-2 px-4 rounded">Generate Service Sitemap</button>
         <button onClick={generateNewsSitemap} className="bg-slate-700 text-white py-2 px-4 rounded">Generate News Sitemap</button>
       </div>
 
-      {loadings ? (
-        <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
-
-      ) : (
-        <>
-
-        </>
-
-      )}
+   
     </div>
   );
 };

@@ -14,6 +14,32 @@ const fs = require('fs').promises;
 const http = require('http');
 const { generateAllSitemaps } = require('./routes/mySitemap');
 const app = express();
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        let filePath = path.join(__dirname, 'public', 'sitemap.xml'); // Local variable
+      try {
+        // First try in dist directory
+        await fs.access(filePath);
+      } catch (error) {
+        // If not found in dist, try in public directory
+        filePath = path.join(__dirname, 'public', 'sitemap.xml');
+        try {
+          await fs.access(filePath);
+        } catch (err) {
+          console.error('Sitemap not found in either location:', err);
+          return res.status(404).send('Sitemap not found');
+        }
+      }
+      
+      // Read the file
+      const data = await fs.readFile(filePath);
+      res.set('Content-Type', 'application/xml');
+      res.send(data);
+    } catch (err) {
+      console.error('Error serving sitemap:', err);
+      return res.status(500).send('Error serving sitemap');
+    }
+  });
 app.get('/api/generate-sitemaps', async (req, res) => {
     try {
         await generateAllSitemaps();
@@ -39,7 +65,8 @@ app.use(express.json());
 app.use('/api/product', require('./routes/product'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/collaboration', require('./routes/collaboration'));
-
+app.use('/api/staticMeta', require('./routes/staticMeta'));
+app.use('/api/navbar', require('./routes/NavData.js'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/pageHeading', require('./routes/pageHeading'));
 app.use('/api/image', require('./routes/image'));
@@ -71,7 +98,7 @@ app.use("/api/googlesettings", require('./routes/googlesettings'))
 app.use("/api/menulisting", require('./routes/menulisting'))
 app.use("/api/infrastructure", require('./routes/infrastructure'))
 app.use("/api/qualitycontrol", require('./routes/qualitycontrol'))
-// app.use("/api/sitemap", require('./routes/sitemap'))
+app.use("/api/sitemap", require('./routes/sitemap'))
 app.use("/api/benefits", require('./routes/benefits'))
 app.use('/api/herosection', require('./routes/heroSection'))
 app.use('/api/serviceDetails', require('./routes/serviceDetails'))
@@ -122,32 +149,7 @@ cron.schedule('59 23 31 * *', () => {
 });
 
 
-app.get('/sitemap.xml', async (req, res) => {
-    try {
-        let filePath = path.join(__dirname, 'public', 'sitemap.xml'); // Local variable
-      try {
-        // First try in dist directory
-        await fs.access(filePath);
-      } catch (error) {
-        // If not found in dist, try in public directory
-        filePath = path.join(__dirname, 'public', 'sitemap.xml');
-        try {
-          await fs.access(filePath);
-        } catch (err) {
-          console.error('Sitemap not found in either location:', err);
-          return res.status(404).send('Sitemap not found');
-        }
-      }
-      
-      // Read the file
-      const data = await fs.readFile(filePath);
-      res.set('Content-Type', 'application/xml');
-      res.send(data);
-    } catch (err) {
-      console.error('Error serving sitemap:', err);
-      return res.status(500).send('Error serving sitemap');
-    }
-  });
+
   // Update your sitemap route to use fs.promises correctly
 app.get('/sitemap1.xml', async (req, res) => {
     try {

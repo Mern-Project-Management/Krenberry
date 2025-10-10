@@ -95,11 +95,10 @@ export const validateEmail = (email) => {
 };
 
 export const validateMobileNo = (value) => {
-  if (!value.trim()) return "Phone number is required";
-  if (!/^\d+$/.test(value)) return "Phone number can only contain digits";
-  if (value.length !== 10) return "Phone number must be exactly 10 digits";
-  return "";
-};
+    if (!value) return "This field is required";
+    if (!/^[6-9]\d{9}$/.test(value)) return "Please enter a valid  mobile number.";
+    return "";
+  };
 
 export const validateResume = (file) => {
   if (!file) return "Resume is required";

@@ -17,6 +17,11 @@ Modal.setAppElement('#root');
 const NewsTable = () => {
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [existingPhoto, setExistingPhoto] = useState('');
+  const [alt, setAlt] = useState('');
+  const [imgTitle, setImgTitle] = useState('');
   const [news, setNews] = useState([]);
   const [loadings, setLoading] = useState(true);
   const [pageIndex, setPageIndex] = useState(0);
@@ -249,26 +254,37 @@ const NewsTable = () => {
   const fetchHeadings = async () => {
     try {
       const response = await axios.get('/api/pageHeading/heading?pageType=blogs', { withCredentials: true });
-      const { heading, subheading } = response.data;
+      const { heading, subheading, photo, alt, imgTitle } = response.data;
       setHeading(heading || '');
       setSubheading(subheading || '');
+      setExistingPhoto(photo || '');
+      setAlt(alt || '');
+      setImgTitle(imgTitle || '');
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching headings:", error);
       toast.error("Failed to fetch headings.");
     }
   };
 
   const saveHeadings = async () => {
+    const formData = new FormData();
+    formData.append('heading', heading);
+    formData.append('subheading', subheading);
+    formData.append('alt', alt);
+    formData.append('imgTitle', imgTitle);
+    if (photo) {
+      formData.append('photo', photo);
+    }
+
     try {
-      await axios.put('/api/pageHeading/updateHeading?pageType=blogs', {
-        pagetype: 'news',
-        heading,
-        subheading,
-      }, { withCredentials: true });
+      await axios.put('/api/pageHeading/updateHeading?pageType=blogs', formData, { 
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       notify();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update headings.");
+      toast.error(error.response?.data?.message || "Failed to update headings.");
     }
   };
 
@@ -278,19 +294,31 @@ const NewsTable = () => {
 
   const handleHeadingChange = (e) => setHeading(e.target.value);
   const handleSubheadingChange = (e) => setSubheading(e.target.value);
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    setPhoto(file);
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    if (file) {
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+  const handleAltChange = (e) => setAlt(e.target.value);
+  const handleImgTitleChange = (e) => setImgTitle(e.target.value);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 overflow-x-auto">
       <ToastContainer />
       <div className="mb-6 sm:mb-8 border border-gray-200 shadow-lg p-4 sm:p-6 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Heading</label>
             <input
               type="text"
               value={heading}
               onChange={handleHeadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
           <div>
@@ -299,7 +327,44 @@ const NewsTable = () => {
               type="text"
               value={subheading}
               onChange={handleSubheadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Photo</label>
+            <input
+              type="file"
+              onChange={handlePhotoChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {photoPreview ? (
+              <div className="mt-2">
+                <img src={photoPreview} alt="New preview" className="h-20 w-auto rounded" />
+                <p className="text-xs text-gray-500 mt-1">New photo preview</p>
+              </div>
+            ) : existingPhoto && (
+              <div className="mt-2">
+                <img src={`/api/image/download/${existingPhoto}`} alt={alt} className="h-20 w-auto rounded" />
+                <p className="text-xs text-gray-500 mt-1">Current photo</p>
+              </div>  
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Image Alt Text</label>
+            <input
+              type="text"
+              value={alt}
+              onChange={handleAltChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Image Title</label>
+            <input
+              type="text"
+              value={imgTitle}
+              onChange={handleImgTitleChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
         </div>

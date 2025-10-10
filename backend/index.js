@@ -12,9 +12,17 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
 const http = require('http');
-
+const { generateAllSitemaps } = require('./routes/mySitemap');
 const app = express();
-
+app.get('/api/generate-sitemaps', async (req, res) => {
+    try {
+        await generateAllSitemaps();
+        res.status(200).json({ message: 'Sitemaps generated successfully' });
+    } catch (error) {
+        console.error('Error generating sitemaps:', error);
+        res.status(500).json({ error: 'Failed to generate sitemaps' });
+    }
+});
 app.use(cors({
     origin: true, // or specify your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -63,7 +71,7 @@ app.use("/api/googlesettings", require('./routes/googlesettings'))
 app.use("/api/menulisting", require('./routes/menulisting'))
 app.use("/api/infrastructure", require('./routes/infrastructure'))
 app.use("/api/qualitycontrol", require('./routes/qualitycontrol'))
-app.use("/api/sitemap", require('./routes/sitemap'))
+// app.use("/api/sitemap", require('./routes/sitemap'))
 app.use("/api/benefits", require('./routes/benefits'))
 app.use('/api/herosection', require('./routes/heroSection'))
 app.use('/api/serviceDetails', require('./routes/serviceDetails'))
@@ -116,7 +124,7 @@ cron.schedule('59 23 31 * *', () => {
 
 app.get('/sitemap.xml', async (req, res) => {
     try {
-        let filePath = path.join(__dirname, 'dist', 'sitemap.xml'); // Local variable
+        let filePath = path.join(__dirname, 'public', 'sitemap.xml'); // Local variable
       try {
         // First try in dist directory
         await fs.access(filePath);
@@ -403,6 +411,7 @@ async function startServer() {
         // Start the server
         return server.listen(process.env.PORT, () => {
             console.log(`Server is running on port ${process.env.PORT}`);
+              // generateAllSitemaps()
         });
 
     } catch (error) {

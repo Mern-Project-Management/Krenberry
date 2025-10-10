@@ -162,7 +162,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoad
       budget: !formData.budget.trim() ? "Budget is required" : "",
     };
     setErrors(newErrors);
-    return Object.values(newErrors).every((error) => !error); // Returns true if no errors
+    return newErrors;
   };
 
   const handleInputChange = (e) => {
@@ -171,7 +171,7 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoad
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -180,14 +180,14 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoad
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const isValid = validateForm();
-    
-    if (isValid) {
+    const newErrors = validateForm();
+
+    if (Object.values(newErrors).every((error) => !error)) {
       // Only set local loading state if parent isn't managing it
-      if (parentLoading === undefined) {
+      if (parentLoading === false) {
         setIsSubmitting(true);
       }
-      
+
       try {
         await onSubmit(formData);
         setFormData(initialFormState);
@@ -200,16 +200,16 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoad
       } catch (error) {
         console.error("Error submitting form:", error);
       } finally {
-        if (parentLoading === undefined) {
+        if (parentLoading === false) {
           setIsSubmitting(false);
         }
       }
     } else {
       // Scroll to first error
-      const firstError = Object.keys(errors).find(key => errors[key]);
+      const firstError = Object.keys(newErrors).find(key => newErrors[key]);
       if (firstError) {
         document.querySelector(`[name="${firstError}"]`)?.scrollIntoView({
-          behavior: 'smooth',
+          behavior: "smooth",
           block: 'center'
         });
       }
@@ -235,7 +235,6 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoad
       <h3 className="text-2xl font-bold mb-6 text-white text-center">
         Get Started Today
       </h3>
-
       <div className="mb-4">
         <label className="block text-white mb-1 text-sm">
           Name <span className="text-red-500">*</span>

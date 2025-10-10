@@ -11,6 +11,8 @@ const NewsletterTable = () => {
   const [emails, setEmails] = useState([]);
   const [loadingState, setLoadingState] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [emailToDelete, setEmailToDelete] = useState(null);
 
   const notifyDelete = () => toast.success("Email deleted successfully!");
 
@@ -27,14 +29,24 @@ const NewsletterTable = () => {
     }
   };
 
-  // Delete email by ID
-  const deleteEmail = async (id) => {
-    try {
-      await axios.delete(`/api/newsletter/deletenewsletter?id=${id}`, { withCredentials: true });
-      fetchEmails(); // Refresh list after deletion
-      notifyDelete();
-    } catch (error) {
-      console.error("Error deleting email:", error);
+  // Handle delete click - show confirmation modal
+  const handleDeleteClick = (id) => {
+    setEmailToDelete(id);
+    setShowModal(true);
+  };
+
+  // Confirm and delete email
+  const confirmDelete = async () => {
+    if (emailToDelete) {
+      try {
+        await axios.delete(`/api/newsletter/deletenewsletter?id=${emailToDelete}`, { withCredentials: true });
+        fetchEmails(); // Refresh list after deletion
+        notifyDelete();
+      } catch (error) {
+        console.error("Error deleting email:", error);
+      }
+      setShowModal(false);
+      setEmailToDelete(null);
     }
   };
 
@@ -71,7 +83,7 @@ const NewsletterTable = () => {
         Cell: ({ row }) => (
           <button
             className="text-red-500 hover:text-red-700 transition"
-            onClick={() => deleteEmail(row.original._id)}
+            onClick={() => handleDeleteClick(row.original._id)}
           >
             <FaTrashAlt />
           </button>
@@ -161,6 +173,29 @@ const NewsletterTable = () => {
             </table>
           )}
         </>
+      )}
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h2 className="text-lg font-bold mb-4">⚠️ Are you sure?</h2>
+            <p className="mb-6">Are you sure you want to delete this newsletter entry? This action cannot be undone.</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

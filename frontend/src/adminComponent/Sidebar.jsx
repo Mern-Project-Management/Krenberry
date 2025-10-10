@@ -195,21 +195,23 @@ export default function Sidebar() {
   };
 
   return (
-    <div className='flex w-full '>
-      <div className=' bg-gray-700 h-screen'>
+    <div className='flex w-full h-screen overflow-hidden'>
+      <div className='bg-gray-700'>
         <aside
           ref={sidebarRef}
-          className={`bg-gray-700 fixed lg:relative z-10 h-full w-[14rem] md:w-[18rem] overflow-y-auto  ${isMenuOpen ? "translate-x-0 transform transition-transform duration-500" : "-translate-x-full lg:translate-x-0"
+          className={`bg-gray-700 fixed lg:relative z-10 h-screen w-[14rem] md:w-[18rem] flex flex-col ${isMenuOpen ? "translate-x-0 transform transition-transform duration-500" : "-translate-x-full lg:translate-x-0"
             }`}>
-          <div className='font-bold text-white text-center pt-4 text-[20px] px-8'>
-
+          
+          {/* Logo Section - Fixed at top */}
+          <div className='font-bold text-white text-center pt-4 text-[20px] px-8 flex-shrink-0'>
             <div>
               <img src={`/api/logo/download/${logo.photo}`} alt="Logo" className="w-full h-auto" />
             </div>
-
           </div>
-          <div className='mt-4'>
-            <ul>
+
+          {/* Scrollable Menu Section */}
+          <div className='mt-4 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-700 hover:scrollbar-thumb-gray-500'>
+            <ul className='pb-4'>
               {sidebarData.map((item, i) => (
                 <div key={i}>
                   <div>
@@ -275,8 +277,9 @@ export default function Sidebar() {
           </div>
         </aside>
       </div>
-      <div className="flex flex-col h-screen w-full">
-        <Navbar className="fixed w-full z-10 bg-white shadow" toggleSidebar={toggleSidebar} />
+      
+      <div className="flex flex-col w-full min-w-0">
+        <Navbar className="fixed w-full z-10 bg-white shadow flex-shrink-0" toggleSidebar={toggleSidebar} />
         <Breadcrumbs sidebarData={sidebarData} />
         <div className="flex-1 overflow-y-auto">
           <Outlet />

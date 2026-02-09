@@ -19,7 +19,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "apexcharts": "^3.52.0",
-    "axios": "^1.7.2",
+    "axios": "^1.13.5",
     "city": "^1.0.4",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.3.18",

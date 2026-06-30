@@ -2,9 +2,8 @@ module.exports = {
   apps: [
     {
       name: "Krenberry",
-      cwd: "/var/www/rndprojects/Krenberry", // Change if your project is in a different directory
-      script: "npm",
-      args: "start",
+      cwd: "/var/www/rndprojects/Krenberry/backend", // Pointing to the backend directory
+      script: "index.js",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,

@@ -17,6 +17,11 @@ Modal.setAppElement('#root');
 const NewsTable = () => {
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [existingPhoto, setExistingPhoto] = useState('');
+  const [alt, setAlt] = useState('');
+  const [imgTitle, setImgTitle] = useState('');
   const [news, setNews] = useState([]);
   const [loadings, setLoading] = useState(true);
   const [pageIndex, setPageIndex] = useState(0);
@@ -200,13 +205,32 @@ const NewsTable = () => {
 
   const handleDeleteConfirm = async () => {
     if (!newsToDelete) return;
+    
     try {
       await axios.delete(`/api/news/deleteNews?slugs=${newsToDelete.slug}`, { withCredentials: true });
-      toast.success("News item deleted successfully!");
-      fetchData(pageIndex);
+      
+      toast.success('News item deleted successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      
+      // Refresh the news list
+      await fetchData(pageIndex);
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete news item.");
+      console.error('Error deleting news item:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete news item. Please try again.', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setIsDeleteModalOpen(false);
       setNewsToDelete(null);
@@ -230,26 +254,37 @@ const NewsTable = () => {
   const fetchHeadings = async () => {
     try {
       const response = await axios.get('/api/pageHeading/heading?pageType=blogs', { withCredentials: true });
-      const { heading, subheading } = response.data;
+      const { heading, subheading, photo, alt, imgTitle } = response.data;
       setHeading(heading || '');
       setSubheading(subheading || '');
+      setExistingPhoto(photo || '');
+      setAlt(alt || '');
+      setImgTitle(imgTitle || '');
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching headings:", error);
       toast.error("Failed to fetch headings.");
     }
   };
 
   const saveHeadings = async () => {
+    const formData = new FormData();
+    formData.append('heading', heading);
+    formData.append('subheading', subheading);
+    formData.append('alt', alt);
+    formData.append('imgTitle', imgTitle);
+    if (photo) {
+      formData.append('photo', photo);
+    }
+
     try {
-      await axios.put('/api/pageHeading/updateHeading?pageType=blogs', {
-        pagetype: 'news',
-        heading,
-        subheading,
-      }, { withCredentials: true });
+      await axios.put('/api/pageHeading/updateHeading?pageType=blogs', formData, { 
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       notify();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update headings.");
+      toast.error(error.response?.data?.message || "Failed to update headings.");
     }
   };
 
@@ -259,19 +294,31 @@ const NewsTable = () => {
 
   const handleHeadingChange = (e) => setHeading(e.target.value);
   const handleSubheadingChange = (e) => setSubheading(e.target.value);
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    setPhoto(file);
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    if (file) {
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+  const handleAltChange = (e) => setAlt(e.target.value);
+  const handleImgTitleChange = (e) => setImgTitle(e.target.value);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 overflow-x-auto">
       <ToastContainer />
       <div className="mb-6 sm:mb-8 border border-gray-200 shadow-lg p-4 sm:p-6 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Heading</label>
             <input
               type="text"
               value={heading}
               onChange={handleHeadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
           <div>
@@ -280,7 +327,44 @@ const NewsTable = () => {
               type="text"
               value={subheading}
               onChange={handleSubheadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Photo</label>
+            <input
+              type="file"
+              onChange={handlePhotoChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {photoPreview ? (
+              <div className="mt-2">
+                <img src={photoPreview} alt="New preview" className="h-20 w-auto rounded" />
+                <p className="text-xs text-gray-500 mt-1">New photo preview</p>
+              </div>
+            ) : existingPhoto && (
+              <div className="mt-2">
+                <img src={`/api/image/download/${existingPhoto}`} alt={alt} className="h-20 w-auto rounded" />
+                <p className="text-xs text-gray-500 mt-1">Current photo</p>
+              </div>  
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Image Alt Text</label>
+            <input
+              type="text"
+              value={alt}
+              onChange={handleAltChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Image Title</label>
+            <input
+              type="text"
+              value={imgTitle}
+              onChange={handleImgTitleChange}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
         </div>
@@ -323,60 +407,54 @@ const NewsTable = () => {
       {loadings ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
       ) : (
-        <>
-          {news.length === 0 ? (
-            <div className="flex justify-center items-center h-64">
-              <iframe className="w-64 h-64 sm:w-96 sm:h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
-            </div>
-          ) : (
-            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-              <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-                {headerGroups.map((headerGroup) => (
-                  <tr key={headerGroup._id}{...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column) => (
-                      <th
-                      key={column._id}
-                        {...column.getHeaderProps(column.getSortByToggleProps())}
-                        className="py-2 px-2 sm:px-4 border-b border-gray-300 cursor-pointer uppercase font-serif text-sm sm:text-base"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{column.render("Header")}</span>
-                          {column.canSort && (
-                            <span className="ml-1">
-                              {column.isSorted ? (
-                                column.isSortedDesc ? (
-                                  <FaArrowDown />
-                                ) : (
-                                  <FaArrowUp />
-                                )
+        <div className="overflow-x-auto">
+          <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+              {headerGroups.map((headerGroup) => (
+                <tr key={headerGroup._id}{...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                    key={column._id}
+                      {...column.getHeaderProps(column.getSortByToggleProps())}
+                      className="py-2 px-2 sm:px-4 border-b border-gray-300 cursor-pointer uppercase font-serif text-sm sm:text-base"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{column.render("Header")}</span>
+                        {column.canSort && (
+                          <span className="ml-1">
+                            {column.isSorted ? (
+                              column.isSortedDesc ? (
+                                <FaArrowDown />
                               ) : (
-                                <FaArrowDown className="text-gray-400" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </th>
+                                <FaArrowUp />
+                              )
+                            ) : (
+                              <FaArrowDown className="text-gray-400" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr key={row.id} {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                    {row.cells.map((cell) => (
+                      <td key={cell.id} {...cell.getCellProps()} className="py-2 px-2 sm:px-4 text-sm sm:text-base">
+                        {cell.render("Cell")}
+                      </td>
                     ))}
                   </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {rows.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr key={row.id} {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
-                      {row.cells.map((cell) => (
-                        <td key={cell.id} {...cell.getCellProps()} className="py-2 px-2 sm:px-4 text-sm sm:text-base">
-                          {cell.render("Cell")}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       <div className="mt-4 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
         <div className="flex gap-2">
@@ -509,6 +587,10 @@ const NewsTable = () => {
         isOpen={isDeleteModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleDeleteConfirm}
+        title="Delete News"
+        message="Are you sure you want to delete this news item? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
         itemName={newsToDelete?.title || 'news item'}
         itemType="news item"
       />

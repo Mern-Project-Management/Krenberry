@@ -4,32 +4,44 @@ import axios from "axios";
 import Marquee from "./Marquee";
 
 const ProjectFeatures = () => {
-  const [heroSection, setHeroSection] = useState("");
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
+  const [backgroundImage, setBackgroundImage] = useState("");
   const location = useLocation();
 
   useEffect(() => {
-    const fetchHeadings = async () => {
+    const fetchHeroData = async () => {
       try {
         const response = await axios.get(
           "/api/pageHeading/heading?pageType=portfolio",
           { withCredentials: true }
         );
-        const { heading, subheading } = response.data;
+        const { heading, subheading, photo } = response.data;
         setHeading(heading || "");
         setSubheading(subheading || "");
+        if (photo) {
+          setBackgroundImage(`/api/logo/download/${photo}`);
+        }
       } catch (error) {
         console.error(error);
       }
     };
-    fetchHeadings();
+    fetchHeroData();
   }, [location]);
 
+  const heroStyle = backgroundImage
+    ? {
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${backgroundImage})`,
+      }
+    : {};
+
   return (
-    <div className="flex flex-col items-center justify-center py-32 md:pt-40  bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="text-center mx-10 md:mx-35%">
-        <h1 className="text-white  text-4xl md:text-5xl lg:text-6xl font-semibold mb-7">
+    <div
+      className="relative flex flex-col items-center justify-center py-32 md:pt-40 bg-gradient-to-br from-gray-900 via-gray-800 to-black bg-cover bg-center overflow-hidden"
+      style={heroStyle}
+    >
+      <div className="relative z-10 text-center mx-10 md:mx-35%">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7">
           {heading}
         </h1>
         <p className="text-gray-300 text-lg md:text-xl lg:text-2xl mb-6">
@@ -45,7 +57,7 @@ const ProjectFeatures = () => {
           Designs commonly featured by
         </p> */}
       </div>
-      {/* <div className="w-full mt-8">
+      {/* <div className="w-full mt-8 relative z-10">
         <Marquee />
       </div> */}
     </div>

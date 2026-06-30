@@ -59,7 +59,7 @@ export default function HeroSection({ serviceGridRef }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 md:pt-36 pb-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="text-center mx-4 md:mx-10 lg:mx-20">
-        <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7 font-serif">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7 ">
           {heroSection || "Testimonials"}
         </h1>
         {rating !== null && (

@@ -119,7 +119,7 @@ const EditTestimonial = () => {
         }
       );
 
-      navigate("/services");
+      navigate("/testimonials");
     } catch (error) {
       console.error(error);
     }

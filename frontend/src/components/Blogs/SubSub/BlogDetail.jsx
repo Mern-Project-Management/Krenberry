@@ -82,13 +82,217 @@ export default function BlogDetail() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
+      <style jsx global>{`
+        .blog-content {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          color: #1a1a1a;
+          line-height: 1.8;
+          font-size: 1.1rem;
+        }
+        .blog-content h2 {
+          font-size: 1.8rem;
+          font-weight: 700;
+          margin: 2.5rem 0 1.2rem;
+          color: #1a1a1a;
+          line-height: 1.3;
+        }
+        .blog-content h3 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin: 2rem 0 1rem;
+          color: #1a1a1a;
+        }
+        .blog-content p {
+          margin-bottom: 1.5rem;
+          color: #333;
+        }
+        .blog-content a {
+          color: #ec2127;
+          text-decoration: none;
+          font-weight: 500;
+          border-bottom: 1px solid #ec2127;
+          transition: all 0.2s ease;
+        }
+        .blog-content a:hover {
+          color: #c41a1f;
+          border-bottom-color: transparent;
+        }
+        .blog-content ul, .blog-content ol {
+          margin: 1.5rem 0;
+          padding-left: 1.8rem;
+        }
+        .blog-content li {
+          margin-bottom: 0.5rem;
+        }
+        .blog-content blockquote {
+          border-left: 4px solid #ec2127;
+          padding: 1rem 0 1rem 1.5rem;
+          margin: 1.5rem 0;
+          font-style: italic;
+          color: #555;
+          background-color: #f9f9f9;
+        }
+        .blog-content img {
+          max-width: 100%;
+          height: auto;
+          margin: 2rem 0;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .blog-content pre {
+          background: #2d2d2d;
+          color: #f8f8f2;
+          padding: 1.2rem;
+          border-radius: 6px;
+          overflow-x: auto;
+          margin: 1.5rem 0;
+          font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
+          font-size: 0.9rem;
+          line-height: 1.5;
+        }
+        .blog-content code {
+          font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
+          background: rgba(236, 33, 39, 0.1);
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-size: 0.9em;
+          color: #ec2127;
+        }
+        .blog-content pre code {
+          background: transparent;
+          padding: 0;
+          color: inherit;
+          font-size: inherit;
+        }
+        
+        /* Enhanced Unordered Lists */
+        .blog-content ul {
+          margin: 1.5rem 0;
+          padding-left: 2rem;
+          list-style-type: none;
+        }
+        
+        .blog-content ul > li {
+          position: relative;
+          padding-left: 1.8rem;
+          margin-bottom: 0.8rem;
+          color: #333;
+        }
+        
+        .blog-content ul > li:before {
+          content: '•';
+          position: absolute;
+          left: 0;
+          color: #ec2127;
+          font-weight: bold;
+          font-size: 1.4em;
+          line-height: 1;
+        }
+        
+        /* Nested Unordered Lists */
+        .blog-content ul ul {
+          margin: 0.8rem 0 0.8rem 1.5rem;
+        }
+        
+        .blog-content ul ul > li:before {
+          content: '◦';
+          color: #666;
+          font-size: 1.2em;
+        }
+        
+        /* Ordered Lists */
+        .blog-content ol {
+          margin: 1.5rem 0;
+          padding-left: 2.2rem;
+          counter-reset: item;
+        }
+        
+        .blog-content ol > li {
+          position: relative;
+          margin-bottom: 0.8rem;
+          counter-increment: item;
+          padding-left: 0.5rem;
+        }
+        
+        .blog-content ol > li:before {
+          content: counter(item) '.';
+          position: absolute;
+          left: -2rem;
+          color: #ec2127;
+          font-weight: 600;
+          font-size: 1em;
+        }
+        
+        /* Nested Ordered Lists */
+        .blog-content ol ol {
+          margin: 0.8rem 0 0.8rem 1.5rem;
+          counter-reset: subitem;
+        }
+        
+        .blog-content ol ol > li {
+          counter-increment: subitem;
+        }
+        
+        .blog-content ol ol > li:before {
+          content: counter(item) '.' counter(subitem);
+          left: -2.5rem;
+          color: #666;
+        }
+        
+        /* List Items Common Styles */
+        .blog-content li > p {
+          margin-bottom: 0.5rem;
+        }
+        
+        .blog-content li > ul,
+        .blog-content li > ol {
+          margin-top: 0.5rem;
+        }
+        
+        /* Task Lists */
+        .blog-content ul.task-list {
+          list-style-type: none;
+          padding-left: 0;
+        }
+        
+        .blog-content .task-list-item {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 0.5rem;
+        }
+        
+        .blog-content .task-list-item:before {
+          content: '';
+          display: inline-block;
+          width: 1.2em;
+          height: 1.2em;
+          border: 2px solid #ec2127;
+          border-radius: 3px;
+          margin-right: 0.8rem;
+          margin-top: 0.2em;
+          flex-shrink: 0;
+        }
+        
+        .blog-content .task-list-item[checked] {
+          text-decoration: line-through;
+          color: #666;
+        }
+        
+        .blog-content .task-list-item[checked]:before {
+          background-color: #ec2127;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 0.8em;
+        }
+      `}</style>
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main content section */}
         <article className="col-span-1 lg:col-span-2">
-          <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none">
+          <div className="blog-content">
             {details ? (
               <div
-                className="text-gray-800 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: details }}
                 aria-label="Blog post content"
               />

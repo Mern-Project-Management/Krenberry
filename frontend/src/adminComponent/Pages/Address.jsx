@@ -50,7 +50,7 @@ const EditAddress = () => {
 
     return (
         <form onSubmit={handleSubmit} className="p-4">
-            <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Edit Address Link</h1>
+            <h1 className="text-xl font-bold text-gray-900 uppercase py-5 text-left">Edit Address Link</h1>
             <ToastContainer />
             <div className="mb-4">
                 <label htmlFor="headOfficeAddress" className="block font-semibold mb-2">

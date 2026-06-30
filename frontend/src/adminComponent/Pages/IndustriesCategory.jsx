@@ -11,7 +11,14 @@ import loading from "react-useanimations/lib/loading";
 const CategoryTable = () => {
   const [categories, setCategories] = useState([]);
   const [loadings, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const navigate = useNavigate()
+
+  const handleImgError = (e) => {
+    e.currentTarget.onerror = null; // prevent infinite loop
+    e.currentTarget.src = '/placeholder.webp';
+  };
 
   const columns = useMemo(
     () => [
@@ -25,7 +32,7 @@ const CategoryTable = () => {
         Cell: ({ row }) => (
           <div className="flex items-center gap-2 hover:text-blue-500 cursor-pointer"
             onClick={() => navigate(`/IndustriesCategory/editIndustriesCategory/${row.original._id}`)}>
-            {row.original.photo && <img src={`/api/logo/download/${row.original.photo}`} alt={row.original.alt} className="w-6 h-6" />}
+            {row.original.photo && <img src={`/api/logo/download/${row.original.photo}`} alt={row.original.alt} className="w-6 h-6" onError={handleImgError} />}
             {row.original.category}
           </div>
         ),
@@ -41,7 +48,7 @@ const CategoryTable = () => {
             </button>
             <button
               className="text-red-500 hover:text-red-700 transition"
-              onClick={() => deleteCategory({ id: row.original._id })}
+              onClick={() => { setDeleteTarget({ id: row.original._id }); setShowDeleteModal(true); }}
             >
               <FaTrashAlt />
             </button>
@@ -109,9 +116,8 @@ const CategoryTable = () => {
     <div className="p-4 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Categories</h1>
-        <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300">
-          <Link to="/IndustriesCategory/CreateIndustriesCategory"><FaPlus size={15} /></Link>
-        </button>
+        <Link to="/IndustriesCategory/CreateIndustriesCategory"><button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300">
+         <FaPlus size={15} /></button></Link>
       </div>
       {loadings ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
@@ -163,7 +169,7 @@ const CategoryTable = () => {
                       <React.Fragment key={subIndex}>
                         <tr className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
                           <td></td>
-                          <td className="py-2 px-8 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/IndustriesCategory/editIndustriesCategory/${row.original._id}/${subcategory._id}`)}><BsArrowReturnRight />{subcategory.photo && <img src={`/api/logo/download/${subcategory.photo}`} alt={subcategory.alt} className="w-6 h-6" />}<span>{subcategory.category}</span></td>
+                          <td className="py-2 px-8 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/IndustriesCategory/editIndustriesCategory/${row.original._id}/${subcategory._id}`)}><BsArrowReturnRight />{subcategory.photo && <img src={`/api/logo/download/${subcategory.photo}`} alt={subcategory.alt} className="w-6 h-6" onError={handleImgError} />}<span>{subcategory.category}</span></td>
                           <td className="py-2 px-4">
                             <div className="flex gap-4">
                               <button className="text-blue-500 hover:text-blue-700 transition">
@@ -173,10 +179,10 @@ const CategoryTable = () => {
                               </button>
                               <button
                                 className="text-red-500 hover:text-red-700 transition"
-                                onClick={() => deleteCategory({
+                                onClick={() => { setDeleteTarget({
                                   categoryId: row.original._id,
                                   subCategoryId: subcategory._id
-                                })}
+                                }); setShowDeleteModal(true); }}
                               >
                                 <FaTrashAlt />
                               </button>
@@ -186,7 +192,7 @@ const CategoryTable = () => {
                         {subcategory.subSubCategory && subcategory.subSubCategory.map((subSubcategory, subSubIndex) => (
                           <tr key={subSubIndex} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
                             <td></td>
-                            <td className="py-2 px-12 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/IndustriesCategory/editIndustriesCategory/${row.original._id}/${subSubcategory._id}`)} ><BsArrowReturnRight />{subSubcategory.photo && <img alt={subSubcategory.alt} src={`/api/logo/download/${subSubcategory.photo}`} className="w-6 h-6" />}<span>{subSubcategory.category}</span></td>
+                            <td className="py-2 px-12 flex gap-2 hover:text-blue-500 cursor-pointer" onClick={() => navigate(`/IndustriesCategory/editIndustriesCategory/${row.original._id}/${subSubcategory._id}`)} ><BsArrowReturnRight />{subSubcategory.photo && <img alt={subSubcategory.alt} src={`/api/logo/download/${subSubcategory.photo}`} className="w-6 h-6" onError={handleImgError} />}<span>{subSubcategory.category}</span></td>
                             <td className="py-2 px-4">
                               <div className="flex gap-4">
                                 <button className="text-blue-500 hover:text-blue-700 transition">
@@ -196,11 +202,11 @@ const CategoryTable = () => {
                                 </button>
                                 <button
                                   className="text-red-500 hover:text-red-700 transition"
-                                  onClick={() => deleteCategory({
+                                  onClick={() => { setDeleteTarget({
                                     categoryId: row.original._id,
                                     subCategoryId: subcategory._id,
                                     subSubCategoryId: subSubcategory._id
-                                  })}
+                                  }); setShowDeleteModal(true); }}
                                 >
                                   <FaTrashAlt />
                                 </button>
@@ -218,6 +224,19 @@ const CategoryTable = () => {
         }
         </>
 
+      )}
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-2">Confirm Deletion</h3>
+            <p className="text-sm text-gray-600 mb-4">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div className="flex justify-end gap-2">
+              <button className="px-4 py-2 border rounded" onClick={() => { setShowDeleteModal(false); setDeleteTarget(null); }}>Cancel</button>
+              <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={() => { deleteCategory(deleteTarget); setShowDeleteModal(false); setDeleteTarget(null); }}>Delete</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

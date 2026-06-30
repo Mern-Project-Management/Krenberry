@@ -476,7 +476,7 @@ const fetchUrlmetaById = async (req, res) => {
   }
 };
 
-downloadCatalogue = (req, res) => {
+const downloadCatalogue = (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, '../catalogues', filename);
 
@@ -488,10 +488,101 @@ downloadCatalogue = (req, res) => {
   });
 };
 
-viewCatalogue = (req, res) => {
+const viewCatalogue = (req, res) => {
   const filename = req.params.filename;
+  console.log('Requested file:', filename);
+  
+  // Validate filename to prevent directory traversal
+  if (!filename || filename.includes('..') || !/\.pdf$/i.test(filename)) {
+    return res.status(400).json({ 
+      success: false,
+      message: 'Invalid file name or type. Only PDF files are allowed.'
+    });
+  }
+
   const filePath = path.join(__dirname, '..', 'catalogues', filename);
-  res.sendFile(filePath);
+  console.log('Serving file from:', filePath);
+
+  // Check if file exists and is accessible
+  try {
+    const stats = fs.statSync(filePath);
+    console.log('File stats:', {
+      size: stats.size,
+      created: stats.birthtime,
+      modified: stats.mtime
+    });
+  } catch (err) {
+    console.error('File access error:', err);
+    return res.status(404).json({ 
+      success: false,
+      message: 'File not found or not accessible',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+
+  // Read file first to check if it's a valid PDF
+  try {
+    const fileContent = fs.readFileSync(filePath);
+    if (fileContent.length === 0) {
+      throw new Error('File is empty');
+    }
+    
+    // Check if it's a PDF by checking the first few bytes
+    const isPdf = fileContent.length > 4 && 
+                 fileContent[0] === 0x25 && // %
+                 fileContent[1] === 0x50 && // P
+                 fileContent[2] === 0x44 && // D
+                 fileContent[3] === 0x46;   // F
+    
+    if (!isPdf) {
+      console.error('File is not a valid PDF');
+      return res.status(400).json({
+        success: false,
+        message: 'The file is not a valid PDF'
+      });
+    }
+
+  } catch (err) {
+    console.error('Error reading/validating PDF:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing the PDF file',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+
+  // If we got here, the file exists and is a valid PDF
+  try {
+    // Set proper headers for PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.setHeader('Content-Length', fs.statSync(filePath).size);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+    // Handle stream errors
+    fileStream.on('error', (error) => {
+      console.error('Error streaming file:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          success: false,
+          message: 'Error reading file' 
+        });
+      }
+    });
+
+  } catch (error) {
+    console.error('Error serving file:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
 };
 
 

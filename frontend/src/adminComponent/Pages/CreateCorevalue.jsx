@@ -5,23 +5,207 @@ import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  validateTitle,
-  validateCoreValueDescription,
-  validatePhotos,
-  validatePhotoAlt,
-  validatePhotoTitle,
-} from "../../utiles/validations";
 
 const NewCoreValueForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [photos, setPhotos] = useState([]);
-  const [photoAlts, setPhotoAlts] = useState([]);
-  const [imgtitle, setImgtitle] = useState([]);
+  const [photo, setPhoto] = useState(null);
+  const [photoAlt, setPhotoAlt] = useState("");
+  const [imgtitle, setImgtitle] = useState("");
   const [status, setStatus] = useState("active");
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const validationRules = {
+    title: { min: 3, max: 100, required: true },
+    description: { min: 10, max: 5000, required: true },
+    alt: { min: 3, max: 100, required: true },
+    imgtitle: { min: 3, max: 100, required: true }
+  };
+
+  const stripHtmlTags = (html) => {
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
+  const validateField = (fieldName, value, customRules = null) => {
+    const rules = customRules || validationRules[fieldName];
+    if (!rules) return '';
+
+    const textValue = fieldName === 'description' ? stripHtmlTags(value) : value;
+    const length = textValue.length;
+
+    if (rules.required && (!value || value.trim() === '')) {
+      return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+    }
+
+    if (value && length < rules.min) {
+      return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} must be at least ${rules.min} characters`;
+    }
+
+    if (value && length > rules.max) {
+      return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} must be no more than ${rules.max} characters`;
+    }
+
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    newErrors.title = validateField('title', title);
+    newErrors.description = validateField('description', description);
+
+    if (photo) {
+      const altError = validateField('alt', photoAlt);
+      const titleError = validateField('imgtitle', imgtitle);
+      
+      if (altError) newErrors.alt = altError;
+      if (titleError) newErrors.imgtitle = titleError;
+    }
+
+    Object.keys(newErrors).forEach(key => {
+      if (!newErrors[key]) delete newErrors[key];
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const clearFieldError = (fieldName) => {
+    if (errors[fieldName]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateImageFile = (file) => {
+    if (!file.type.startsWith('image/')) {
+      return 'Please select only image files';
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return 'Image size must be less than 5MB';
+    }
+
+    return '';
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const error = validateImageFile(file);
+    if (error) {
+      toast.error(`${file.name}: ${error}`);
+      e.target.value = '';
+      return;
+    }
+
+    if (photo) {
+      const shouldReplace = window.confirm("An image already exists. Do you want to replace it with the new image?");
+      if (!shouldReplace) {
+        e.target.value = '';
+        return;
+      }
+      handleDeleteImage();
+    }
+
+    setPhoto(file);
+    setPhotoAlt("");
+    setImgtitle("");
+    e.target.value = '';
+  };
+
+  const handleDeleteImage = () => {
+    setPhoto(null);
+    setPhotoAlt("");
+    setImgtitle("");
+    clearFieldError('alt');
+    clearFieldError('imgtitle');
+    toast.success("Image removed successfully");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
+    if (!photo) {
+      toast.error("Exactly one image is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('description', description);
+      formData.append('photo', photo);
+      formData.append('alt', photoAlt);
+      formData.append('imgtitle', imgtitle);
+      formData.append('status', status);
+
+      const response = await axios.post('/api/corevalue/createCoreValue', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true
+      });
+
+      if (response.data && response.data.success === false) {
+        // Handle server-side validation errors
+        if (response.data.message && response.data.message.includes('already exists')) {
+          setErrors(prev => ({
+            ...prev,
+            title: response.data.message
+          }));
+          toast.error("Please fix the validation errors");
+          return;
+        }
+        throw new Error(response.data.message || 'Failed to add core value');
+      }
+
+      toast.success("Core Value added successfully!");
+      setTitle("");
+      setDescription("");
+      setPhoto(null);
+      setPhotoAlt("");
+      setImgtitle("");
+      setStatus("active");
+      setErrors({});
+      navigate('/CoreValue');
+    } catch (error) {
+      console.error('Error:', error);
+      if (error.response && error.response.data) {
+        // Handle other server-side errors
+        const errorMessage = error.response.data.message || 'Failed to add core value';
+        if (error.response.status === 400 && errorMessage.includes('already exists')) {
+          setErrors(prev => ({
+            ...prev,
+            title: errorMessage
+          }));
+          toast.error("Please fix the validation errors");
+        } else {
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error(error.message || 'Failed to add core value');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const modules = {
     toolbar: [
@@ -42,107 +226,36 @@ const NewCoreValueForm = () => {
     }
   };
 
-  const handlePhotoChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (photos.length + files.length > 5) {
-      toast.error("You can only upload up to 5 photos");
-      return;
-    }
-    const newPhotos = [...photos, ...files];
-    setPhotos(newPhotos);
-    const newPhotoAlts = Array.from({ length: files.length }, () => "");
-    setPhotoAlts([...photoAlts, ...newPhotoAlts]);
-    const newImgtitles = Array.from({ length: files.length }, () => "");
-    setImgtitle([...imgtitle, ...newImgtitles]);
-    setErrors(prev => ({
-      ...prev,
-      photos: newPhotos.length > 0 ? validatePhotos(newPhotos) : "",
-      photoAlts: newPhotos.map((_, i) => validatePhotoAlt(photoAlts[i] || "")),
-      imgtitle: newPhotos.map((_, i) => validatePhotoTitle(imgtitle[i] || "")),
-    }));
+  const getCharacterCount = (value, fieldName) => {
+    const textValue = fieldName === 'description' ? stripHtmlTags(value) : value;
+    return textValue.length;
   };
 
-  const handleDeleteImage = (index) => {
-    const updatedPhotos = photos.filter((_, i) => i !== index);
-    const updatedPhotoAlts = photoAlts.filter((_, i) => i !== index);
-    const updatedImgtitles = imgtitle.filter((_, i) => i !== index);
-    setPhotos(updatedPhotos);
-    setPhotoAlts(updatedPhotoAlts);
-    setImgtitle(updatedImgtitles);
-    setErrors(prev => ({
-      ...prev,
-      photos: updatedPhotos.length > 0 ? validatePhotos(updatedPhotos) : "",
-      photoAlts: updatedPhotos.map((_, i) => validatePhotoAlt(updatedPhotoAlts[i] || "")),
-      imgtitle: updatedPhotos.map((_, i) => validatePhotoTitle(updatedImgtitles[i] || "")),
-    }));
-  };
+  const getCharacterCountDisplay = (value, fieldName) => {
+    const count = getCharacterCount(value, fieldName);
+    const rules = validationRules[fieldName];
+    if (!rules) return '';
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {
-      title: validateTitle(title),
-      description: validateCoreValueDescription(description),
-      photos: photos.length > 0 ? validatePhotos(photos) : "",
-      photoAlts: photos.map((_, i) => validatePhotoAlt(photoAlts[i] || "")),
-      imgtitle: photos.map((_, i) => validatePhotoTitle(imgtitle[i] || "")),
-    };
-
-    setErrors(newErrors);
-    if (
-      newErrors.title ||
-      newErrors.description ||
-      newErrors.photoAlts.some(e => e) ||
-      newErrors.imgtitle.some(e => e)
-    ) {
-      toast.error("Please correct the errors in the form");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('status', status);
-    photos.forEach((photo, index) => {
-      formData.append(`photo`, photo);
-      if (photoAlts[index]) formData.append(`alt`, photoAlts[index]);
-      if (imgtitle[index]) formData.append(`imgtitle`, imgtitle[index]);
-    });
-
-    try {
-      await axios.post('/api/corevalue/createCoreValue', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        withCredentials: true
-      });
-      setTitle("");
-      setDescription("");
-      setPhotos([]);
-      setPhotoAlts([]);
-      setImgtitle([]);
-      setStatus("active");
-      setErrors({});
-      navigate('/CoreValue');
-    } catch (error) {
-      console.error("Error creating core value:", error);
-      // Check for duplicate title error from backend
-      if (
-        error.response &&
-        error.response.data &&
-        typeof error.response.data.error === 'string' &&
-        error.response.data.error.toLowerCase().includes('title')
-      ) {
-        toast.error("A core value with this title already exists. Please use a different title.");
-      } else {
-        toast.error("Error creating core value");
-      }
-    }
+    const isOverLimit = count > rules.max;
+    const isUnderLimit = count < rules.min && count > 0;
+    
+    let colorClass = 'text-gray-500';
+    if (isOverLimit) colorClass = 'text-red-500';
+    else if (isUnderLimit) colorClass = 'text-amber-500';
+    
+    return (
+      <div className={`text-sm ${colorClass}`}>
+        {count}/{rules.max} characters
+        {rules.min > 0 && count > 0 && count < rules.min && ` (minimum ${rules.min})`}
+      </div>
+    );
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-4">
       <ToastContainer />
-      <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Core Value</h1>
+      <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center mb-6">Add Core Value</h1>
+      
       <div className="mb-4">
         <label htmlFor="title" className="block font-semibold mb-2">
           Title <span className="text-red-500">*</span>
@@ -152,123 +265,144 @@ const NewCoreValueForm = () => {
           id="title"
           value={title}
           onChange={(e) => {
-            const value = e.target.value;
-            setTitle(value);
-            setErrors(prev => ({ ...prev, title: validateTitle(value) }));
+            setTitle(e.target.value);
+            clearFieldError('title');
           }}
-          className={`w-full p-2 border rounded focus:outline-none ${errors.title ? "border-red-500" : ""}`}
-          required
-          maxLength={100}
+          className={`w-full p-2 border rounded focus:outline-none focus:border-blue-500 ${
+            errors.title ? 'border-red-500' : ''
+          }`}
         />
-        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+        {getCharacterCountDisplay(title, 'title')}
+        {errors.title && (
+          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+        )}
       </div>
+
       <div className="mb-8">
         <label htmlFor="description" className="block font-semibold mb-2">
           Description <span className="text-red-500">*</span>
-        </label>  
+        </label>
         <ReactQuill
           value={description}
           onChange={(value) => {
             setDescription(value);
-            setErrors(prev => ({ ...prev, description: validateCoreValueDescription(value) }));
+            clearFieldError('description');
           }}
           modules={modules}
-          className="quill"
+          className={`quill ${errors.description ? 'border-red-500' : ''}`}
+          style={{ height: '100px', marginBottom: '4.3rem' }}
         />
-        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+        {getCharacterCountDisplay(description, 'description')}
+        {errors.description && (
+          <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+        )}
       </div>
+
       <div className="mb-4">
-        <label htmlFor="photo" className="block font-semibold mb-2">Photos (optional)</label>
+        <label htmlFor="photo" className="block font-semibold ">
+          Photo (Max 1 image, 5MB) <span className="text-red-500">*</span>
+        </label>
+        <p className="text-sm text-gray-500 mt-1 mb-2">The image size should be 317 × 310 pixels, and the appearance should be circular.</p>
         <input
           type="file"
           name="photo"
           id="photo"
-          multiple
           onChange={handlePhotoChange}
-          className={`border rounded focus:outline-none ${errors.photos ? "border-red-500" : ""}`}
-          accept="image/jpeg,image/png,image/gif,image/webp"
+          className="w-full p-2 border rounded focus:outline-none focus:border-blue-500"
+          accept="image/*"
         />
-        {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos}</p>}
-        {photos.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-4">
-            {photos.map((photo, index) => (
-              <div key={index} className="relative w-56">
-                <img
-                  src={URL.createObjectURL(photo)}
-                  alt={photoAlts[index] || `Photo ${index + 1}`}
-                  className="w-56 h-32 object-cover"
+       
+        
+        {photo && (
+          <div className="mt-4">
+            <h4 className="font-semibold text-gray-700 mb-2">Selected Image:</h4>
+            <div className="relative w-56 border rounded-lg p-2">
+              <button
+                type="button"
+                className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-600 focus:outline-none z-10"
+                onClick={handleDeleteImage}
+                title="Remove image"
+              >
+                <span className="text-xs font-bold">×</span>
+              </button>
+              <img
+                src={URL.createObjectURL(photo)}
+                alt=""
+                className="h-32 w-52 object-cover rounded"
+              />
+              
+              <div className="mt-2">
+                <label className="block text-sm font-medium mb-1">
+                  Alt Text <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={photoAlt}
+                  onChange={(e) => {
+                    setPhotoAlt(e.target.value);
+                    clearFieldError('alt');
+                  }}
+                  className={`w-full p-2 border rounded focus:outline-none focus:border-blue-500 ${
+                    errors.alt ? 'border-red-500' : ''
+                  }`}
+                  placeholder="Describe this image..."
                 />
-                <button
-                  type="button"
-                  onClick={() => handleDeleteImage(index)}
-                  className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 size-6 flex justify-center items-center hover:bg-red-600 focus:outline-none"
-                >
-                  <span className="text-xs">X</span>
-                </button>
-                <label htmlFor={`alt-${index}`} className="block mt-2">
-                  Alternative Text <span className="text-red-500">*</span>:
-                  <input
-                    type="text"
-                    id={`alt-${index}`}
-                    value={photoAlts[index] || ""}
-                    onChange={(e) => {
-                      const newPhotoAlts = [...photoAlts];
-                      newPhotoAlts[index] = e.target.value;
-                      setPhotoAlts(newPhotoAlts);
-                      setErrors(prev => ({
-                        ...prev,
-                        photoAlts: photos.map((_, i) => validatePhotoAlt(newPhotoAlts[i] || "")),
-                      }));
-                    }}
-                    className={`w-full p-2 border rounded focus:outline-none ${errors.photoAlts?.[index] ? "border-red-500" : ""}`}
-                    required
-                    maxLength={100}
-                  />
-                  {errors.photoAlts?.[index] && <p className="text-red-500 text-sm mt-1">{errors.photoAlts[index]}</p>}
-                </label>
-                <label htmlFor={`imgtitle-${index}`} className="block mt-2">
-                  Title Text <span className="text-red-500">*</span>:
-                  <input
-                    type="text"
-                    id={`imgtitle-${index}`}
-                    value={imgtitle[index] || ""}
-                    onChange={(e) => {
-                      const newImgtitles = [...imgtitle];
-                      newImgtitles[index] = e.target.value;
-                      setImgtitle(newImgtitles);
-                      setErrors(prev => ({
-                        ...prev,
-                        imgtitle: photos.map((_, i) => validatePhotoTitle(newImgtitles[i] || "")),
-                      }));
-                    }}
-                    className={`w-full p-2 border rounded focus:outline-none ${errors.imgtitle?.[index] ? "border-red-500" : ""}`}
-                    required
-                    maxLength={100}
-                  />
-                  {errors.imgtitle?.[index] && <p className="text-red-500 text-sm mt-1">{errors.imgtitle[index]}</p>}
-                </label>
+                {getCharacterCountDisplay(photoAlt, 'alt')}
+                {errors.alt && (
+                  <p className="text-red-500 text-xs mt-1">{errors.alt}</p>
+                )}
               </div>
-            ))}
+
+              <div className="mt-2">
+                <label className="block text-sm font-medium mb-1">
+                  Image Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={imgtitle}
+                  onChange={(e) => {
+                    setImgtitle(e.target.value);
+                    clearFieldError('imgtitle');
+                  }}
+                  className={`w-full p-2 border rounded focus:outline-none focus:border-blue-500 ${
+                    errors.imgtitle ? 'border-red-500' : ''
+                  }`}
+                  placeholder="Image title..."
+                />
+                {getCharacterCountDisplay(imgtitle, 'imgtitle')}
+                {errors.imgtitle && (
+                  <p className="text-red-500 text-xs mt-1">{errors.imgtitle}</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
+
       <div className="mb-4">
-        <label htmlFor="status" className="block font-semibold mb-2">Status</label>
+        <label htmlFor="status" className="block font-semibold mb-2">
+          Status <span className="text-red-500">*</span>
+        </label>
         <select
           id="status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none"
+          className="w-full p-2 border rounded focus:outline-none focus:border-blue-500"
         >
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
       </div>
-      <div className="mt-8">
-        <button type="submit" className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none">
-          Submit
-        </button>
-      </div>
+
+      <button 
+        type="submit"
+        disabled={isSubmitting}
+        className={`bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200 ${
+          isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        {isSubmitting ? 'Adding Core Value...' : 'Add Core Value'}
+      </button>
     </form>
   );
 };

@@ -37,6 +37,7 @@ const NewCareerForm = () => {
   const [photosError, setPhotosError] = useState("");
   const [photoAltsErrors, setPhotoAltsErrors] = useState([]);
   const [imgTitlesErrors, setImgTitlesErrors] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handlePhotoChange = (e) => {
@@ -136,9 +137,18 @@ const NewCareerForm = () => {
       photoAltsErrs.some((err) => err) ||
       imgTitlesErrs.some((err) => err)
     ) {
-      toast.error("Please correct the errors in the form");
+      toast.error("Please correct the errors in the form", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const formData = new FormData();
@@ -155,45 +165,78 @@ const NewCareerForm = () => {
       });
       formData.append('status', status);
 
-      await axios.post('/api/careeroption/CreateCareeroption', formData, {
+      const response = await axios.post('/api/careeroption/CreateCareeroption', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         withCredentials: true
       });
 
-      // Reset form fields
-      setJobTitle("");
-      setDepartment("");
-      setJobType("");
-      setEmploymentType("");
-      setRequirement("");
-      setDescription("");
-      setPhotos([]);
-      setPhotoAlts([]);
-      setImgTitles([]);
-      setStatus("active");
-      setJobTitleError("");
-      setDepartmentError("");
-      setJobTypeError("");
-      setEmploymentTypeError("");
-      setRequirementError("");
-      setDescriptionError("");
-      setPhotosError("");
-      setPhotoAltsErrors([]);
-      setImgTitlesErrors([]);
+      // Show success toast
+      toast.success('Career option added successfully!', {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
 
-      navigate('/careeroption');
+      // Reset form fields after a short delay
+      setTimeout(() => {
+        setJobTitle("");
+        setDepartment("");
+        setJobType("");
+        setEmploymentType("");
+        setRequirement("");
+        setDescription("");
+        setPhotos([]);
+        setPhotoAlts([]);
+        setImgTitles([]);
+        setStatus("active");
+        setJobTitleError("");
+        setDepartmentError("");
+        setJobTypeError("");
+        setEmploymentTypeError("");
+        setRequirementError("");
+        setDescriptionError("");
+        setPhotosError("");
+        setPhotoAltsErrors([]);
+        setImgTitlesErrors([]);
+        
+        // Navigate after showing success message
+        navigate('/careeroption');
+      }, 1500);
+      
     } catch (error) {
       console.error(error);
-      toast.error("Error adding career option");
+      toast.error(error.response?.data?.message || "Error adding career option. Please try again.", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-4">
-      <ToastContainer />
-      <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Career Option</h1>
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <h1 className="text-xl  font-bold font-serif text-gray-700 uppercase text-center">Add Career Option</h1>
       <div className="mb-4">
         <label htmlFor="jobTitle" className="block font-semibold mb-2">
           Job Title <span className="text-red-500">*</span>
@@ -397,8 +440,26 @@ const NewCareerForm = () => {
           </label>
         </div>
       </div>
-      <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">
-        Add Career Option
+      <button 
+        type="submit" 
+        disabled={isSubmitting}
+        className={`w-full sm:w-1/2 flex items-center justify-center gap-2 text-white font-bold py-2 rounded ${
+          isSubmitting 
+            ? 'bg-blue-400 cursor-not-allowed' 
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
+      >
+        {isSubmitting ? (
+          <>
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Adding...
+          </>
+        ) : (
+          'Add Career Option'
+        )}
       </button>
     </form>
   );

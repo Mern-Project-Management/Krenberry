@@ -10,6 +10,7 @@ const EditServiceCategoryForm = () => {
 
   const [image, setImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(""); // State to hold the preview image URL
+  const [errors, setErrors] = useState({});
 
   const { categoryId: categoryIdFromParams } = useParams(); // Extract categoryId from URL path
   const navigate = useNavigate();
@@ -38,8 +39,19 @@ const EditServiceCategoryForm = () => {
     fetchGallery();
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!alt.trim()) newErrors.alt = "Alt Text is required";
+    if (!imgtitle.trim()) newErrors.imgtitle = "Title Text is required";
+    // Only require a new image if there is no existing image (no preview)
+    if (!previewImage && !image) newErrors.image = "Please select an image to upload";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       const formData = new FormData();
       formData.append('categoryId', categoryId || categoryIdFromParams); // Use the categoryId from state or URL
@@ -60,12 +72,15 @@ const EditServiceCategoryForm = () => {
       navigate('/services');
     } catch (error) {
       console.error("Error updating gallery:", error);
+      setErrors((prev) => ({ ...prev, submit: "Failed to update gallery. Please try again." }));
     }
   };
 
   const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
-    setPreviewImage(URL.createObjectURL(e.target.files[0])); 
+    const file = e.target.files[0];
+    setImage(file);
+    setPreviewImage(file ? URL.createObjectURL(file) : previewImage);
+    if (file) setErrors((prev) => ({ ...prev, image: null }));
   };
 
   return (
@@ -84,40 +99,53 @@ const EditServiceCategoryForm = () => {
       </div>
 
       <div className="mb-4">
-        <label htmlFor="alt" className="block font-semibold mb-2">Alt Text</label>
+        <label htmlFor="alt" className="block font-semibold mb-2">Alt Text <span className="text-red-500">*</span></label>
         <input
           type="text"
           id="alt"
           value={alt}
-          onChange={(e) => setAlt(e.target.value)}
-          className="w-56 p-2 border rounded focus:outline-none"
+          onChange={(e) => {
+            setAlt(e.target.value);
+            if (e.target.value.trim()) setErrors((prev) => ({ ...prev, alt: null }));
+          }}
+          className={`w-56 p-2 border rounded focus:outline-none ${errors.alt ? 'border-red-500' : ''}`}
           required
         />
+        {errors.alt && <p className="text-red-500 text-sm mt-1">{errors.alt}</p>}
       </div>
 
       <div className="mb-4">
-        <label htmlFor="imgtitle" className="block font-semibold mb-2">Title Text</label>
+        <label htmlFor="imgtitle" className="block font-semibold mb-2">Title Text <span className="text-red-500">*</span></label>
         <input
           type="text"
           id="imgtitle"
           value={imgtitle}
-          onChange={(e) => setImgtitle(e.target.value)}
-          className="w-56 p-2 border rounded focus:outline-none"
+          onChange={(e) => {
+            setImgtitle(e.target.value);
+            if (e.target.value.trim()) setErrors((prev) => ({ ...prev, imgtitle: null }));
+          }}
+          className={`w-56 p-2 border rounded focus:outline-none ${errors.imgtitle ? 'border-red-500' : ''}`}
           required
         />
+        {errors.imgtitle && <p className="text-red-500 text-sm mt-1">{errors.imgtitle}</p>}
       </div>
 
 
       <div className="mb-4">
-        <label htmlFor="image" className="block font-semibold mb-2">Upload New Image</label>
+        <label htmlFor="image" className="block font-semibold mb-2">Upload New Image {(!previewImage) && <span className="text-red-500">*</span>}</label>
         <input
           type="file"
           id="image"
           onChange={handleFileChange}
           accept="image/*"
-          className="w-56 p-2 border rounded focus:outline-none"
+          className={`w-56 p-2 border rounded focus:outline-none ${errors.image ? 'border-red-500' : ''}`}
         />
+        {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
       </div>
+
+      {errors.submit && (
+        <p className="text-red-500 text-sm mb-2">{errors.submit}</p>
+      )}
 
       <div className="mt-4">
         <button

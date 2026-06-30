@@ -486,51 +486,52 @@ const deletesubcategory = async (req, res) => {
   const { categoryId, subCategoryId } = req.query;
 
   try {
-    // Find category by slug
-    const categoryDoc = await ServiceCategory.findOne({ slug: categoryId });
+    const categoryDoc = await ServiceCategory.findOne({slug:categoryId});
     if (!categoryDoc) {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Find index by slug instead of _id
     const subCategoryIndex = categoryDoc.subCategories.findIndex(
       (subCat) => subCat.slug === subCategoryId
     );
-
     if (subCategoryIndex === -1) {
       return res.status(404).json({ message: "Subcategory not found" });
     }
 
     const subCategory = categoryDoc.subCategories[subCategoryIndex];
 
-    // Prevent deletion if sub-subcategories exist
+    // Check if there are sub-subcategories
     if (subCategory.subSubCategory && subCategory.subSubCategory.length > 0) {
-      return res.status(400).json({
-        message:
-          "Subcategory has associated sub-subcategories and cannot be deleted",
-      });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Subcategory has associated sub-subcategories and cannot be deleted",
+        });
     }
 
-    // Remove subcategory
+    // Remove the subcategory from the array
     categoryDoc.subCategories.splice(subCategoryIndex, 1);
+
     await categoryDoc.save();
 
-    // Remove reference from Service collection
+    // Find and update all services that reference this subcategory, removing the subcategory reference
     await Service.updateMany(
-      { subcategories: subCategory._id }, // <-- Use ID here
-      { $pull: { subcategories: subCategory._id } }
+      { subcategories: subCategoryId },
+      { $pull: { subcategories: subCategoryId } }
     );
 
-    res.status(200).json({
-      message:
-        "Subcategory deleted successfully and references removed from services",
-    });
+    res
+      .status(200)
+      .json({
+        message:
+          "Subcategory deleted successfully and references removed from services",
+      });
   } catch (error) {
     console.error(`Error: ${error.message}`);
     res.status(500).json({ message: "Server error", error });
   }
 };
- 
 
 const deletesubsubcategory = async (req, res) => {
   // Delete sub-subcategory
@@ -542,13 +543,13 @@ const deletesubsubcategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    const subCategory = categoryDoc.subCategories.id(subCategoryId);
+    const subCategory = categoryDoc.subCategories.find(subCat => subCat.slug === subCategoryId);
     if (!subCategory) {
       return res.status(404).json({ message: "Subcategory not found" });
     }
 
     const subSubCategoryIndex = subCategory.subSubCategory.findIndex(
-      (subSubCat) => subSubCat._id.toString() === subSubCategoryId
+      (subSubCat) => subSubCat.slug === subSubCategoryId
     );
     if (subSubCategoryIndex === -1) {
       return res.status(404).json({ message: "Sub-subcategory not found" });

@@ -50,13 +50,10 @@ export default function Sidebar() {
       title: "Home", icon: <FaHome size={20} />, submenu: [
         { title: "Hero Section", icon: <GiVerticalBanner size={20} />, path: "/homehero" },
         { title: "Testimonials", icon: <FaPager size={20} />, path: "/testimonials" },
-        { title: "Extra Pages", icon: <RiPagesFill size={20} />, path: "/extrapages" },
         
+        { title: "Extra Pages", icon: <RiPagesFill size={20} />, path: "/extrapages" },
+        { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
       ]
-    },
-    { title: "FAQ", icon: <RiQuestionAnswerFill size={20} />, path: "/faq" },
-    {
-      title:"Policy",icon:<GiVerticalBanner size={20}/>,path:"/policy"
     },
     {
       title: "About us", icon: <BsFillPersonLinesFill size={20} />, submenu: [
@@ -68,6 +65,11 @@ export default function Sidebar() {
         // { title: "Our Team", icon: <FaPeopleGroup size={20} />, path: "/ourTeam" },
       ]
     },
+   
+    {
+      title:"Policy",icon:<GiVerticalBanner size={20}/>,path:"/policy"
+    },
+   
     {
       title: "Career", icon: <FaGraduationCap size={20} />, submenu: [
         { title: "Career Options", icon: <FaEnvelopeOpenText size={20} />, path: "/careeroption" },
@@ -131,7 +133,10 @@ export default function Sidebar() {
     {
       title: "SEO", icon: <TbSeo size={20} />, submenu: [
         { title: "Sitemap Generator", icon: <FaSitemap size={20} />, path: "/sitemap" },
-        { title: "Meta Tags Settings", icon: <FaCode size={20} />, path: "/metadetails" },
+
+        { title: "Static Page Meta Tags", icon: <FaCode size={20} />, path: "/meta-table" },
+        { title: "Meta List", icon: <FaCode size={20} />, path: "/navbar-data" },
+        
         { title: "Google Tag Manager", icon: <FaGoogle size={20} />, path: "/googleSettings" },
         { title: "Inquiries", icon: <FaPhone size={20} />, path: "/Inquiry" },
       ]
@@ -139,14 +144,14 @@ export default function Sidebar() {
     {
       title: "Settings", icon: <IoSettings size={20} />, submenu: [
         // { title: "Menu Listing", icon: <FaListOl size={20} />, path: "/menulisting" },
-        { title: "Manage Section Visibility", icon: < FaEarthAsia size={20} />, path: "/managesectionvisibility" },
-        { title: "Manage Theme", icon: <FaCode size={20} />, path: "/manageTheme" },
+        // { title: "Manage Section Visibility", icon: < FaEarthAsia size={20} />, path: "/managesectionvisibility" },
+        // { title: "Manage Theme", icon: <FaCode size={20} />, path: "/manageTheme" },
         { title: "Footer Settings", icon: <AiOutlineVerticalAlignBottom size={20} />, path: "/footer" },
         // { title: "Header Settings", icon: <AiOutlineVerticalAlignTop size={20} />, path: "/header" },
         { title: "Manage Logo", icon: <FaPager size={20} />, path: "/manageLogo" },
-        { title: "Whatsapp Settings", icon: <RiWhatsappFill size={20} />, path: "/whatsappSettings" },
+        // { title: "Whatsapp Settings", icon: <RiWhatsappFill size={20} />, path: "/whatsappSettings" },
 
-        { title: "Database Management", icon: <FaDatabase size={20} />, path: "/DatabaseManagement" }
+        // { title: "Database Management", icon: <FaDatabase size={20} />, path: "/DatabaseManagement" }
       ]
     }
 
@@ -193,21 +198,23 @@ export default function Sidebar() {
   };
 
   return (
-    <div className='flex w-full '>
-      <div className=' bg-gray-700 h-screen'>
+    <div className='flex w-full h-screen overflow-hidden'>
+      <div className='bg-gray-700'>
         <aside
           ref={sidebarRef}
-          className={`bg-gray-700 fixed lg:relative z-10 h-full w-[14rem] md:w-[18rem] overflow-y-auto  ${isMenuOpen ? "translate-x-0 transform transition-transform duration-500" : "-translate-x-full lg:translate-x-0"
+          className={`bg-gray-700 fixed lg:relative z-10 h-screen w-[14rem] md:w-[18rem] flex flex-col ${isMenuOpen ? "translate-x-0 transform transition-transform duration-500" : "-translate-x-full lg:translate-x-0"
             }`}>
-          <div className='font-bold text-white text-center pt-4 text-[20px] px-8'>
-
+          
+          {/* Logo Section - Fixed at top */}
+          <div className='font-bold text-white text-center pt-4 text-[20px] px-8 flex-shrink-0'>
             <div>
               <img src={`/api/logo/download/${logo.photo}`} alt="Logo" className="w-full h-auto" />
             </div>
-
           </div>
-          <div className='mt-4'>
-            <ul>
+
+          {/* Scrollable Menu Section */}
+          <div className='mt-4 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-700 hover:scrollbar-thumb-gray-500'>
+            <ul className='pb-4'>
               {sidebarData.map((item, i) => (
                 <div key={i}>
                   <div>
@@ -273,8 +280,9 @@ export default function Sidebar() {
           </div>
         </aside>
       </div>
-      <div className="flex flex-col h-screen w-full">
-        <Navbar className="fixed w-full z-10 bg-white shadow" toggleSidebar={toggleSidebar} />
+      
+      <div className="flex flex-col w-full min-w-0">
+        <Navbar className="fixed w-full z-10 bg-white shadow flex-shrink-0" toggleSidebar={toggleSidebar} />
         <Breadcrumbs sidebarData={sidebarData} />
         <div className="flex-1 overflow-y-auto">
           <Outlet />

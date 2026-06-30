@@ -71,8 +71,8 @@ useEffect(() => {
   }
 
   return (
-    <div className="bg-[#F7F4EE] font-poppins">
-      <div className="flex flex-col xl:flex-row justify-center text-center lg:py-5 relative">
+    <div className="bg-[#F7F4EE] ">
+      <div className="flex flex-col xl:flex-row justify-center text-center lg:py-5 py-16 relative">
         {/* Left Side Animated Photos */}
         <div className="xl:flex flex-col flex-1 hidden" ref={leftImageRef}>
           <ImageBubble photos={photos} homeHero={homeHero} />
@@ -83,7 +83,7 @@ useEffect(() => {
           className="flex-2 flex flex-col items-center justify-center max-w-2xl pb-10 pt-10 xl:pt-32 mx-auto px-4 md:px-0"
           ref={textSectionRef}
         >
-          <h1 className="text-[27px] md:text-[50px] leading-[3rem] md:leading-[4rem] md:mb-5 text-center font-poppins font-semibold py-10 text-gray-700 mb-6">
+          <h1 className="text-[27px] md:text-[50px] leading-[3rem] mt-5 sm:mt-0 md:leading-[4rem] md:mb-5 text-center font-bold py-10 text-gray-700 sm:mb-6">
             {homeHero.heading.beforeHighlight}{" "}
             <Typed
               strings={homeHero.heading.highlightedWords}
@@ -98,7 +98,7 @@ useEffect(() => {
           </h1>
 
           <p
-            className="text-lg lg:text-xl font-poppins text-gray-700 mb-6 max-w-xl"
+            className="text-lg lg:text-xl  text-gray-700 mb-6 max-w-xl"
             dangerouslySetInnerHTML={{ __html: homeHero.paragraph.text }}
           />
 

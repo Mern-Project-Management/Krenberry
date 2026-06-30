@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { CgCalendarDates } from "react-icons/cg";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaArrowRight } from "react-icons/fa";
 
 export default function HowRndHelp() {
   const [blogData, setBlogData] = useState([]);
@@ -38,10 +38,15 @@ export default function HowRndHelp() {
     setVisibleCount((prevCount) => prevCount + 4);
   };
 
-  const handleReadMore = async (blogslug) => {
+  const handleCardClick = async (e, blogSlug) => {
+    // Prevent the default link behavior if the click is on a button or link
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.tagName === 'A' || e.target.closest('a')) {
+      return;
+    }
+    
     try {
-      await axios.put(`/api/news/updateBlogVisits?slug=${blogslug}`);
-      navigate(`/blog/${blogslug}`);
+      await axios.put(`/api/news/updateBlogVisits?slug=${blogSlug}`);
+      navigate(`/blog/${blogSlug}`);
     } catch (error) {
       console.error("Error updating visits:", error);
     }
@@ -70,64 +75,55 @@ export default function HowRndHelp() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredData.slice(0, visibleCount).map((blog) => (
-          <article
-            key={blog._id}
-            className="blog-card border border-gray-200 rounded-xl p-4 flex flex-col gap-4 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:-translate-y-1 focus-within:shadow-xl"
-            tabIndex={0}
-            role="article"
-            aria-labelledby={`blog-title-${blog._id}`}
+          <div 
+            key={blog._id} 
+            className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            onClick={(e) => handleCardClick(e, blog.slug)}
           >
-            <div className="relative">
-              <span className="absolute top-2 right-2 bg-gray-800 text-white text-xs px-3 py-1 rounded-full font-medium">
-                {blog.serviceCategoryName}
-              </span>
-              <img
-                src={`/api/image/download/${blog.photo[0]}`}
-                alt={blog.alt[0]}
-                title={blog.imgtitle[0]}
+            <div className="relative h-48">
+              <img 
+                src={blog.photo?.[0] ? `/api/image/download/${blog.photo[0]}` : '/placeholder.jpg'} 
+                alt={blog.title}
+                className="w-full h-full  object-fill"
                 loading="lazy"
-                className="w-full h-48 rounded-md object-cover mb-4"
-                aria-describedby={`blog-description-${blog._id}`}
               />
             </div>
-            <div className="flex flex-col flex-grow">
-              <h3
-                id={`blog-title-${blog._id}`}
-                className="text-lg sm:text-xl font-semibold mb-2 text-gray-900"
-              >
-                {blog.title}
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-2 py-1 bg-[#ec2127]  text-white text-xs font-medium rounded">
+                  {blog.serviceCategoryName}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                <Link to={`/blog/${blog.slug}`} className="hover: transition-colors">
+                  {blog.title}
+                </Link>
               </h3>
-              <div
-                id={`blog-description-${blog._id}`}
-                className="text-sm sm:text-base text-gray-600 line-clamp-3 mb-4"
-              >
+              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                 {blog?.details ? (
                   <div dangerouslySetInnerHTML={{ __html: blog.details }} />
                 ) : (
                   "Easily manage your design projects with our convenient portal. Provide important details like"
                 )}
-              </div>
-              <button
-                onClick={() => handleReadMore(blog.slug)}
-                className="mt-auto py-2 px-6 text-sm font-semibold bg-red-600 text-white rounded-full hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-300"
-                aria-label={`Read more about ${blog.title}`}
-              >
-                Read More
-              </button>
-            </div>
-            <div className="flex justify-between items-center text-sm text-gray-500 mt-4">
-              <div className="flex gap-2 items-center">
-                <CgCalendarDates size={18} aria-hidden="true" />
-                <time dateTime={blog.date}>
-                  {format(new Date(blog.date), "MMMM d, yyyy")}
-                </time>
-              </div>
-              <div className="flex gap-2 items-center">
-                <FaEye aria-hidden="true" />
-                <span>{blog.visits || 0} views</span>
+              </p>
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <div className="flex gap-2 items-center">
+                  <CgCalendarDates size={18} aria-hidden="true" />
+                  <time dateTime={blog.date}>
+                    {format(new Date(blog.date), "MMMM d, yyyy")}
+                  </time>
+                </div>
+                <Link 
+                  to={`/blog/${blog.slug}`}
+                  className=" hover: font-medium text-sm flex text-[#ec2127] items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Read More
+                  <FaArrowRight size={14} />
+                </Link>
               </div>
             </div>
-          </article>
+          </div>
         ))}
       </div>
 

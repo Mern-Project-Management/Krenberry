@@ -60,9 +60,8 @@ const CareerOptionTable = () => {
           <span
             className="hover:text-blue-500 text-wrap cursor-pointer truncate"
             onClick={() => navigate(`/careeroption/editCareerOption/${row.original._id}`)}
-          >
-            {row.original.description}
-          </span>
+            dangerouslySetInnerHTML={{ __html: row.original.description }}
+          />
         ),
       },
       {
@@ -140,18 +139,25 @@ const CareerOptionTable = () => {
 
   const deleteCareerOption = async (id) => {
     try {
-      await axios.delete(`/api/careeroption/deleteCareeroption?id=${id}`, { withCredentials: true });
-      fetchData();
-      toast.success("Career option deleted successfully!");
+      const response = await axios.delete(
+        `/api/careeroption/deleteCareeroption?id=${id}`, 
+        { withCredentials: true }
+      );
+      
+      if (response.status === 200) {
+        // Filter out the deleted item from the local state
+        setCareerOptions(prev => prev.filter(option => option._id !== id));
+        toast.success("Career option deleted successfully!");
+      }
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete career option.");
+      console.error("Delete error:", error);
+      const errorMessage = error.response?.data?.message || "Failed to delete career option";
+      toast.error(errorMessage);
     } finally {
       setDeleteModalOpen(false);
       setItemToDelete(null);
     }
   };
-
   const handleConfirmDelete = () => {
     if (itemToDelete) {
       deleteCareerOption(itemToDelete);

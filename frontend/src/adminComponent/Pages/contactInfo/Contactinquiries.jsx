@@ -17,6 +17,8 @@ const Inquiry = () => {
     const [countWithoutFields, setCountWithoutFields] = useState(0);
     const [dataWithFields, setDataWithFields] = useState([]);
     const [dataWithoutFields, setDataWithoutFields] = useState([]);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [inquiryToDelete, setInquiryToDelete] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -59,6 +61,37 @@ const Inquiry = () => {
         }
     }, [selectedCategory, dataWithFields, dataWithoutFields, inquiries]);
 
+    const deleteInquiry = async (id) => {
+        try {
+            const response = await axios.delete(`
+/api/contactinquiries/deletecontactInquiries?id=${id}`, { withCredentials: true });
+
+            fetchData();
+            setDeleteModalOpen(false);
+            setInquiryToDelete(null);
+            // You might want to add a success toast here
+        } catch (error) {
+            console.error(error);
+            // You might want to add an error toast here
+        }
+    };
+
+    const handleDeleteClick = (id) => {
+        setInquiryToDelete(id);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (inquiryToDelete) {
+            deleteInquiry(inquiryToDelete);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setDeleteModalOpen(false);
+        setInquiryToDelete(null);
+    };
+
     const columns = useMemo(
         () => [
             {
@@ -92,7 +125,10 @@ const Inquiry = () => {
                 Header: "Options",
                 Cell: ({ row }) => (
                     <div className="flex gap-4">
-                        <button className="text-red-500 hover:text-red-700 transition" onClick={() => deleteInquiry(row.original._id)}>
+                        <button
+                            onClick={() => handleDeleteClick(row.original._id)}
+                            className="text-red-500  px-3 py-1 rounded "
+                        >
                             <FaTrashAlt />
                         </button>
                     </div>
@@ -116,18 +152,6 @@ const Inquiry = () => {
         },
         useSortBy
     );
-
-    const deleteInquiry = async (id) => {
-        try {
-            const response = await axios.delete(`
-/api/contactinquiries/deletecontactInquiry?id=${id}`, { withCredentials: true });
-
-            fetchData();
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
 
     return (
         <div className="p-4 overflow-x-auto">
@@ -230,6 +254,28 @@ const Inquiry = () => {
 
             )}
 
+            {deleteModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                        <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+                        <p className="mb-6">Are you sure you want to delete this inquiry? This action cannot be undone.</p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={handleCancelDelete}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -339,11 +339,11 @@ exports.updateSitemapById = async (req, res) => {
 exports.generateSitemapIndex = async (req, res) => {
   try {
     const sitemaps = [
-      { url: 'http://localhost:3000/sitemap-main.xml' },
-      // { url: 'http://localhost:3000/sitemap-product.xml' },
-      { url: 'http://localhost:3000/sitemap-service.xml' },
-      { url: 'http://localhost:3000/sitemap-package.xml' },
-      { url: 'http://localhost:3000/sitemap-news.xml' },
+      { url: 'http://localhost:3006/sitemap-main.xml' },
+      // { url: 'http://localhost:3006/sitemap-product.xml' },
+      { url: 'http://localhost:3006/sitemap-service.xml' },
+      { url: 'http://localhost:3006/sitemap-package.xml' },
+      { url: 'http://localhost:3006/sitemap-news.xml' },
     ];
 
     const xmlContent = generateSitemapXML(sitemaps);

@@ -73,21 +73,36 @@ const EditServiceDetails = () => {
     }
   };
 
-  // Validation functions
   const validateHeading = (value) => {
-    // Only allow alphabets, spaces, and specific special characters: ? ! ' " ,
     const headingRegex = /^[a-zA-Z\s?!'",\-]+$/;
-    if (!value.trim()) {
+  
+    // Extract text if HTML was passed
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = value;
+    const textOnly = tempDiv.textContent || tempDiv.innerText || "";
+  
+    const cleanValue = textOnly
+      .normalize("NFKC")
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  
+    console.log(cleanValue, "okay");
+  
+    if (!cleanValue) {
       return "Heading is required";
     }
-    if (value.length > 100) {
+    if (cleanValue.length > 100) {
       return "Heading must be less than 100 characters";
     }
-    if (!headingRegex.test(value)) {
+    if (!headingRegex.test(cleanValue)) {
       return "Please enter a valid heading using alphabets, spaces, and only these special characters: ? ! ' \" ,";
     }
     return "";
   };
+  
+  
+  
 
   const validateDescription = (value) => {
     const plainText = value.replace(/<[^>]*>/g, '').trim();

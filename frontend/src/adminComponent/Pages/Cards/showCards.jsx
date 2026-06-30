@@ -6,9 +6,13 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Import React Quill styles
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Delete, DeleteIcon, EditIcon, X } from 'lucide-react';
 
 function CardsTable() {
   const [cards, setCards] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
   const [photo, setPhoto] = useState(null); // State for uploaded photo
@@ -81,14 +85,70 @@ function CardsTable() {
   }, []);
 
   const handleDelete = (id) => {
-    axios
-      .delete(`/api/card/deleteCard?id=${id}`)
-      .then(() => setCards(cards.filter((card) => card._id !== id)))
-      .catch((error) => console.error('Error deleting card:', error));
+    setCardToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!cardToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await axios.delete(`/api/card/deleteCard?id=${cardToDelete}`);
+      setCards(cards.filter((card) => card._id !== cardToDelete));
+      toast.success('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+      toast.error('Failed to delete card');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setCardToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCardToDelete(null);
   };
 
   return (
     <div className="container mx-auto my-10">
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+              <button 
+                onClick={cancelDelete}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="mb-6">Are you sure you want to delete this card? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className={`px-4 py-2 rounded-md text-white ${
+                  isDeleting ? 'bg-red-400' : 'bg-red-500 hover:bg-red-600'
+                }`}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <ToastContainer />
       <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded">
         <div className="grid md:grid-cols-2 md:gap-2 grid-cols-1">
@@ -213,13 +273,13 @@ function CardsTable() {
                   </div>
                 ))}
               </td>
-              <td className="py-2 px-4 border">
-                <Link to={`/Card/editCard/${card._id}`} className="text-blue-500 mr-2">Edit</Link>
+              <td className="py-2 px-4 border-t flex">
+                <Link to={`/Card/editCard/${card._id}`} className="text-blue-500 mr-2"><EditIcon /></Link>
                 <button
                   onClick={() => handleDelete(card._id)}
                   className="text-red-500"
                 >
-                  Delete
+                  <Delete />
                 </button>
               </td>
             </tr>

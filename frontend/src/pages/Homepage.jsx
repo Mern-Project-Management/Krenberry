@@ -33,7 +33,10 @@ export default function Homepage() {
       <ScrollSection /> */}
       <WhatYouGet />
       {/* <StandardPackage/> */}
+      <div className='mt-12'>
+        
       <Faq />
+      </div>
       <BookAcall />
       <PremiumTemplatesSection />
       <GlobalSolution />

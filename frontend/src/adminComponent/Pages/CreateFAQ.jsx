@@ -8,6 +8,7 @@ const FAQForm = () => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [status, setStatus] = useState("active");
+  const [errors, setErrors] = useState({});
   
   // Service category state
   const [servicecategories, setServiceCategories] = useState([]);
@@ -42,8 +43,22 @@ const FAQForm = () => {
     }
   };
 
+  // Validation helpers
+  const isMeaningfulText = (val) => /^[A-Za-z][A-Za-z0-9 \-&,.'()?!]*$/.test(val || "");
+  const stripHtml = (html) => (html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const newErrors = {};
+    // Question
+    if (!question || question.trim() === "") newErrors.question = 'Question is required';
+    else if (!isMeaningfulText(question)) newErrors.question = 'Only meaningful text allowed (letters, spaces, basic punctuation)';
+    // Answer
+    const plainAnswer = stripHtml(answer);
+    if (!plainAnswer) newErrors.answer = 'Answer cannot be empty';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
     try {
       const response = await axios.post('/api/faq/insertFAQ', {
         question,
@@ -215,7 +230,7 @@ const FAQForm = () => {
       )}
 
       {/* Industry Categories */}
-      <div className="mb-4">
+      <div className="mb-1">
         <label htmlFor="industryParentCategory" className="block font-semibold mb-2">
           Parent Industry Category
         </label>
@@ -229,6 +244,7 @@ const FAQForm = () => {
           {industrycategories.map(renderCategoryOptions)}
         </select>
       </div>
+      {/* Category is optional; no error shown */}
 
       {subIndustryCategories.length > 0 && (
         <div className="mb-4">
@@ -273,10 +289,28 @@ const FAQForm = () => {
           type="text"
           id="question"
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '' || isMeaningfulText(val)) {
+              setErrors((prev) => ({ ...prev, question: undefined }));
+              setQuestion(val);
+            } else {
+              setErrors((prev) => ({ ...prev, question: 'Only meaningful text allowed (letters, spaces, basic punctuation)' }));
+            }
+          }}
+          onBlur={() => {
+            if (!question || question.trim() === '') {
+              setErrors((prev) => ({ ...prev, question: 'Question is required' }));
+            }
+          }}
+          minLength={10}
+          maxLength={255}
           className="w-full p-2 border rounded focus:outline-none"
           required
         />
+        {errors.question && (
+          <p className="text-red-500 text-sm mt-1">{errors.question}</p>
+        )}
       </div>
 
       <div className="mb-8">
@@ -285,10 +319,21 @@ const FAQForm = () => {
         </label>
         <ReactQuill
           value={answer}
-          onChange={setAnswer}
+          onChange={(val) => {
+            setAnswer(val);
+            const plain = stripHtml(val);
+            if (!plain) setErrors((prev) => ({ ...prev, answer: 'Answer cannot be empty' }));
+            else setErrors((prev) => ({ ...prev, answer: undefined }));
+          }}
           modules={modules} // Include modules for image handling
           className="quill"
+          minLength={10}
+          maxLength={255}
+          style={{ height: '150px', paddingBottom: '2rem' }}
         />
+        {errors.answer && (
+          <p className="text-red-500 text-sm mt-1">{errors.answer}</p>
+        )}
       </div>
 
       {/* Status */}

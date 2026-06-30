@@ -20,22 +20,36 @@ const FaqTable = () => {
   const [loadings, setLoading] = useState(true);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageCount, setPageCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // customizable page size
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFAQ, setSelectedFAQ] = useState(null); // State for the selected banner
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [industryCategories, setIndustryCategories] = useState([]);
+  const [filterServiceParent, setFilterServiceParent] = useState("");
+  const [filterIndustryParent, setFilterIndustryParent] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const navigate = useNavigate()
 
   const notify = () => {
     toast.success("Updated Successfully!");
   };
 
-  const pageSize = 5;
-
   const filteredFaqs = useMemo(() => {
-    return faqs.filter((faqs) =>
-      faqs.question.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [faqs, searchTerm]);
+    return faqs.filter((item) => {
+      const matchesSearch = item.question.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesService = filterServiceParent ? item.serviceparentCategoryId === filterServiceParent : true;
+      const matchesIndustry = filterIndustryParent ? item.industryparentCategoryId === filterIndustryParent : true;
+      return matchesSearch && matchesService && matchesIndustry;
+    });
+  }, [faqs, searchTerm, filterServiceParent, filterIndustryParent]);
+
+  // Compute paginated data on the client
+  const paginatedFaqs = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return filteredFaqs.slice(start, start + pageSize);
+  }, [filteredFaqs, pageIndex, pageSize]);
 
   const columns = useMemo(
     () => [
@@ -71,7 +85,7 @@ const FaqTable = () => {
             <button className="text-blue-500 hover:text-blue-700 transition">
               <Link to={`/faq/editFAQ/${row.original._id}`}><FaEdit /></Link>
             </button>
-            <button className="text-red-500 hover:text-red-700 transition" onClick={() => deleteFaq(row.original._id)}>
+            <button className="text-red-500 hover:text-red-700 transition" onClick={() => openDeleteConfirm(row.original._id)}>
               <FaTrashAlt />
             </button>
           </div>
@@ -91,7 +105,7 @@ const FaqTable = () => {
   } = useTable(
     {
       columns,
-      data: filteredFaqs,
+      data: paginatedFaqs,
     },
     useSortBy
   );
@@ -109,13 +123,12 @@ const FaqTable = () => {
   const fetchData = async (pageIndex) => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/faq/getFAQ?page=${pageIndex + 1}`, { withCredentials: true });
+      const response = await axios.get(`/api/faq/getFAQ`, { withCredentials: true });
       const faqsWithIds = response.data.data.map((faqItem, index) => ({
         ...faqItem,
-        id: pageIndex * pageSize + index + 1,
+        id: index + 1,
       }));
       setFaqs(faqsWithIds);
-      setPageCount(Math.ceil(response.data.total / pageSize));
     } catch (error) {
       console.error(error);
     } finally {
@@ -125,17 +138,43 @@ const FaqTable = () => {
 
   const deleteFaq = async (id) => {
     try {
-      const response = await axios.delete(`/api/faq/deleteFaq?id=${id}`, { withCredentials: true });
-
+      await axios.delete(`/api/faq/deleteFaq?id=${id}`, { withCredentials: true });
       fetchData(pageIndex);
+      toast.success('FAQ deleted successfully');
     } catch (error) {
       console.error(error);
+      toast.error('Failed to delete FAQ');
     }
+  };
+
+  const openDeleteConfirm = (id) => {
+    setPendingDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    setIsDeleteModalOpen(false);
+    setPendingDeleteId(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    await deleteFaq(pendingDeleteId);
+    closeDeleteConfirm();
   };
 
   useEffect(() => {
     fetchData(pageIndex);
   }, [pageIndex]);
+
+  // Recalculate total pages when filters or page size change
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredFaqs.length / pageSize) || 1;
+    setPageCount(totalPages);
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(0);
+    }
+  }, [filteredFaqs, pageSize]);
 
   const fetchHeadings = async () => {
     try {
@@ -205,7 +244,7 @@ const FaqTable = () => {
           <Link to="/faq/createFAQ"><FaPlus size={15} /></Link>
         </button>
       </div>
-      <div className="mb-4">
+      <div className=" gap-3 mb-4">
         <input
           type="text"
           placeholder="Search by question..."
@@ -213,59 +252,59 @@ const FaqTable = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
         />
+   
       </div>
       <h2 className="text-md font-semibold mb-4">Manage FAQs</h2>
       {loadings ? (
-      <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
+        <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
 
       ) : (
         <>{faqs.length == 0 ? <div className="flex justify-center items-center"><iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe></div>
-          :  <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-          <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-            {headerGroups.map((headerGroup) => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  <th
-                    {...column.getHeaderProps(column.getSortByToggleProps())}
-                    className="py-2 px-4 border-b border-gray-300 cursor-pointer"
-                  >
-                    <div className="flex items-center uppercase font-serif  gap-2 ">
-                      <span className="">{column.render("Header")}</span>
-                      {column.canSort && (
-                        <span className="ml-1">
-                          {column.isSorted ? (
-                            column.isSortedDesc ? (
-                              <FaArrowDown />
+          : <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                      {...column.getHeaderProps(column.getSortByToggleProps())}
+                      className="py-2 px-4 border-b border-gray-300 cursor-pointer"
+                    >
+                      <div className="flex items-center uppercase font-serif  gap-2 ">
+                        <span className="">{column.render("Header")}</span>
+                        {column.canSort && (
+                          <span className="ml-1">
+                            {column.isSorted ? (
+                              column.isSortedDesc ? (
+                                <FaArrowDown />
+                              ) : (
+                                <FaArrowUp />
+                              )
                             ) : (
-                              <FaArrowUp />
-                            )
-                          ) : (
-                            <FaArrowDown className="text-gray-400" />
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody {...getTableBodyProps()}>
-            {rows.map((row) => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
-                  {row.cells.map((cell) => (
-                    <td {...cell.getCellProps()} className="py-2 px-4">
-                      {cell.render("Cell")}
-                    </td>
+                              <FaArrowDown className="text-gray-400" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>}</>
-      
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150 ">
+                    {row.cells.map((cell) => (
+                      <td {...cell.getCellProps()} className="py-2 px-4">
+                        {cell.render("Cell")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>}</>
       )}
       <div className="mt-4 flex justify-center">
         <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0} className="mr-2 px-3 py-1 bg-slate-700 rounded hover:bg-slate-900 transition text-white">
@@ -293,9 +332,8 @@ const FaqTable = () => {
         contentLabel="Banner Details"
         className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
       >
-         
         <div className="bg-white p-8 rounded shadow-lg w-96 relative">
-        <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
+          <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
             <FaTimes size={20} />
           </button>
           <h2 className="text-xl font-bold font-serif mb-4">FAQ</h2>
@@ -305,7 +343,7 @@ const FaqTable = () => {
                 <p className="mr-2 font-semibold font-serif">Qusetion :</p>
                 <p>{selectedFAQ.question}</p>
               </div>
-            <div className=" mt-2">
+              <div className=" mt-2">
                 <p className="mr-2 font-semibold font-serif">Answer :</p>
                 <ReactQuill
                   readOnly={true}
@@ -324,6 +362,37 @@ const FaqTable = () => {
           >
             Close
           </button> */}
+        </div>
+      </Modal>
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onRequestClose={closeDeleteConfirm}
+        contentLabel="Confirm Deletion"
+        className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+          <button onClick={closeDeleteConfirm} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+            <FaTimes size={18} />
+          </button>
+          <h2 className="text-lg font-semibold mb-2">Confirm Deletion</h2>
+          <p className="text-gray-700 mb-6">Are you sure you want to delete this FAQ? This action cannot be undone.</p>
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={closeDeleteConfirm}
+              className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

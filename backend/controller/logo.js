@@ -1,6 +1,7 @@
 const Logo = require('../model/logo'); 
 const path = require('path');
 const fs = require('fs');
+const mime = require('mime-types');
 
 // Get all images
 const getAllLogos = async (req, res) => {
@@ -66,10 +67,22 @@ const downloadLogo = (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, '../logos', filename);
 
-  res.download(filePath, (err) => {
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: 'Image not found' });
+  }
+
+  // Infer content type from filename
+  const contentType = mime.lookup(filePath) || 'application/octet-stream';
+  res.setHeader('Content-Type', contentType);
+  // Cache for 7 days
+  res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+
+  res.sendFile(filePath, (err) => {
     if (err) {
-      console.error(err);
-      res.status(500).json({ message: 'File download failed' });
+      console.error('Error sending image file:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Error serving image' });
+      }
     }
   });
 };

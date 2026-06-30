@@ -1,6 +1,14 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useTable, useSortBy } from "react-table";
-import { FaEdit, FaTrashAlt, FaCheck, FaEye, FaTimes, FaArrowUp, FaArrowDown, FaPlus } from "react-icons/fa";
+import { Edit,  //Edit
+  Trash2,  //Trash2
+  Check,  //Check
+  Eye,  //Eye
+  X,  //X
+  ArrowUp,  //ArrowUp
+  ArrowDown,  //ArrowDown
+  Plus  //Plus
+ } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
@@ -18,22 +26,72 @@ const CorevalueTable = () => {
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
   const [corevalues, setCorevalues] = useState([]);
-  const [loadings, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCorevalue, setSelectedCorevalue] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [corevalueToDelete, setCorevalueToDelete] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
   const navigate = useNavigate();
 
   const filteredCorevalues = useMemo(() => {
-    return corevalues.filter((corevalue) =>
-      corevalue.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return corevalues.filter(corevalue => {
+      const matchesSearch = searchTerm 
+        ? corevalue.title?.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+      return matchesSearch;
+    });
   }, [corevalues, searchTerm]);
 
-  const notify = () => {
-    toast.success("Updated Successfully!");
+  const paginatedCoreValues = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCorevalues.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCorevalues, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`/api/corevalue/getCorevalue`, { 
+          withCredentials: true 
+        });
+        const corevaluesWithIds = response.data.data.map((cv, index) => ({
+          ...cv,
+          id: index + 1,
+        }));
+        setCorevalues(corevaluesWithIds);
+      } catch (error) {
+        console.error('Error fetching core values:', error);
+        toast.error('Failed to load core values');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handleDeleteClick = async (item) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.title}"?`);
+    if (confirmDelete) {
+      try {
+        await axios.delete(`/api/corevalue/deleteCorevalue?id=${item._id}`, { 
+          withCredentials: true 
+        });
+        setCorevalues(prev => prev.filter(cv => cv._id !== item._id));
+        toast.success("Core value deleted successfully");
+      } catch (error) {
+        console.error('Error deleting core value:', error);
+        toast.error("Failed to delete core value");
+      }
+    }
   };
 
   const columns = useMemo(
@@ -41,69 +99,93 @@ const CorevalueTable = () => {
       {
         Header: "ID",
         accessor: "id",
+        width: 50,
       },
       {
         Header: "Title",
         accessor: "title",
         Cell: ({ row }) => (
-          <span
-            className="hover:text-blue-500 cursor-pointer truncate"
-            onClick={() => navigate(`/corevalue/editCorevalue/${row.original._id}`)}
-          >
-            {row.original.title || 'N/A'}
-          </span>
+          <div className="flex flex-col">
+            <span
+              className="hover:text-blue-500 cursor-pointer"
+              onClick={() => navigate(`/corevalue/editCorevalue/${row.original._id}`)}
+            >
+              {row.original.title}
+            </span>
+            {validationErrors[row.original._id]?.title && (
+              <span className="text-red-500 text-xs">
+                {validationErrors[row.original._id].title}
+              </span>
+            )}
+          </div>
         ),
       },
       {
         Header: "Photo",
         accessor: "photo",
-        Cell: ({ value }) => {
-          const firstImage = Array.isArray(value) && value.length > 0 ? value[0] : null;
-          return firstImage ? (
-            <img src={`/api/image/download/${firstImage}`} alt="Core Value" className="w-20 h-12 sm:w-32 sm:h-20 object-cover rounded" />
-          ) : (
-            <span>N/A</span>
-          );
-        },
+        Cell: ({ value }) => (
+          <div className="w-32 h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+            {value?.[0] ? (
+              <img 
+                src={`/api/image/download/${value[0]}`}
+                alt="Core Value"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/placeholder-image.png';
+                }}
+              />
+            ) : (
+              <span className="text-gray-400 text-sm">No image</span>
+            )}
+          </div>
+        ),
         disableSortBy: true,
       },
       {
         Header: "Status",
         accessor: "status",
-        Cell: ({ value }) => value === "active" ? <FaCheck className="text-green-500" /> : <FaTimes className="text-red-500" />,
-        disableSortBy: true,
+        width: 100,
+        Cell: ({ value }) => (
+          <div className="flex items-center">
+            <span className={`mr-1 ${value === 'active' ? 'text-green-500' : 'text-red-500'}`}>
+              {value === 'active' ? <Check size={16} /> : <X size={16} />}
+            </span>
+            <span className="capitalize text-sm">{value}</span>
+          </div>
+        ),
       },
       {
-        Header: "Options",
+        Header: "Actions",
+        accessor: "actions",
+        width: 120,
         Cell: ({ row }) => (
-          <div className="flex gap-2 sm:gap-4">
+          <div className="flex space-x-2">
             <button
-              className="text-blue-500 hover:text-blue-700 transition"
               onClick={() => handleView(row.original)}
+              className="text-blue-500 hover:text-blue-700"
+              title="View"
             >
-              <FaEye />
+              <Eye size={18} />
             </button>
-            <button className="text-blue-500 hover:text-blue-700 transition">
-              <Link to={`/corevalue/editCorevalue/${row.original._id}`}><FaEdit /></Link>
-            </button>
+            <Link to={`/corevalue/editCorevalue/${row.original._id}`}>
+              <button className="text-green-500 hover:text-green-700" title="Edit">
+                <Edit size={18} />
+              </button>
+            </Link>
             <button
-              className="text-red-500 hover:text-red-700 transition"
-              onClick={() => {
-                setCorevalueToDelete({
-                  id: row.original._id,
-                  name: row.original.title || 'core value',
-                });
-                setIsDeleteModalOpen(true);
-              }}
+              onClick={() => handleDeleteClick(row.original)}
+              className="text-red-500 hover:text-red-700"
+              title="Delete"
             >
-              <FaTrashAlt />
+              <Trash2 size={18} />
             </button>
           </div>
         ),
         disableSortBy: true,
       },
     ],
-    []
+    [navigate, validationErrors]
   );
 
   const {
@@ -115,41 +197,15 @@ const CorevalueTable = () => {
   } = useTable(
     {
       columns,
-      data: filteredCorevalues,
+      data: paginatedCoreValues,
+      initialState: {
+        sortBy: [{ id: 'title', desc: false }]
+      },
+      autoResetSortBy: false,
+      disableMultiSort: true,
     },
     useSortBy
   );
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`/api/corevalue/getCorevalue`, { withCredentials: true });
-      const corevaluesWithIds = response.data.data.map((corevalue, index) => ({
-        ...corevalue,
-        id: index + 1,
-      }));
-      setCorevalues(corevaluesWithIds);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch core values.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteCorevalue = async (id) => {
-    try {
-      await axios.delete(`/api/corevalue/deleteCorevalue?id=${id}`, { withCredentials: true });
-      toast.success("Core value deleted successfully!");
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete core value.");
-    } finally {
-      setIsDeleteModalOpen(false);
-      setCorevalueToDelete(null);
-    }
-  };
 
   const handleView = (corevalue) => {
     setSelectedCorevalue(corevalue);
@@ -161,112 +217,100 @@ const CorevalueTable = () => {
     setSelectedCorevalue(null);
   };
 
-  const handleConfirmDelete = () => {
-    if (corevalueToDelete) {
-      deleteCorevalue(corevalueToDelete.id);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setIsDeleteModalOpen(false);
-    setCorevalueToDelete(null);
-  };
-
-  const fetchHeadings = async () => {
-    try {
-      const response = await axios.get('/api/pageHeading/heading?pageType=corevalue', { withCredentials: true });
-      const { heading, subheading } = response.data;
-      setHeading(heading || '');
-      setSubheading(subheading || '');
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch headings.");
-    }
-  };
-
-  const saveHeadings = async () => {
-    try {
-      await axios.put('/api/pageHeading/updateHeading?pageType=corevalue', {
-        pagetype: 'corevalue',
-        heading,
-        subheading,
-      }, { withCredentials: true });
-      notify();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update headings.");
-    }
-  };
-
-  useEffect(() => {
-    fetchHeadings();
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const handleHeadingChange = (e) => setHeading(e.target.value);
   const handleSubheadingChange = (e) => setSubheading(e.target.value);
 
+  const saveHeadings = async () => {
+    try {
+      await axios.put('/api/pageHeading/updateHeading', {
+        pageType: 'corevalue',
+        heading,
+        subheading,
+      }, { withCredentials: true });
+      toast.success('Headings updated successfully');
+    } catch (error) {
+      console.error('Error updating headings:', error);
+      toast.error('Failed to update headings');
+    }
+  };
+
+  useEffect(() => {
+    const loadHeadings = async () => {
+      try {
+        const response = await axios.get('/api/pageHeading/heading', {
+          params: { pageType: 'corevalue' },
+          withCredentials: true
+        });
+        setHeading(response.data.heading || '');
+        setSubheading(response.data.subheading || '');
+      } catch (error) {
+        console.error('Error loading headings:', error);
+      }
+    };
+
+    loadHeadings();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <UseAnimations animation={loading} size={56} />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 overflow-x-auto">
+    <div className="p-4 overflow-x-auto">
       <ToastContainer />
-      <div className="mb-6 sm:mb-8 border border-gray-200 shadow-lg p-4 sm:p-6 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Heading</label>
+      <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded ">
+        <div className="grid md:grid-cols-2 md:gap-2 grid-cols-1">
+          <div className="mb-6">
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">Heading</label>
             <input
               type="text"
               value={heading}
               onChange={handleHeadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300 text-sm sm:text-base"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
             />
           </div>
-          <div>
-            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif text-sm sm:text-base">Sub heading</label>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-bold mb-2 uppercase font-serif">Sub heading</label>
             <input
               type="text"
               value={subheading}
               onChange={handleSubheadingChange}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300 text-sm sm:text-base"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
             />
           </div>
         </div>
         <button
           onClick={saveHeadings}
-          className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-900 transition duration-300 font-serif text-sm sm:text-base"
+          className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif"
         >
           Save
         </button>
       </div>
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-700 font-serif uppercase">Core Values</h1>
-        <div className="flex flex-col items-stretch sm:items-end">
-          <button
-            onClick={() => {
-              if (corevalues.length < 5) {
-                navigate('/corevalue/createCorevalue');
-              }
-            }}
-            disabled={corevalues.length >= 5}
-            className={`px-4 py-2 rounded-md transition duration-300 font-serif flex items-center gap-2 text-sm sm:text-base mt-2 sm:mt-0
-              ${corevalues.length >= 5 ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-900'}`}
-            aria-disabled={corevalues.length >= 5}
-          >
-            <FaPlus size={15} /> <span className="hidden sm:inline">Add Core Value</span>
-          </button>
-          {corevalues.length === 4 && (
-            <p className="text-amber-600 text-xs sm:text-sm mt-1">
-              Warning: You are nearing the limit (4 of 5). You can add one more core value.
-            </p>
-          )}
-          {corevalues.length >= 5 && (
-            <p className="text-red-600 text-xs sm:text-sm mt-1">
-              Limit reached: Maximum 5 core values allowed. Delete an existing one to add more.
-            </p>
-          )}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-bold text-gray-700 font-serif uppercase">Core Values</h1>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={showActiveOnly}
+              onChange={(e) => {
+                setShowActiveOnly(e.target.checked);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
+              className="rounded text-slate-700"
+            />
+            <span className="text-sm text-gray-700">Show active only</span>
+          </label>
         </div>
+        <Link to="/corevalue/createCorevalue">
+          <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif flex items-center">
+            <Plus size={15} className="mr-1" /> Add New
+          </button>
+        </Link>
       </div>
       <div className="mb-4">
         <input
@@ -274,155 +318,151 @@ const CorevalueTable = () => {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300 text-sm sm:text-base"
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
         />
       </div>
-      <h2 className="text-md sm:text-lg font-semibold mb-4 font-serif">Manage Core Values</h2>
-      {loadings ? (
-        <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
-      ) : (
-        <>
-          {filteredCorevalues.length === 0 ? (
-            <div className="flex justify-center items-center h-64">
-              <iframe className="w-64 h-64 sm:w-96 sm:h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
-            </div>
-          ) : (
-            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
-              <thead className="bg-slate-700 hover:bg-slate-800 text-white">
-                {headerGroups.map((headerGroup) => (
-                  <tr {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column) => (
-                      <th
-                        {...column.getHeaderProps(column.getSortByToggleProps())}
-                        className="py-2 px-2 sm:px-4 border-b border-gray-300 cursor-pointer uppercase font-serif text-sm sm:text-base"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{column.render("Header")}</span>
-                          {column.canSort && (
-                            <span className="ml-1">
-                              {column.isSorted ? (
-                                column.isSortedDesc ? (
-                                  <FaArrowDown />
-                                ) : (
-                                  <FaArrowUp />
-                                )
+      <h2 className="text-md font-semibold mb-4">Manage Core Values</h2>
+      {
+        corevalues.length == 0 ? <div className="flex justify-center items-center"><iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe></div>
+          :
+          <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+            <thead className="bg-slate-700 hover:bg-slate-800 text-white">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                      {...column.getHeaderProps(column.getSortByToggleProps())}
+                      className="py-2 px-4 border-b border-gray-300 cursor-pointer uppercase font-serif "
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="">{column.render("Header")}</span>
+                        {column.canSort && (
+                          <span className="ml-1">
+                            {column.isSorted ? (
+                              column.isSortedDesc ? (
+                                <ArrowDown />
                               ) : (
-                                <FaArrowDown className="text-gray-400" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </th>
+                                <ArrowUp />
+                              )
+                            ) : (
+                              <ArrowDown className="text-gray-400" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+                    {row.cells.map((cell) => (
+                      <td {...cell.getCellProps()} className="py-2 px-4 ">
+                        {cell.render("Cell")}
+                      </td>
                     ))}
                   </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {rows.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} className="border-b border-gray-300 hover:bg-gray-100 transition duration-150">
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="py-2 px-2 sm:px-4 text-sm sm:text-base">
-                          {cell.render("Cell")}
-                        </td>
-                      ))}
-                    </tr>
-                  )})
-                }
-              </tbody>
-            </table>
-          )}
-        </>
+                );
+              })}
+            </tbody>
+          </table>
+      }
+      {filteredCorevalues.length > 0 && (
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-600">
+            Showing {currentPage * itemsPerPage - itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCorevalues.length)} of {filteredCorevalues.length} entries
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-900'}`}
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(5, Math.ceil(filteredCorevalues.length / itemsPerPage)) }, (_, i) => {
+              // Show page numbers with ellipsis for large numbers of pages
+              let pageNum;
+              if (Math.ceil(filteredCorevalues.length / itemsPerPage) <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= Math.ceil(filteredCorevalues.length / itemsPerPage) - 2) {
+                pageNum = Math.ceil(filteredCorevalues.length / itemsPerPage) - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-1 rounded ${currentPage === pageNum ? 'bg-slate-700 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            {Math.ceil(filteredCorevalues.length / itemsPerPage) > 5 && (
+              <span className="px-2 py-1">...</span>
+            )}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredCorevalues.length / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredCorevalues.length / itemsPerPage)}
+              className={`px-3 py-1 rounded ${currentPage === Math.ceil(filteredCorevalues.length / itemsPerPage) ? 'bg-gray-200 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-900'}`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
-        contentLabel="Core Value Details"
-        className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 p-4"
+        contentLabel="Banner Details"
+        className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
       >
-        <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-sm sm:max-w-lg md:max-w-2xl max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold font-serif text-gray-800">Core Value Details</h2>
-            <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
-              <FaTimes size={20} />
-            </button>
-          </div>
+        <div className="bg-white p-8 rounded shadow-lg w-96 relative">
+        <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
+            <X size={20} />
+          </button>
+          <h2 className="text-xl font-bold mb-4 uppercase font-serif">Core value </h2>
           {selectedCorevalue && (
-            <div className="space-y-4 text-sm sm:text-base">
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <p className="font-semibold font-serif mr-2">Title:</p>
-                <p>{selectedCorevalue.title || 'N/A'}</p>
+            <div className="">
+              <div className="flex mt-2">
+                <p className="mr-2 font-semibold font-serif">Title :</p>
+                <p>{selectedCorevalue.title}</p>
               </div>
-              <div className="flex flex-col">
-                <p className="font-semibold font-serif">Description:</p>
+              <div className=" mt-2">
+                <p className="mr-2 font-semibold font-serif">Description :</p>
                 <ReactQuill
                   readOnly={true}
-                  value={selectedCorevalue.description || ''}
+                  value={selectedCorevalue.description}
                   modules={{ toolbar: false }}
                   theme="bubble"
                   className="quill"
                 />
               </div>
-              <div className="flex flex-col">
-                <p className="font-semibold font-serif">Photos:</p>
-                {selectedCorevalue.photo && Array.isArray(selectedCorevalue.photo) && selectedCorevalue.photo.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                    {selectedCorevalue.photo.map((image, index) => (
-                      <img
-                        key={index}
-                        src={`/api/image/download/${image}`}
-                        alt={selectedCorevalue.alt?.[index] || `Core Value Image ${index + 1}`}
-                        className="w-full h-32 sm:h-40 object-cover rounded-md"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p>No photos available</p>
-                )}
-              </div>
-              <div className="flex flex-col">
-                <p className="font-semibold font-serif">Alt Text:</p>
-                {selectedCorevalue.alt && Array.isArray(selectedCorevalue.alt) && selectedCorevalue.alt.length > 0 ? (
-                  <ul className="list-disc list-inside">
-                    {selectedCorevalue.alt.map((altText, index) => (
-                      <li key={index}>{altText || 'N/A'}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>N/A</p>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <p className="font-semibold font-serif mr-2">Status:</p>
-                <p>{selectedCorevalue.status === 'active' ? 'Active' : 'Inactive'}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <p className="font-semibold font-serif mr-2">Created At:</p>
-                <p>{selectedCorevalue.createdAt ? new Date(selectedCorevalue.createdAt).toLocaleString() : 'N/A'}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <p className="font-semibold font-serif mr-2">Updated At:</p>
-                <p>{selectedCorevalue.updatedAt ? new Date(selectedCorevalue.updatedAt).toLocaleString() : 'N/A'}</p>
-              </div>
             </div>
           )}
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-900 transition duration-300 font-serif text-sm sm:text-base"
-            >
-              Close
-            </button>
-          </div>
+          <button
+            onClick={closeModal}
+            className=" mt-4 px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300"
+          >
+            Close
+          </button>
         </div>
       </Modal>
       <DeleteConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        itemName={corevalueToDelete?.name || 'core value'}
-        itemType="core value"
+      isOpen={isDeleteModalOpen}
+        onClose={closeModal}
+        onConfirm={handleDeleteClick}
+        itemName={selectedCorevalue?.title || 'Core Value'}
+        itemType="Core Value"
       />
     </div>
   );

@@ -29,6 +29,11 @@ const NewCategoryForm = () => {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
+  // Character limits
+  const MAX_CATEGORY_LEN = 200;
+  const MAX_META_LEN = 200; // hard limit
+  const META_RECOMMENDED = 160; // show warning beyond this
+
   const validateFile = (file) => {
     if (!file) return true; // No file selected is valid since photo is optional
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -44,7 +49,17 @@ const NewCategoryForm = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!category.trim()) newErrors.category = "Category is required";
+    // Category name required and only letters and hyphens, no spaces, up to MAX_CATEGORY_LEN
+    if (!category.trim()) {
+      newErrors.category = "Category is required";
+    } else {
+      if (category.length > MAX_CATEGORY_LEN) {
+        newErrors.category = `Category must be ${MAX_CATEGORY_LEN} characters or fewer`;
+      }
+      if (!/^[A-Za-z-]+$/.test(category)) {
+        newErrors.category = "Category Name should only contain letters and hyphens";
+      }
+    }
     if (!slug.trim()) {
       newErrors.slug = "Slug is required";
     } else if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -52,6 +67,10 @@ const NewCategoryForm = () => {
     }
     if (!metatitle.trim()) newErrors.metatitle = "Meta Title is required";
     if (!metadescription.trim()) newErrors.metadescription = "Meta Description is required";
+
+    if (metatitle.length > MAX_META_LEN) newErrors.metatitle = `Meta Title must be ${MAX_META_LEN} characters or fewer`;
+    if (metadescription.length > MAX_META_LEN) newErrors.metadescription = `Meta Description must be ${MAX_META_LEN} characters or fewer`;
+
     if (!status) newErrors.status = "Status is required";
     if (photo && !altText.trim()) newErrors.altText = "Alternative Text is required when a photo is uploaded";
     if (photo && !imgtitle.trim()) newErrors.imgtitle = "Image Title Text is required when a photo is uploaded";
@@ -257,7 +276,7 @@ const NewCategoryForm = () => {
       </h1>
       <div className="mb-4">
         <label htmlFor="parentCategory" className="block font-semibold mb-2">
-          Parent Category<span className="text-red-500">*</span>
+          Parent Category
         </label>
         <select
           id="parentCategory"
@@ -297,10 +316,22 @@ const NewCategoryForm = () => {
           type="text"
           id="title"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            // allow only letters and hyphens, block spaces and others
+            if (val === '' || /^[A-Za-z-]+$/.test(val)) {
+              setCategory(val);
+              setErrors(prev => ({ ...prev, category: '' }));
+            } else {
+              setCategory(val);
+              setErrors(prev => ({ ...prev, category: 'Category Name should only contain letters and hyphens' }));
+            }
+          }}
+          maxLength={MAX_CATEGORY_LEN}
           className={`w-full p-2 border rounded focus:outline-none ${errors.category ? 'border-red-500' : ''}`}
           required
         />
+        <div className="text-xs text-gray-500 mt-1">{category.length}/{MAX_CATEGORY_LEN}</div>
         {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
       </div>
       <div className="mb-6">
@@ -419,8 +450,12 @@ const NewCategoryForm = () => {
           onChange={(e) => setMetatitle(e.target.value)}
           className={`w-full p-2 border rounded focus:outline-none ${errors.metatitle ? 'border-red-500' : ''}`}
           rows="3"
+          maxLength={MAX_META_LEN}
           required
         ></textarea>
+        <div className={`text-xs mt-1 ${metatitle.length > META_RECOMMENDED ? 'text-amber-600' : 'text-gray-500'}`}>
+          {metatitle.length}/{MAX_META_LEN}{metatitle.length > META_RECOMMENDED ? ' (Recommended ≤ 160)' : ''}
+        </div>
         {errors.metatitle && <p className="text-red-500 text-sm mt-1">{errors.metatitle}</p>}
       </div>
       <div className="mb-4">
@@ -433,8 +468,12 @@ const NewCategoryForm = () => {
           onChange={(e) => setMetadescription(e.target.value)}
           className={`w-full p-2 border rounded focus:outline-none ${errors.metadescription ? 'border-red-500' : ''}`}
           rows="3"
+          maxLength={MAX_META_LEN}
           required
         ></textarea>
+        <div className={`text-xs mt-1 ${metadescription.length > META_RECOMMENDED ? 'text-amber-600' : 'text-gray-500'}`}>
+          {metadescription.length}/{MAX_META_LEN}{metadescription.length > META_RECOMMENDED ? ' (Recommended ≤ 160)' : ''}
+        </div>
         {errors.metadescription && <p className="text-red-500 text-sm mt-1">{errors.metadescription}</p>}
       </div>
       <div className="mb-4">

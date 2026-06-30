@@ -213,7 +213,7 @@ const NewCategoryForm = () => {
             )}
             <div className="mb-4">
                 <label htmlFor="title" className="block font-semibold mb-2">
-                    Category
+                    Category <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -225,7 +225,7 @@ const NewCategoryForm = () => {
                 />
             </div>
             <div className="mb-8">
-                <label htmlFor="photo" className="block font-semibold mb-2">Photo</label>
+                <label htmlFor="photo" className="block font-semibold mb-2">Photo <span className="text-red-500">*</span></label>
                 <input
                     type="file"
                     name="photo"
@@ -276,7 +276,7 @@ const NewCategoryForm = () => {
             </div>
             <div className="mb-4 mt-4">
                 <label htmlFor="slug" className="block font-semibold mb-2">
-                    Slug
+                    Slug <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -288,7 +288,7 @@ const NewCategoryForm = () => {
             </div>
             <div className="mb-4 mt-4">
                 <label htmlFor="url" className="block font-semibold mb-2">
-                    URL
+                    URL <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"

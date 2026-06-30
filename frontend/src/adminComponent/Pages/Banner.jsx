@@ -210,7 +210,7 @@ const BannersTable = () => {
   const handleSubheadingChange = (e) => setSubheading(e.target.value);
 
   return (
-    <div className="p-4 overflow-x-auto">
+    <div className="p-4 ">
       <ToastContainer />
       <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded">
         <div className="grid md:grid-cols-2 md:gap-2 grid-cols-1 ">
@@ -240,8 +240,8 @@ const BannersTable = () => {
           Save
         </button>
       </div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Banners</h1>
+      <div className="flex justify-end items-center mb-4">
+        {/* <h1 className="text-xl font-bold  text-gray-700 font-serif uppercase">Banners</h1> */}
         <button className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
           <Link to="/policy/createPolicy">
             <FaPlus size={15} />
@@ -350,9 +350,10 @@ const BannersTable = () => {
         isOpen={isModalOpen}
         onRequestClose={closeModal}
         contentLabel="Banner Details"
-        className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 "
+        overlayClassName="fixed  inset-0 z-[1000] flex items-center justify-center bg-gray-800 bg-opacity-50"
+        className="outline-none w-[90vw] max-w-3xl max-h-[85vh]  overflow-x-hidden p-0"
       >
-        <div className="bg-white p-8 rounded shadow-lg min-w-54 m-4 relative">
+        <div className="bg-white p-8 rounded shadow-lg w-full h-full m-4 relative z-[1001] overflow-x-hidden overflow-y-auto">
         <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-700">
             <FaTimes size={20} />
           </button>

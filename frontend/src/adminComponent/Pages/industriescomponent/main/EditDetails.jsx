@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { useNavigate, useParams } from "react-router-dom";
@@ -342,7 +341,7 @@ const handleServiceSubSubCategoryChange = (e) => {
     setPhotoAlts(updatedPhotoAlts);
     const updatedImgtitle = [...imgtitle];
     updatedImgtitle.splice(index, 1);
-    setPhotoAlts(updatedImgtitle);
+    setImgtitle(updatedImgtitle); // Fixed: was setPhotoAlts instead of setImgtitle
   };
 
   const handleDeleteVideo = async (e) => {
@@ -377,7 +376,7 @@ const handleServiceSubSubCategoryChange = (e) => {
           htmlFor="serviceParentCategory"
           className="block font-semibold mb-2"
         >
-          Service Parent Category
+          Service Parent Category 
         </label>
         <select
           id="serviceParentCategory"
@@ -434,7 +433,7 @@ const handleServiceSubSubCategoryChange = (e) => {
 
 
       <div className="mb-4">
-        <label htmlFor="heading" className="block font-semibold mb-2">Heading</label>
+        <label htmlFor="heading" className="block font-semibold mb-2">Heading   <span className="text-red-500">*</span></label>
        <div className="mb-4">     
            <ReactQuill
           value={heading}
@@ -446,7 +445,7 @@ const handleServiceSubSubCategoryChange = (e) => {
       </div>
 
       <div className="mb-8">
-        <label htmlFor="description" className="block font-semibold mb-2">Description</label>
+        <label htmlFor="description" className="block font-semibold mb-2">Description <span className="text-red-500">*</span></label>
         <ReactQuill
           value={description}
           onChange={setDescription}
@@ -456,93 +455,106 @@ const handleServiceSubSubCategoryChange = (e) => {
       </div>
 
       <div className="mb-4">
-        <label className="block font-semibold mb-2">Current Photos</label>
+        <label className="block font-semibold mb-2">Current Photos </label>
         <div className="flex flex-wrap gap-4">
-          {initialPhotos.map((photo, index) => (
-            <div key={index} className="relative w-56">
-              <img
-                src={`/api/image/download/${photo}`}
-                alt={`Photo ${index + 1}`}
-                className="w-56 h-32 object-cover"
-              />
-              <label htmlFor={`alt-${index}`} className="block mt-2">
-                Alternative Text:
-                <input
-                  type="text"
-                  id={`alt-${index}`}
-                  value={initialPhotoAlts[index] || ""}
-                  onChange={(e) => handleInitialAltTextChange(e, index)}
-                  className="w-full p-2 border rounded focus:outline-none"
+          {initialPhotos.map((photo, index) => {
+            // Handle case where photo might be an object or a string
+            const photoUrl = typeof photo === 'object' && photo.path 
+              ? `/api/image/download/${photo.path}`
+              : `/api/image/download/${photo}`;
+              
+            return (
+              <div key={index} className="relative w-56">
+                <img
+                  src={photoUrl}
+                  alt={`Photo ${index + 1}`}
+                  className="w-56 h-32 object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load image:', photo);
+                    e.target.alt = 'Image failed to load';
+                    e.target.src = '/placeholder-image.jpg'; // Add a placeholder image in your public folder
+                  }}
                 />
-              </label>
-              <label htmlFor={`alt-${index}`} className="block mt-2">
-                Title Text:
-                <input
-                  type="text"
-                  id={`imgtitle-${index}`}
-                  value={initialImgtitle[index]}
-                  onChange={(e) => handleInitialImgtitleChange(e, index)}
-                  className="w-full p-2 border rounded focus:outline-none"
-                />
-              </label>
-              <button
-                onClick={(e) => handleDeleteInitialPhoto(e, photo, index)}
-                className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 flex justify-center items-center"
-              >
-                <span className="text-xs">X</span>
-              </button>
-            </div>
-          ))}
+                <label htmlFor={`alt-${index}`} className="block mt-2">
+                  Alternative Text: <span className="text-red-500">*</span>
+                  <input
+                    type="text"
+                    id={`alt-${index}`}
+                    value={initialPhotoAlts[index] || ""}
+                    onChange={(e) => handleInitialAltTextChange(e, index)}
+                    className="w-full p-2 border rounded focus:outline-none"
+                  />
+                </label>
+                <label htmlFor={`alt-${index}`} className="block mt-2">
+                  Title Text: <span className="text-red-500">*</span>
+                  <input
+                    type="text"
+                    id={`imgtitle-${index}`}
+                    value={initialImgtitle[index] || ""}
+                    onChange={(e) => handleInitialImgtitleChange(e, index)}
+                    className="w-full p-2 border rounded focus:outline-none"
+                  />
+                </label>
+                <button
+                  onClick={(e) => handleDeleteInitialPhoto(e, photo, index)}
+                  className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 flex justify-center items-center"
+                >
+                  <span className="text-xs">X</span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="mb-4">
-        <label className="block font-semibold mb-2">Add New Photos</label>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          multiple
-          accept="image/*"
-          className="p-2 border rounded"
+  <label className="block font-semibold mb-2">Add New Photos (image size should be 750x450 for better UI )</label>
+  <input
+    type="file"
+    onChange={handleFileChange}
+    multiple
+    accept="image/*"
+    className="p-2 border rounded"
+  />
+  <div className="flex flex-wrap gap-4 mt-4">
+    {photos.map((file, index) => (
+      <div key={index} className="relative w-56">
+        {/* Fixed: Uncommented the image preview */}
+        <img
+          src={URL.createObjectURL(file)}
+          alt={`New Photo ${index + 1}`}
+          className="w-56 h-32 object-cover"
         />
-        <div className="flex flex-wrap gap-4 mt-4">
-          {photos.map((file, index) => (
-            <div key={index} className="relative w-56">
-              {/* <img
-                src={URL.createObjectURL(file)}
-                alt={`New Photo ${index + 1}`}
-                className="w-56 h-32 object-cover"
-              /> */}
-              <label htmlFor={`alt-new-${index}`} className="block mt-2">
-                Alternative Text:
-                <input
-                  type="text"
-                  id={`alt-new-${index}`}
-                  value={photoAlts[index] || ""}
-                  onChange={(e) => handleNewAltTextChange(e, index)}
-                  className="w-full p-2 border rounded focus:outline-none"
-                />
-              </label>
-              <label htmlFor={`imgtitle-new-${index}`} className="block mt-2">
-                Title Text:
-                <input
-                  type="text"
-                  id={`imgtitle-new-${index}`}
-                  value={imgtitle[index] || ""}
-                  onChange={(e) => handleNewImgtitleChange(e, index)}
-                  className="w-full p-2 border rounded focus:outline-none"
-                />
-              </label>
-              <button
-                onClick={(e) => handleDeleteNewPhoto(e, index)}
-                className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 flex justify-center items-center"
-              >
-                <span className="text-xs">X</span>
-              </button>
-            </div>
-          ))}
-        </div>
+        <label htmlFor={`alt-new-${index}`} className="block mt-2">
+          Alternative Text: <span className="text-red-500">*</span>
+          <input
+            type="text"
+            id={`alt-new-${index}`}
+            value={photoAlts[index] || ""}
+            onChange={(e) => handleNewAltTextChange(e, index)}
+            className="w-full p-2 border rounded focus:outline-none"
+          />
+        </label>
+        <label htmlFor={`imgtitle-new-${index}`} className="block mt-2">
+          Title Text: <span className="text-red-500">*</span>
+          <input
+            type="text"
+            id={`imgtitle-new-${index}`}
+            value={imgtitle[index] || ""}
+            onChange={(e) => handleNewImgtitleChange(e, index)}
+            className="w-full p-2 border rounded focus:outline-none"
+          />
+        </label>
+        <button
+          onClick={(e) => handleDeleteNewPhoto(e, index)}
+          className="absolute top-4 right-2 bg-red-500 text-white rounded-md p-1 flex justify-center items-center"
+        >
+          <span className="text-xs">X</span>
+        </button>
       </div>
+    ))}
+  </div>
+</div>
 
 
       <div className="mb-4">

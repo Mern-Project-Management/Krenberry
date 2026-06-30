@@ -201,6 +201,12 @@ const postInquiry = async (req, res) => {
 
 const getInquiries = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const category = req.query.category || "All";
+    const search = req.query.search || "";
+
     const totalCount = await Inquiry.countDocuments();
 
     const countWithFields = await Inquiry.countDocuments({
@@ -225,36 +231,55 @@ const getInquiries = async (req, res) => {
       ]
     });
 
-    const dataWithFields = await Inquiry.find({
-      $or: [
-        { utm_source: { $exists: true, $ne: '' } },
-        { utm_medium: { $exists: true, $ne: '' } },
-        { utm_campaign: { $exists: true, $ne: '' } },
-        { utm_id: { $exists: true, $ne: '' } },
-        { gclid: { $exists: true, $ne: '' } },
-        { gcid_source: { $exists: true, $ne: '' } }
-      ]
-    });
+    let baseQuery = {};
+    if (category === "GPM") {
+      baseQuery = {
+        $or: [
+          { utm_source: { $exists: true, $ne: '' } },
+          { utm_medium: { $exists: true, $ne: '' } },
+          { utm_campaign: { $exists: true, $ne: '' } },
+          { utm_id: { $exists: true, $ne: '' } },
+          { gclid: { $exists: true, $ne: '' } },
+          { gcid_source: { $exists: true, $ne: '' } }
+        ]
+      };
+    } else if (category === "SEO") {
+      baseQuery = {
+        $nor: [
+          { utm_source: { $exists: true, $ne: '' } },
+          { utm_medium: { $exists: true, $ne: '' } },
+          { utm_campaign: { $exists: true, $ne: '' } },
+          { utm_id: { $exists: true, $ne: '' } },
+          { gclid: { $exists: true, $ne: '' } },
+          { gcid_source: { $exists: true, $ne: '' } }
+        ]
+      };
+    }
 
-    const dataWithoutFields = await Inquiry.find({
-      $nor: [
-        { utm_source: { $exists: true, $ne: '' } },
-        { utm_medium: { $exists: true, $ne: '' } },
-        { utm_campaign: { $exists: true, $ne: '' } },
-        { utm_id: { $exists: true, $ne: '' } },
-        { gclid: { $exists: true, $ne: '' } },
-        { gcid_source: { $exists: true, $ne: '' } }
-      ]
-    });
+    let query = baseQuery;
 
-    const inquiries = await Inquiry.find();
+    if (search.trim()) {
+      const searchQuery = {
+        $or: [
+          { firstname: { $regex: search, $options: 'i' } },
+          { lastname: { $regex: search, $options: 'i' } }
+        ]
+      };
+      query = { ...baseQuery, ...searchQuery };
+    }
+
+    const total = await Inquiry.countDocuments(query);
+
+    const inquiries = await Inquiry.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
+      total,
       totalCount,
       countWithFields,
       countWithoutFields,
-      dataWithFields,
-      dataWithoutFields,
       inquiries
     });
   } catch (error) {

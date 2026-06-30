@@ -12,12 +12,12 @@ import IndustryServiceSlider from '../components/Design/IndustryServiceSlider'
 import FAQ from '../components/Faq'
 import Companies from "../components/Design/companies"
 
-export default function SocialMedia() {
+export default function   SocialMedia() {
   return (
     <div>
       <HeroSection />
-      <LatestProduct/>
       <CraftRight />
+      <LatestProduct/>
       <CraftLeft/>
       <IndustryServiceSlider/>
       <Companies/>

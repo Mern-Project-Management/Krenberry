@@ -22,10 +22,18 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
   const pageSize = 5;
   const navigate = useNavigate();
 
+  // Helpers to normalize text: strip HTML, lowercase, collapse whitespace, and trim
+  const stripHTML = (html) => (html || "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ");
+  const normalize = (textOrHtml) => stripHTML(textOrHtml).toLowerCase().replace(/\s+/g, " ").trim();
+
   const filteredServices = useMemo(() => {
-    return services.filter((service) =>
-      service?.heading?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const query = normalize(searchTerm);
+    return services.filter((service) => {
+      if (!query) return true; // empty or only spaces -> show all
+      const h = normalize(service?.heading || "");
+      const d = normalize(service?.description || "");
+      return h.includes(query) || d.includes(query);
+    });
   }, [services, searchTerm]);
 
   const columns = useMemo(
@@ -37,9 +45,8 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
           <span
             className="hover:text-blue-500 cursor-pointer"
             onClick={() => navigate(`/services/editService/${row.original._id}`)}
-          >
-            {row.original.heading}
-          </span>
+            dangerouslySetInnerHTML={{ __html: row.original.heading }}
+          />
         ),
       },
       {
@@ -165,6 +172,16 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
     }
   };
 
+  const handleAddNew = () => {
+    if (services.length >= 2) {
+      toast.error('Maximum of 2 services allowed per category');
+      return;
+    }
+    navigate(`/services/createService/${categoryId}`, { 
+      state: { categoryId, subcategoryId, subsubcategoryId } 
+    });
+  };
+
   useEffect(() => {
     if (categoryId) {
       fetchData(0);
@@ -176,15 +193,19 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
       <ToastContainer />
 
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold font-serif text-gray-700 uppercase">Services</h1>
-        <Link to={`/services/createService/${categoryId}`} className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-900 transition duration-300 font-serif">
-          <FaPlus size={15} />
-        </Link>
+        <h1 className="text-xl font-bold font-serif text-gray-700 uppercase">Services  <span className="text-red-500 font-normal"  >(Max 2 services allowed per category)</span> </h1>
+        <button
+          onClick={handleAddNew}
+          disabled={services.length >= 2}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-white ${services.length >= 2 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+        >
+          <FaPlus /> Add New
+        </button>
       </div>
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by name..."
+          placeholder="Search by heading or description..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full p-2 border rounded"
@@ -203,15 +224,25 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
           ) : (
             <table {...getTableProps()} className="min-w-full border-collapse border border-gray-300">
               <thead>
-                {headerGroups.map(headerGroup => (
-                  <tr {...headerGroup.getHeaderGroupProps()} className="bg-gray-100">
-                    {headerGroup.headers.map(column => (
-                      <th {...column.getHeaderProps()} className="border border-gray-300 p-2 text-left font-bold">
-                        {column.render("Header")}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                {headerGroups.map(headerGroup => {
+                  const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+                  return (
+                    <tr key={key} {...restHeaderGroupProps} className="bg-gray-100">
+                      {headerGroup.headers.map(column => {
+                        const { key: headerKey, ...restHeaderProps } = column.getHeaderProps();
+                        return (
+                          <th 
+                            key={headerKey} 
+                            {...restHeaderProps} 
+                            className="border border-gray-300 p-2 text-left font-bold"
+                          >
+                            {column.render("Header")}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </thead>
               <tbody {...getTableBodyProps()}>
                 {rows.map(row => {
@@ -240,7 +271,10 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
         overlayClassName="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center"
       >
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold text-gray-800">{selectedService?.heading}</h2>
+          <h2
+            className="text-2xl font-bold text-gray-800"
+            dangerouslySetInnerHTML={{ __html: selectedService?.heading }}
+          />
           <div
             className="text-gray-600"
             dangerouslySetInnerHTML={{ __html: selectedService?.description }}
@@ -266,7 +300,9 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
               <ul className="list-disc pl-5 mt-2 text-gray-600">
                 {selectedService.questions.map((question) => (
                   <li key={question._id} className="mb-2">
-                    <strong>{question.question}</strong>: {question.answer}
+                    <strong dangerouslySetInnerHTML={{ __html: question.question }} />
+                    <span>: </span>
+                    <span dangerouslySetInnerHTML={{ __html: question.answer }} />
                   </li>
                 ))}
               </ul>
@@ -285,10 +321,10 @@ const ServicesTable = ({ categoryId, subcategoryId, subsubcategoryId }) => {
       <Modal
         isOpen={isDeleteModalOpen}
         onRequestClose={closeDeleteModal}
-        className="bg-white p-6 w-full max-w-7xl max-h-[90vh] rounded-lg shadow-lg overflow-y-auto mx-auto my-10 outline-none"
+        className="bg-white p-6 w-full max-w-xl max-h-[90vh] rounded-lg shadow-lg overflow-y-auto mx-auto my-10 outline-none"
         overlayClassName="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center"
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col  gap-4">
           <h3 className="text-2xl font-bold text-gray-800">
             Are you sure you want to delete this service?
           </h3>

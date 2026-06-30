@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 export default function HeroSection() {
-  const [heroSection, setHeroSection] = useState("");
+  const [heroSection, setHeroSection] = useState({});
   const location = useLocation();
 
   useEffect(() => {
@@ -24,15 +24,25 @@ export default function HeroSection() {
     fetchHeroSection();
   }, [location]);
 
-  return (
-    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col items-center justify-center text-center pt-44 pb-16 p-6">
-      <h1 className="text-white text-6xl md:text-4xl lg:text-6xl font-semibold mb-7">
-        {heroSection.heading || "Blogs"}
-      </h1>
-      <p className="text-white max-w-screen-lg text-xl md:text-xl mb-6">
-        {heroSection.subheading || "This is the blog page"}
-      </p>
+  const heroStyle = heroSection.photo
+    ? {
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/api/logo/download/${heroSection.photo})`,
+      }
+    : {};
 
+  return (
+    <div
+      className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black bg-cover bg-center flex flex-col items-center justify-center text-center pt-44 pb-16 p-6"
+      style={heroStyle}
+    >
+      <div className="relative z-10">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-semibold mb-7 capitalize">
+          {heroSection.heading || "Blogs"}
+        </h1>
+        <p className="text-white max-w-screen-lg text-lg md:text-xl mb-6">
+          {heroSection.subheading || "Insights, articles, and updates from our team."}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -54,7 +54,7 @@ const HeroSection = ({ categoryId, subcategoryId, subsubcategoryId }) => {
     } finally {
       setLoading(false);
     }
-  }, [categoryId]);
+  }, [categoryId, subcategoryId, subsubcategoryId]);
 
   // Save headings to the API
   const saveHeadings = async () => {
@@ -70,6 +70,7 @@ const HeroSection = ({ categoryId, subcategoryId, subsubcategoryId }) => {
         { withCredentials: true }
       );
       notifySuccess();
+      await fetchHeadings();
     } catch (error) {
       console.error(error);
       setError("Failed to save headings. Please try again.");
@@ -97,7 +98,6 @@ const HeroSection = ({ categoryId, subcategoryId, subsubcategoryId }) => {
 
   return (
     <div className="p-4 overflow-x-auto">
-      <ToastContainer />
       <div className="mb-8 border border-gray-200 shadow-lg p-4 rounded">
         <div className="grid md:grid-cols-2 md:gap-2 grid-cols-1">
           <div className="mb-6">

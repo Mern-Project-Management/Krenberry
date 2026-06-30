@@ -22,19 +22,83 @@ export const validateName = (value) => {
   return "";
 };
 
-export const validateEmail = (value) => {
-  if (!value.trim()) return "Email is required";
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(value)) return "Please enter a valid email address";
+export const validateEmail = (email) => {
+  if (!email || !email.trim()) {
+    return "Email is required";
+  }
+  
+  const trimmedEmail = email.trim().toLowerCase();
+  
+  // Check if @ symbol exists and appears only once
+  const atCount = (trimmedEmail.match(/@/g) || []).length;
+  if (atCount !== 1) {
+    return "Email must contain exactly one @ symbol";
+  }
+  
+  const [localPart, domainPart] = trimmedEmail.split("@");
+  
+  // Validate local part (before @)
+  if (!localPart || localPart.length === 0) {
+    return "Email must have characters before @";
+  }
+  
+  // Local part cannot start or end with special characters
+  if (/^[^a-zA-Z0-9]/.test(localPart) || /[^a-zA-Z0-9]$/.test(localPart)) {
+    return "Email cannot start or end with special characters";
+  }
+  
+  // Local part can only contain letters, numbers, dots, underscores, and hyphens
+  if (!/^[a-zA-Z0-9._-]+$/.test(localPart)) {
+    return "Email contains invalid characters before @";
+  }
+  
+  // Check for consecutive dots in local part
+  if (localPart.includes("..")) {
+    return "Email cannot contain consecutive dots";
+  }
+  
+  // Validate domain part (after @)
+  if (!domainPart || domainPart.length < 3) {
+    return "Please enter a valid email domain";
+  }
+  
+  // Domain must contain at least one dot
+  if (!domainPart.includes(".")) {
+    return "Email domain must include a dot (e.g., example.com)";
+  }
+  
+  // Domain can only contain letters, numbers, dots, and hyphens
+  if (!/^[a-zA-Z0-9.-]+$/.test(domainPart)) {
+    return "Email domain contains invalid characters";
+  }
+  
+  // Domain cannot start or end with a dot or hyphen
+  if (/^[.-]/.test(domainPart) || /[.-]$/.test(domainPart)) {
+    return "Email domain cannot start or end with a dot or hyphen";
+  }
+  
+  // Validate TLD (top-level domain)
+  const domainParts = domainPart.split(".");
+  const tld = domainParts[domainParts.length - 1];
+  
+  // TLD must be at least 2 characters and contain only letters
+  if (!tld || tld.length < 2 || !/^[a-zA-Z]+$/.test(tld)) {
+    return "Email must have a valid domain extension (e.g., .com, .org)";
+  }
+  
+  // Check for numeric-only TLD (e.g., .23)
+  if (/^\d+$/.test(tld)) {
+    return "Email domain extension cannot be only numbers";
+  }
+  
   return "";
 };
 
 export const validateMobileNo = (value) => {
-  if (!value.trim()) return "Phone number is required";
-  if (!/^\d+$/.test(value)) return "Phone number can only contain digits";
-  if (value.length !== 10) return "Phone number must be exactly 10 digits";
-  return "";
-};
+    if (!value) return "This field is required";
+    if (!/^[6-9]\d{9}$/.test(value)) return "Please enter a valid  mobile number.";
+    return "";
+  };
 
 export const validateResume = (file) => {
   if (!file) return "Resume is required";

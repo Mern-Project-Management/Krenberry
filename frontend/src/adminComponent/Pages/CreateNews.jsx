@@ -56,7 +56,32 @@ const NewNewsForm = () => {
   const [serviceParentCategoryId, setServiceParentCategoryId] = useState("");
   const [serviceSubCategoryId, setServiceSubCategoryId] = useState("");
   const [serviceSubSubCategoryId, setServiceSubSubCategoryId] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    details: '',
+    title: '',
+    postedBy: '',
+    date: '',
+    parentCategoryId: '',
+    serviceParentCategoryId: '',
+    photoAlts: [],
+    imgTitles: [],
+    slug: '',
+    metatitle: '',
+    metadescription: '',
+    metakeywords: '',
+    metalanguage: '',
+    metacanonical: '',
+    metaschema: '',
+    otherMeta: '',
+    url: '',
+    changeFreq: '',
+    priority: '',
+    photos: '',
+    subCategoryId: '',
+    subSubCategoryId: '',
+    serviceSubCategoryId: '',
+    serviceSubSubCategoryId: '',
+  });
 
   const modules = {
     toolbar: [
@@ -73,6 +98,14 @@ const NewNewsForm = () => {
       ["clean"],
     ],
     clipboard: { matchVisual: false },
+  };
+
+  const isDescriptionEmpty = (htmlContent) => {
+    if (!htmlContent) return true;
+    // Remove all HTML tags and trim whitespace
+    const textContent = htmlContent.replace(/<[^>]*>/g, '').trim();
+    // Check if the remaining content is empty
+    return textContent === '';
   };
 
   useEffect(() => {
@@ -150,12 +183,20 @@ const NewNewsForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isDescriptionEmpty(details)) {
+      setErrors(prev => ({
+        ...prev,
+        details: 'Description is required and cannot be empty'
+      }));
+      toast.error('Please enter a valid description');
+      return;
+    }
+
     const newErrors = {
+      ...errors,
+      details: '',
       title: validateTitle(title),
-      details: validateDetails(details),
-      photos: validatePhotos(photos),
-      photoAlts: photos.map((_, i) => validatePhotoAlt(photoAlts[i] || "")),
-      imgTitles: photos.map((_, i) => validatePhotoTitle(imgTitles[i] || "")),
       postedBy: validatePostedBy(postedBy),
       date: validateDate(date),
       parentCategoryId: validateCategoryId(parentCategoryId),
@@ -175,6 +216,9 @@ const NewNewsForm = () => {
       url: validateUrl(url),
       changeFreq: validateChangeFreq(changeFreq),
       priority: validatePriority(priority),
+      photos: validatePhotos(photos),
+      photoAlts: photos.map((_, i) => validatePhotoAlt(photoAlts[i] || "")),
+      imgTitles: photos.map((_, i) => validatePhotoTitle(imgTitles[i] || "")),
     };
 
     setErrors(newErrors);
@@ -185,7 +229,8 @@ const NewNewsForm = () => {
       newErrors.parentCategoryId ||
       newErrors.serviceParentCategoryId ||
       newErrors.photoAlts.some(e => e) ||
-      newErrors.imgTitles.some(e => e)
+      newErrors.imgTitles.some(e => e) ||
+      newErrors.details
     ) {
       toast.error("Please correct the errors in the form");
       return;
@@ -424,17 +469,34 @@ const NewNewsForm = () => {
         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
       </div>
       <div className="mb-8">
-        <label htmlFor="details" className="block font-semibold mb-2">Description </label>
+        <label htmlFor="details" className="block font-semibold mb-2">
+          Description <span className="text-red-500">*</span>
+        </label>
         <ReactQuill
+          id="details"
           value={details}
           onChange={(value) => {
             setDetails(value);
-            setErrors(prev => ({ ...prev, details: validateDetails(value) }));
+            // Clear error when user starts typing
+            if (errors.details) {
+              setErrors(prev => ({ ...prev, details: '' }));
+            }
           }}
-          modules={modules}
-          className="quill"
+          modules={{
+            toolbar: [
+              [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+              ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+              [{'list': 'ordered'}, {'list': 'bullet'}],
+              ['link', 'image'],
+              ['clean']
+            ],
+          }}
+          className={`h-64 mb-12 ${errors.details ? 'border border-red-500' : ''}`}
+          placeholder="Enter news description"
         />
-        {errors.details && <p className="text-red-500 text-sm mt-1">{errors.details}</p>}
+        {errors.details && (
+          <p className="text-red-500 text-sm mt-1">{errors.details}</p>
+        )}
       </div>
       <div className="mb-4">
         <label htmlFor="photos" className="block font-semibold mb-2">Photos </label>

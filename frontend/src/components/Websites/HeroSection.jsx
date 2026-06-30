@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { FaStarOfLife } from "react-icons/fa6";
 import { X } from "lucide-react";
@@ -57,9 +56,8 @@ const AutocompleteInput = ({
         onFocus={() => setIsOpen(true)}
         placeholder={loading ? "Loading..." : placeholder}
         disabled={disabled || loading}
-        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
-          error ? "border-red-500" : "border-white/20"
-        } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+        className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${error ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
       />
       {error && (
         <p className="text-red-500 text-xs mt-1">{error}</p>
@@ -85,7 +83,7 @@ const AutocompleteInput = ({
   );
 };
 
-const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
+const ContactForm = React.memo(({ isModal = false, onSubmit, loading: parentLoading = false }) => {
   const initialFormState = {
     name: "",
     email: "",
@@ -111,14 +109,10 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
   const [loadingCities, setLoadingCities] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const budgetOptions = [
-    "CAD 165K and Above",
-    "CAD 83K - 165K",
-    "CAD 41K - 83K",
-    "CAD 25K - 41K",
-    "CAD 8K - 25K",
-  ];
+  // Use parent loading prop if available, otherwise use local isSubmitting state
+  const loading = parentLoading !== undefined ? parentLoading : isSubmitting;
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -163,12 +157,12 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       name: validateName(formData.name),
       email: validateEmail(formData.email),
       phone: validateMobileNo(formData.phone),
-      // city: validateCategory(formData.city),
-      // service: validateCategory(formData.service),
-      // budget: validateCategory(formData.budget),
+      city: !formData.city.trim() ? "City is required" : "",
+      service: !formData.service.trim() ? "Service is required" : "",
+      budget: !formData.budget.trim() ? "Budget is required" : "",
     };
     setErrors(newErrors);
-    return Object.values(newErrors).every((error) => !error); // Returns true if no errors
+    return newErrors;
   };
 
   const handleInputChange = (e) => {
@@ -177,106 +171,185 @@ const ContactForm = React.memo(({ isModal = false, onSubmit, loading }) => {
       ...prev,
       [name]: value,
     }));
-    // Validate on change
-    let error = "";
-    if (name === "name") error = validateName(value);
-    else if (name === "email") error = validateEmail(value);
-    else if (name === "phone") error = validateMobileNo(value);
-    // else if (name === "city") error = validateCategory(value);
-    // else if (name === "service") error = validateCategory(value);
-    // else if (name === "budget") error = validateCategory(value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (validateForm()) {
-      await onSubmit(formData);
-      setFormData(initialFormState);
-      setErrors({});
-      setResetKey((prev) => prev + 1);
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 5000);
+    const newErrors = validateForm();
+
+    if (Object.values(newErrors).every((error) => !error)) {
+      // Only set local loading state if parent isn't managing it
+      if (parentLoading === false) {
+        setIsSubmitting(true);
+      }
+
+      try {
+        await onSubmit(formData);
+        setFormData(initialFormState);
+        setErrors({});
+        setResetKey((prev) => prev + 1);
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 5000);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+      } finally {
+        if (parentLoading === false) {
+          setIsSubmitting(false);
+        }
+      }
+    } else {
+      // Scroll to first error
+      const firstError = Object.keys(newErrors).find(key => newErrors[key]);
+      if (firstError) {
+        document.querySelector(`[name="${firstError}"]`)?.scrollIntoView({
+          behavior: "smooth",
+          block: 'center'
+        });
+      }
     }
   };
+
+  const budgetOptions = [
+    "CAD 165K and Above",
+    "CAD 83K - 165K",
+    "CAD 41K - 83K",
+    "CAD 25K - 41K",
+    "CAD 8K - 25K",
+  ];
 
   return (
     <form
       onSubmit={handleSubmit}
-      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${
-        isModal
+      className={`p-8 rounded-xl shadow-2xl border transition-transform duration-300 ${isModal
           ? "w-full max-w-md mx-auto bg-black"
           : "bg-white/10 backdrop-blur-lg border-white/10"
-      }`}
+        }`}
     >
       <h3 className="text-2xl font-bold mb-6 text-white text-center">
         Get Started Today
       </h3>
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="name"
+          type="text"
+          placeholder="Your Name"
+          value={formData.name}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.name ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.name && (
+          <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+        )}
+      </div>
 
-      {["name", "email", "phone"].map((field) => (
-        <div key={field} className="mb-4">
-          <input
-            name={field}
-            type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-            placeholder={
-              field.charAt(0).toUpperCase() +
-              field.slice(1) +
-              (field === "phone" ? " No." : "")
-            }
-            value={formData[field]}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-1 rounded-lg bg-white/5 border ${
-              errors[field] ? "border-red-500" : "border-white/20"
-            } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
-            required
-          />
-          {errors[field] && (
-            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
-          )}
-        </div>
-      ))}
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Email <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="email"
+          type="email"
+          placeholder="Your Email"
+          value={formData.email}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.email ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+        />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.city}
-        onChange={handleInputChange}
-        suggestions={cities}
-        placeholder="City"
-        loading={loadingCities}
-        fieldName="city"
-        resetKey={resetKey}
-        error={errors.city}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Phone Number <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="phone"
+          type="tel"
+          placeholder="Your Phone Number"
+          value={formData.phone}
+          onChange={handleInputChange}
+          className={`w-full px-3 py-2 rounded-lg bg-white/5 border ${
+            errors.phone ? "border-red-500" : "border-white/20"
+          } text-white placeholder:text-white/50 focus:outline-none focus:border-[#ec2127] transition-colors duration-300`}
+          required
+          maxLength={10}
+          minLength={10}
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+        )}
+      </div>
 
-      <AutocompleteInput
-        value={formData.service}
-        onChange={handleInputChange}
-        suggestions={category}
-        placeholder="Service"
-        fieldName="service"
-        resetKey={resetKey}
-        error={errors.service}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          City <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.city}
+          onChange={handleInputChange}
+          suggestions={cities}
+          placeholder="Select your city"
+          loading={loadingCities}
+          fieldName="city"
+          resetKey={resetKey}
+          error={errors.city}
+        />
+      </div>
 
-      <AutocompleteInput
-        value={formData.budget}
-        onChange={handleInputChange}
-        suggestions={budgetOptions}
-        placeholder="Your Monthly Budget(CAD)"
-        fieldName="budget"
-        resetKey={resetKey}
-        error={errors.budget}
-      />
+      <div className="mb-4">
+        <label className="block text-white mb-1 text-sm">
+          Service <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.service}
+          onChange={handleInputChange}
+          suggestions={category}
+          placeholder="Select a service"
+          fieldName="service"
+          resetKey={resetKey}
+          error={errors.service}
+        />
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-white mb-1 text-sm">
+          Monthly Budget (CAD) <span className="text-red-500">*</span>
+        </label>
+        <AutocompleteInput
+          value={formData.budget}
+          onChange={handleInputChange}
+          suggestions={budgetOptions}
+          placeholder="Select your budget range"
+          fieldName="budget"
+          resetKey={resetKey}
+          error={errors.budget}
+        />
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className={`w-full py-3 ${
-          loading
+        className={`w-full py-3 ${loading
             ? "bg-gray-400"
             : "bg-gradient-to-r from-[#ec2127] to-red-600"
-        } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
+          } text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg`}
       >
         {loading ? "Submitting..." : "Let's Connect"}
       </button>
@@ -393,14 +466,12 @@ const HeroSection = () => {
   const Modal = useCallback(
     () => (
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${
-          isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ${isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       >
         <div
-          className={`relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center ${
-            isModalOpen ? "scale-100" : "scale-95"
-          }`}
+          className={`relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center ${isModalOpen ? "scale-100" : "scale-95"
+            }`}
         >
           <button
             onClick={() => setIsModalOpen(false)}
@@ -408,90 +479,130 @@ const HeroSection = () => {
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <ContactForm
-            isModal={true}
-            onSubmit={handleFormSubmit}
-            loading={loading}
-          />
+          <ContactForm onSubmit={handleFormSubmit} loading={loading} isModal={true} />
         </div>
       </div>
     ),
     [isModalOpen, loading]
   );
 
-  const SkeletonLoader = () => (
-    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-between text-white">
-      <div className="flex flex-col md:flex-row w-11/12 lg:w-4/5 mx-auto gap-12 py-20">
-        <div className="md:w-[60%] space-y-6 animate-pulse">
-          <div className="h-12 bg-slate-700 rounded-lg w-3/4"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-full"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-5/6"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-4/5"></div>
-          <div className="h-8 bg-slate-700 rounded-lg w-2/3"></div>
+  const renderHeroContent = () => {
+    if (isLoading) {
+      return (
+        <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-[80vh] flex items-center justify-center">
+          <div className="animate-pulse w-full h-96 bg-gray-800 rounded-lg"></div>
         </div>
-        <div className="md:w-[25%] animate-pulse">
-          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl space-y-4">
-            <div className="h-8 bg-slate-700 rounded-lg"></div>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-slate-700 rounded-lg"></div>
-            ))}
+      );
+    }
+
+    if (!heroSection || Object.keys(heroSection).length === 0) {
+      return (
+        <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-[80vh] flex items-center justify-center text-white">
+          <div className="text-center p-8 max-w-2xl mx-auto">
+            <div className="w-32 h-32 mx-auto mb-6 text-gray-400">
+              <svg 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="1" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="w-full h-full"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold mb-4 text-white">Content Coming Soon</h2>
+            <p className="text-gray-300 mb-8 text-lg">
+              We're working on something amazing for this page. Please check back soon!
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[80vh] py-4 flex items-center justify-between text-white overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-20 w-11/12 sm:pt-16 lg:w-4/5 mx-auto my-32">
+          <div className="md:w-[50%] space-y-8">
+            <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
+              <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
+                Best
+              </span>
+              <span className="ml-2 text-[16px] text-gray-700 font-semibold">
+                {heroSection.title}
+              </span>
+            </div>
+            <div className="quill">
+              <div 
+                dangerouslySetInnerHTML={{ __html: heroSection.heading }}
+                style={{
+                  fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                  fontSize: 'inherit',
+                  lineHeight: 'inherit',
+                  fontWeight: 'inherit'
+                }}
+                className="quill-content [&_h1]:text-xl [&_h1]:md:text-3xl [&_h1]:lg:text-4xl text-justify [&_h2]:text-md [&_h2]:md:text-lg [&_h2]:text-gray-100"
+              />
+            </div>
+            <div className="flex sm:block flex-col gap-4 items-center justify-center">
+              <Link to="/contact">
+                <button className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                  Request Proposal
+                </button>
+              </Link>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-[65%]"
+              >
+                Get in Touch
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden md:block xl:w-[35%] w-[40%] relative">
+            <div className="absolute -top-4 -left-4 z-10">
+              <FaStarOfLife className="text-[#ec2127] text-4xl animate-[spin_5s_linear_infinite]" />
+            </div>
+            <ContactForm onSubmit={handleFormSubmit} loading={loading} />
           </div>
         </div>
       </div>
-    </div>
-  );
-
-  if (isLoading) return <SkeletonLoader />;
+    );
+  };
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black md:min-h-[80vh] py-4 flex items-center justify-between text-white overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
-      </div>
-
-      <div className="relative flex flex-col md:flex-row justify-center gap-10 xl:gap-40 w-11/12 pt-16 lg:w-4/5 mx-auto my-32">
-        <div className="md:w-[50%] space-y-8">
-          <div className="inline-flex items-center rounded-full bg-white px-2 py-2 pr-4">
-            <span className="ml-2 text-[16px] font-medium bg-[#ec2127] rounded-full text-white px-4 py-1">
-              Best
-            </span>
-            <span className="ml-2 text-[16px] text-gray-700 font-semibold">
-              {heroSection.title}
-            </span>
-          </div>
-          <ReactQuill
-            readOnly={true}
-            value={heroSection.heading}
-            modules={{ toolbar: false }}
-            theme="bubble"
-            className="quill-content"
-          />
-          <Link to="/contact">
+    <section className="relative">
+      {renderHeroContent()}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
+          <div className="relative w-full max-w-md transform transition-all duration-300 flex flex-col items-center justify-center">
             <button
-              className="mt-6 px-8 py-3 bg-gradient-to-r from-[#ec2127] to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+              onClick={() => setIsModalOpen(false)}
+              className="absolute -bottom-10 z-10 bg-[#1111119f] p-1 rounded-full hover:bg-white/20 transition-colors duration-300"
             >
-              Request Proposal
+              <X className="w-6 h-6 text-white" />
             </button>
-          </Link>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="md:hidden px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg w-full"
-          >
-            Get in Touch
-          </button>
-        </div>
-
-        <div className="hidden md:block xl:w-[25%] w-[40%] relative">
-          <div className="absolute -top-4 -left-4 z-10">
-            <FaStarOfLife className="text-[#ec2127] text-4xl animate-[spin_5s_linear_infinite]" />
+            <ContactForm onSubmit={handleFormSubmit} loading={loading} isModal={true} />
           </div>
-          <ContactForm onSubmit={handleFormSubmit} loading={loading} />
         </div>
-      </div>
-      <Modal />
-    </div>
+      )}
+    </section>
   );
 };
 
+export { ContactForm };
 export default HeroSection;

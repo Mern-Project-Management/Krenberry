@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useTable, useSortBy } from "react-table";
-import { FaEdit, FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { FaEdit, FaTrash, FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import UseAnimations from "react-useanimations";
@@ -61,7 +61,7 @@ const flattenData = (data, type) => {
 
 const MetaDetailsTable = () => {
   const [metaDetails, setMetaDetails] = useState([]);
-  const [loadings, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [filterNoMetaTitle, setFilterNoMetaTitle] = useState(false);
@@ -75,9 +75,6 @@ const MetaDetailsTable = () => {
       return matchesSearch && matchesMetaTitleFilter && matchesMetaDescriptionFilter;
     });
   }, [metaDetails, searchTerm, filterNoMetaTitle, filterNoMetaDescription]);
-
-
-
 
   const columns = useMemo(
     () => [
@@ -100,6 +97,12 @@ const MetaDetailsTable = () => {
             <button className="text-blue-500 hover:text-blue-700 transition">
               <Link to={`/metadetails/editMetaDetails/${row.original._id}/${row.original.type}`}><FaEdit /></Link>
             </button>
+            <button
+              className="text-red-500 hover:text-red-700 transition"
+              onClick={() => handleDelete(row.original._id, row.original.type)}
+            >
+              <FaTrash />
+            </button>
           </div>
         ),
         disableSortBy: true,
@@ -121,6 +124,19 @@ const MetaDetailsTable = () => {
     },
     useSortBy
   );
+
+  const handleDelete = async (id, type) => {
+    if (window.confirm("Are you sure you want to delete this meta entry? This action cannot be undone.")) {
+      try {
+        await axios.delete(`/api/sitemap/deleteMeta/${id}/${type}`, { withCredentials: true });
+        // Refresh the data after deletion
+        fetchData();
+      } catch (error) {
+        console.error("Error deleting meta entry:", error);
+        alert("Failed to delete the entry. Please try again.");
+      }
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -175,7 +191,7 @@ const MetaDetailsTable = () => {
           type="text"
           placeholder="Search by URL..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value.trim())}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
         />
       </div>
@@ -200,13 +216,17 @@ const MetaDetailsTable = () => {
         </label>
       </div>
       <h2 className="text-md font-semibold mb-4">Manage Meta Details</h2>
-      {loadings ? (
+      {loading ? (
         <div className="flex justify-center"><UseAnimations animation={loading} size={56} /></div>
 
       ) : (
         <>
-          {metaDetails.length == 0 ? <div className="flex justify-center items-center"><iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe></div>
-            : <table className="w-full mt-4 border-collapse" {...getTableProps()}>
+          {filteredMetaDetails.length === 0 ? (
+            <div className="flex justify-center items-center">
+              <iframe className="w-96 h-96" src="https://lottie.host/embed/1ce6d411-765d-4361-93ca-55d98fefb13b/AonqR3e5vB.json"></iframe>
+            </div>
+          ) : (
+            <table className="w-full mt-4 border-collapse" {...getTableProps()}>
               <thead className="bg-slate-700 hover:bg-slate-800 text-white">
                 {headerGroups.map((headerGroup) => (
                   <tr {...headerGroup.getHeaderGroupProps()}>
@@ -251,9 +271,8 @@ const MetaDetailsTable = () => {
                 })}
               </tbody>
             </table>
-          }
+          )}
         </>
-
       )}
     </div>
   );

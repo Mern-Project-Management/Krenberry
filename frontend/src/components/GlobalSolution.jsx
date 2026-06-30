@@ -64,10 +64,10 @@ const GlobalSolution = () => {
       </div>
 
       {/* Content Section */}
-      <div className="relative sm:pt-32 pt-24">
+      <div className="relative sm:pt-32 pt-10">
         <div className="container mx-auto py-12 sm:px-4 px-2 w-full sm:w-[67%]">
           <div className="text-center">
-            <h2 className="text-4xl md:text-5xl font-semibold mb-4 text-white">
+            <h2 className="text-4xl md:text-5xl capitalize font-semibold mb-4 text-white">
               <span dangerouslySetInnerHTML={{ __html: globalSolution.heading }} />
             </h2>
             <p className="sm:text-lg text-xl mb-8 text-white font-inter sm:pt-10 pt-7">
@@ -75,7 +75,7 @@ const GlobalSolution = () => {
             </p>
           </div>
 
-          <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 sm:mt-32 mt-24">
+          <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:mt-12 mt-24">
             {globalSolution.subsections.map((language, index) => (
               <div key={index} className="text-center space-y-6">
                 {language.imageUrl ? (
@@ -90,7 +90,7 @@ const GlobalSolution = () => {
                 ) : (
                   <div className="md:w-28 md:h-28 w-24 h-24 mx-auto mb-2 bg-gray-200" />
                 )}
-                <h3 className="md:text-xl text-md text-base font-semibold font-inter text-white">
+                <h3 className="md:text-xl text-md text-base font-semibold font-inter text-white capitalize">
                   {language.title}
                 </h3>
               </div>

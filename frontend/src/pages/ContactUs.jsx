@@ -7,8 +7,9 @@ import contactBanner from '../assets/contact-banner.jpg'; // Corrected import
 // import Enterprice from '../assets/enterprise.gif';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-
+import { validateName,
+  validateEmail,
+  validateMobileNo, validateDetails} from '../utiles/validations';
 
 const ContactUs = () => {
   const [contactInfos, setContactInfos] = useState([]);
@@ -20,15 +21,25 @@ const ContactUs = () => {
   const [headOfficeAddress, setHeadOfficeAddress] = useState('');
   const [salesOfficeAddress, setSalesOfficeAddress] = useState('');
   const [location, setLocation] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
   const [clientIp, setClientIp] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
   const [utmParams, setUtmParams] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+  const [isTouched, setIsTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+    subject: false,
+    message: false
+  });
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -56,30 +67,141 @@ const ContactUs = () => {
     });
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const validateField = (name, value) => {
+    let error = '';
+    
+    if (!value.trim()) {
+      error = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
+      return error;
+    }
+    
+    switch (name) {
+      case 'name':
+        error = validateName(value);
+        break;
+      case 'email':
+        error = validateEmail(value);
+        break;
+      case 'phone':
+        error = validateMobileNo(value);
+        break;
+      case 'message':
+        error = validateDetails(value);
+        break;
+      default:
+        break;
+    }
+    
+    return error || '';
+  };
 
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setIsTouched(prev => ({ ...prev, [name]: true }));
+    
+    const error = validateField(name, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const handleChange = (e) => {
+    let { name, value } = e.target;
+
+    if (name === 'phone') {
+      // Only allow numbers for phone
+      if (value !== '' && !/^\d*$/.test(value)) {
+        return;
+      }
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Validate on change if the field has been touched
+    if (formErrors[name]) {
+      const error = validateField(name, value);
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+    
+    const fields = [
+      { name: 'name', value: formData.name },
+      { name: 'email', value: formData.email },
+      { name: 'phone', value: formData.phone },
+      { name: 'message', value: formData.message }
+    ];
+    
+    fields.forEach(field => {
+      const error = validateField(field.name, field.value);
+      if (error) {
+        errors[field.name] = error;
+        isValid = false;
+      }
+    });
+    
+    setFormErrors(errors);
+    return isValid;
+  };
+
+ const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    const payload = {
+      ...formData,
+      ipaddress: clientIp,
+      ...utmParams,
+    };
+
+    const start = performance.now();
     try {
-      await axios.post('/api/contactinquiries/createcontactInquiry', {
-        name,
-        email,
-        phone,
-        subject,
-        message,
-        ipaddress: clientIp,
-        ...utmParams,
+      // 10s timeout (adjust as needed)
+      await axios.post('/api/contactinquiries/createcontactInquiry', payload, { timeout: 10000 });
+
+      const duration = (performance.now() - start).toFixed(0);
+      console.log(`Contact submit completed in ${duration} ms`);
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
+      setFormErrors({});
+      setIsTouched({
+        name: false,
+        email: false,
+        phone: false,
+        subject: false,
+        message: false
       });
 
-      // Success actions
-      setName('');
-      setEmail('');
-      setPhone('');
-      setSubject('');
-      setMessage('');
-      navigate("/thankyou")
+      navigate("/thankyou");
     } catch (error) {
-      setErrorMessage(error.response ? error.response.data.error : 'An error occurred.');
+      const duration = (performance.now() - start).toFixed(0);
+      console.error(`Contact submit failed after ${duration} ms`, error);
+
+      if (error.code === 'ECONNABORTED') {
+        setErrorMessage('The request timed out. Please try again.');
+      } else {
+        setErrorMessage(error.response?.data?.error || 'An error occurred while submitting the form.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -157,24 +279,24 @@ const ContactUs = () => {
                     {item.type === 'Head Office Address' ? (
                       <>
                         <h3 className="font-bold">{item.title}</h3>
-                        <a href={headOfficeAddress} target='_blank' className='hover:text-blue-500'>{item.address}</a>
+                        <a href={headOfficeAddress} target='_blank' className='hover:text-[#ec2127]'>{item.address}</a>
                       </>
                     ) : item.type === 'Phone No' ? (
                       <>
                         <h3 className="font-bold">{item.title}</h3>
-                        <a href={`tel:${item.phone1}`} className='hover:text-blue-500'>{item.phone1}</a><br />
-                        {item.phone2 && <a href={`tel:${item.phone2}`} className='hover:text-blue-500'>{item.phone2}</a>}
+                        <a href={`tel:${item.phone1}`} className='hover:text-[#ec2127]'>{item.phone1}</a><br />
+                        {item.phone2 && <a href={`tel:${item.phone2}`} className='hover:text-[#ec2127]'>{item.phone2}</a>}
                       </>
                     ) : item.type === 'Email' ? (
                       <>
                         <h3 className="font-bold">{item.title}</h3>
-                        <a href={`mailto:${item.email1}`} className='hover:text-blue-500' >{item.email1}</a><br />
-                        {item.email2 && <a href={`mailto:${item.email2}`} className='hover:text-blue-500'>{item.email2}</a>}
+                        <a href={`mailto:${item.email1}`} className='hover:text-[#ec2127]' >{item.email1}</a><br />
+                        {item.email2 && <a href={`mailto:${item.email2}`} className='hover:text-[#ec2127]'>{item.email2}</a>}
                       </>
                     ) : (
                       <>
                         <h3 className="font-bold">{item.title}</h3>
-                        <a href={salesOfficeAddress} target='_blank' className='hover:text-blue-500'>{item.address}</a>
+                        <a href={salesOfficeAddress} target='_blank' className='hover:text-[#ec2127]'>{item.address}</a>
                       </>
                     )}
                   </div>
@@ -190,72 +312,144 @@ const ContactUs = () => {
             {/* Contact Form */}
             <div className="flex-1">
               <h2 className="text-2xl mb-4 text-black font-serif">Get in Touch</h2>
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                <div className="flex flex-col md:flex-row gap-2 w-full">
+              <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+                <div className="flex flex-col md:flex-row gap-4 w-full">
                   <div className="w-full">
-                    <label htmlFor="name" className="block mb-1">Name</label>
+                    <label htmlFor="name" className="block mb-1">
+                      Name <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       id="name"
-                      className="w-full p-2 border rounded focus:border-red-500 outline-none"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Enter your full name"
+                      className={`w-full p-2 border rounded focus:border-[#ec2127] outline-none ${
+                        formErrors.name && isTouched.name ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       required
+                      minLength={2}
                     />
+                    {formErrors.name && isTouched.name && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+                    )}
                   </div>
+                  
                   <div className="w-full">
-                    <label htmlFor="email" className="block mb-1">Email</label>
+                    <label htmlFor="email" className="block mb-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="email"
                       id="email"
-                      className="w-full p-2 border rounded focus:border-red-500 outline-none"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Enter your email address"
+                      className={`w-full p-2 border rounded focus:border-[#ec2127] outline-none ${
+                        formErrors.email && isTouched.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       required
+                    />
+                    {formErrors.email && isTouched.email && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-4 w-full">
+                  <div className="w-full">
+                    <label htmlFor="phone" className="block mb-1">
+                      Mobile Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Enter your 10-digit mobile number"
+                      maxLength="10"
+                      className={`w-full p-2 border rounded focus:border-[#ec2127] outline-none ${
+                        formErrors.phone && isTouched.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      required
+                    />
+                    {formErrors.phone && isTouched.phone && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.phone}</p>
+                    )}
+                  </div>
+                  
+                  <div className="w-full">
+                    <label htmlFor="subject" className="block mb-1">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      placeholder="Enter subject"
+                      className="w-full p-2 border border-gray-300 rounded focus:border-[#ec2127] outline-none"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label htmlFor="phone" className="block mb-1">Mobile</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    className="w-full p-2 border rounded focus:border-red-500 outline-none"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="subject" className="block mb-1">Subject</label>
-                  <input
-                    type="text"
-                    id="subject"
-                    className="w-full p-2 border rounded focus:border-red-500 outline-none"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="message" className="block mb-1">Message</label>
+                  <label htmlFor="message" className="block mb-1">
+                    Message <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Enter your message (minimum 10 characters)"
                     rows="4"
-                    className="w-full p-2 border rounded focus:border-red-500 outline-none"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    className={`w-full p-2 border rounded focus:border-[#ec2127] outline-none resize-none ${
+                      formErrors.message && isTouched.message ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     required
-                  ></textarea>
+                  />
+                  {formErrors.message && isTouched.message && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.message}</p>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center"
-                  disabled={isSubmitting}
-                >
-                  <Send className="mr-2" size={16} />
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </button>
+
+                {errorMessage && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <span className="block sm:inline">{errorMessage}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-start">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#ec2127] hover:bg-[#ec2127] text-white font-medium py-2 px-6 rounded-md flex items-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        Send Message
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
 

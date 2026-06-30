@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const NewCounterForm = () => {
   const [title, setTitle] = useState("");
@@ -10,6 +12,7 @@ const NewCounterForm = () => {
   const [photo, setPhoto] = useState(null);
   const [altText, setAltText] = useState("");
   const [imgtitle, setImgtitle] = useState("");
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handlePhotoChange = (e) => {
@@ -21,8 +24,60 @@ const NewCounterForm = () => {
     setPhoto(null);
   };
 
+  // Helpers
+  const validateRequired = (value) => value && value.trim() !== "";
+  const onlyAlphaNumSpace = (value) => /^[A-Za-z0-9 ]*$/.test(value);
+
+  const handleTextChange = (field, setter, label) => (e) => {
+    const raw = e.target.value;
+    if (!onlyAlphaNumSpace(raw)) {
+      setErrors((prev) => ({ ...prev, [field]: `${label} cannot have special characters` }));
+      return;
+    }
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setter(raw);
+  };
+
+  const handleTextBlur = (field, value, label) => {
+    if (!validateRequired(value)) {
+      setErrors((prev) => ({ ...prev, [field]: `${label} is required` }));
+    } else if (!onlyAlphaNumSpace(value)) {
+      setErrors((prev) => ({ ...prev, [field]: `${label} cannot have special characters` }));
+    } else {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleNumberChange = (e) => {
+    const v = (e.target.value || '').replace(/\D/g, '').slice(0, 5);
+    setNo(v);
+    if (v.length === 0) {
+      setErrors((prev) => ({ ...prev, no: 'Number is required' }));
+    } else {
+      setErrors((prev) => ({ ...prev, no: undefined }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Final validation
+    const newErrors = {};
+    if (!validateRequired(title)) newErrors.title = 'Title is required';
+    else if (!onlyAlphaNumSpace(title)) newErrors.title = 'Title cannot have special characters';
+
+    if (!validateRequired(no)) newErrors.no = 'Number is required';
+    else if (!/^\d{1,5}$/.test(no)) newErrors.no = 'Number must be up to 5 digits';
+
+    if (!validateRequired(altText)) newErrors.altText = 'Alternative Text is required';
+    else if (!onlyAlphaNumSpace(altText)) newErrors.altText = 'Alternative Text cannot have special characters';
+
+    if (!validateRequired(imgtitle)) newErrors.imgtitle = 'Title Text is required';
+    else if (!onlyAlphaNumSpace(imgtitle)) newErrors.imgtitle = 'Title Text cannot have special characters';
+
+    if (!validateRequired(sign)) newErrors.sign = 'Sign is required';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
     const formData = new FormData();
     formData.append("title", title);
     formData.append("no", no);
@@ -47,11 +102,14 @@ const NewCounterForm = () => {
       navigate('/counter');
     } catch (error) {
       console.error(error);
+      const serverMessage = error?.response?.data?.error || error?.response?.data?.message || 'Failed to add counter';
+      toast.error(serverMessage);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-4">
+    <ToastContainer />
     <h1 className="text-xl font-bold font-serif text-gray-700 uppercase text-center">Add Counter</h1>
       <div className="mb-4">
         <label htmlFor="title" className="block font-semibold mb-2">Title</label>
@@ -59,21 +117,33 @@ const NewCounterForm = () => {
           type="text"
           id="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTextChange('title', setTitle, 'Title')}
+          onBlur={() => handleTextBlur('title', title, 'Title')}
           className="w-full p-2 border rounded focus:outline-none"
           required
         />
+        {errors.title && (
+          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+        )}
       </div>
       <div className="mb-4">
         <label htmlFor="no" className="block font-semibold mb-2">Number</label>
         <input
-          type="number"
+          type="text"
           id="no"
           value={no}
-          onChange={(e) => setNo(e.target.value)}
+          onChange={handleNumberChange}
+          onBlur={() => {
+            if (!validateRequired(no)) setErrors((prev) => ({ ...prev, no: 'Number is required' }));
+          }}
           className="w-full p-2 border rounded focus:outline-none"
           required
+          inputMode="numeric"
+          // pattern="\\d{1,5}"
         />
+        {errors.no && (
+          <p className="text-red-500 text-sm mt-1">{errors.no}</p>
+        )}
       </div>
       <div className="mb-4">
         <label htmlFor="sign" className="block font-semibold mb-2">Sign</label>
@@ -106,6 +176,9 @@ const NewCounterForm = () => {
           <option value="months">months</option>
           <option value="years">years</option>
         </select>
+        {errors.sign && (
+          <p className="text-red-500 text-sm mt-1">{errors.sign}</p>
+        )}
       </div>
       <div className="mb-8">
         <label htmlFor="photo" className="block font-semibold mb-2">Photo</label>
@@ -138,10 +211,14 @@ const NewCounterForm = () => {
             type="text"
             id="alt"
             value={altText}
-            onChange={(e) => setAltText(e.target.value)}
+            onChange={handleTextChange('altText', setAltText, 'Alternative Text')}
+            onBlur={() => handleTextBlur('altText', altText, 'Alternative Text')}
             className="w-56 p-2 border rounded focus:outline-none"
             required
           />
+          {errors.altText && (
+            <p className="text-red-500 text-sm mt-1">{errors.altText}</p>
+          )}
         </div>
         <div className="mb-4">
           <label htmlFor="imgtitle" className="block font-semibold mb-2">Title Text</label>
@@ -149,10 +226,14 @@ const NewCounterForm = () => {
             type="text"
             id="imgtitle"
             value={imgtitle}
-            onChange={(e) => setImgtitle(e.target.value)}
+            onChange={handleTextChange('imgtitle', setImgtitle, 'Title Text')}
+            onBlur={() => handleTextBlur('imgtitle', imgtitle, 'Title Text')}
             className="w-56 p-2 border rounded focus:outline-none"
             required
           />
+          {errors.imgtitle && (
+            <p className="text-red-500 text-sm mt-1">{errors.imgtitle}</p>
+          )}
         </div>
           </div>
         )}
